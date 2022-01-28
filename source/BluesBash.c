@@ -21,23 +21,46 @@ int main(void)
 
     InitAudioDevice();
     
-    Sound middleC = LoadSound("C:\\raylib\\npp\\bbAssets\\allNotes\\C1.mp3");
-    Sound middleE = LoadSound("C:\\raylib\\npp\\bbAssets\\allNotes\\Eb1.mp3");
-    Sound middleG = LoadSound("C:\\raylib\\npp\\bbAssets\\allNotes\\G1.mp3");
+    Sound C1 = LoadSound("C:\\raylib\\npp\\bbAssets\\allNotes\\C1.mp3");
+    Sound Eb1 = LoadSound("C:\\raylib\\npp\\bbAssets\\allNotes\\Eb1.mp3");
+    Sound G1 = LoadSound("C:\\raylib\\npp\\bbAssets\\allNotes\\G1.mp3");
+    
+    int placement = 0;
+    
+    Sound keyboard[3] = {C1, Eb1, G1};
     
     while(!WindowShouldClose()){
         
-        if (IsKeyPressed(KEY_SPACE)){
-            PlaySound(middleC);
-            PlaySound(middleE);
-            PlaySound(middleG);
+        if (IsKeyPressed(KEY_F)){
+            if((placement == 0) || (placement == 1)){
+                placement = placement + 1;
+            }
+            
+            PlaySound(keyboard[placement]);
+        
         }
         
-        if(IsKeyReleased(KEY_SPACE)){
-            StopSound(middleC);
-            StopSound(middleE);
-            StopSound(middleG);
+        
+        if (IsKeyPressed(KEY_D)){
+            if((placement == 1) || (placement == 2)){
+                placement = placement - 1;
+            }
+            PlaySound(keyboard[placement]);
+        }
+        
+        if(IsKeyReleased(KEY_F)){
+            StopSound(keyboard[placement]);
         }            
+        
+        if(IsKeyReleased(KEY_D)){
+            StopSound(keyboard[placement]);
+        }
+        
+        if((IsKeyUp(KEY_F)) && (IsKeyUp(KEY_D))){
+            StopSound(keyboard[0]);
+            StopSound(keyboard[1]);
+            StopSound(keyboard[2]);
+        }
         
         BeginDrawing();
 
@@ -53,7 +76,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     CloseAudioDevice();         // Close audio device (music streaming is automatically stopped)
-    UnloadSound(middleC);
+    UnloadSound(C1);
     CloseWindow();              // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
