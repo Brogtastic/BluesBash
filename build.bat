@@ -12,7 +12,7 @@ if not exist libs (
 
 set IncludePaths=-I./libs/raylib/include
 set LibraryPaths=/LIBPATH:./libs/raylib/lib
-set TranslationUnits=source/BluesBash.c
+set TranslationUnits=source/BluesBash.cpp
 
 set CFlags=-nologo -Fo./bin/obj/ -MD
 set LFlags=-link /OUT:./bin/BluesBash.exe /nologo
