@@ -1,4 +1,11 @@
-#include "raylib.h"
+#include <raylib.h>
+
+// Tells MSVC what libraries we need.
+#pragma comment(lib, "raylib.lib")
+#pragma comment(lib, "Gdi32.lib")
+#pragma comment(lib, "winmm.lib")
+#pragma comment(lib, "user32.lib")
+#pragma comment(lib, "Shell32.lib")
 
 int main(void)
 {
