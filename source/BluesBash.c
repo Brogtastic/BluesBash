@@ -10,9 +10,9 @@ int main(void)
 
     InitAudioDevice();
     
-    Sound C1 = LoadSound("C:\\raylib\\npp\\bbAssets\\allNotes\\C1.mp3");
-    Sound Eb1 = LoadSound("C:\\raylib\\npp\\bbAssets\\allNotes\\Eb1.mp3");
-    Sound G1 = LoadSound("C:\\raylib\\npp\\bbAssets\\allNotes\\G1.mp3");
+    Sound C1 = LoadSound("resources/allNotes/C1.mp3");
+    Sound Eb1 = LoadSound("resources/allNotes/Eb1.mp3");
+    Sound G1 = LoadSound("resources/allNotes/G1.mp3");
     
     int placement = 0;
     
