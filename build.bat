@@ -19,6 +19,12 @@ set TranslationUnits=source/BluesBash.cpp
 set CFlags=-nologo -Fo./bin/obj/ -MD
 set LFlags=-link /OUT:./bin/BluesBash.exe /nologo
 
+if "%1"=="debug" (
+	 set CFlags=%CFlags% -Zi -Od
+	 set LFlags=%LFlags% /DEBUG
+)
+
+
 
 @echo on
 cl %CFlags% %IncludePaths% %TranslationUnits% %LFlags% %LibraryPaths%
