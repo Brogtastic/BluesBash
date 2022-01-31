@@ -15,10 +15,36 @@
 // NOTE(Roskuski): If you want to read more about this Technique, it is called "X-Macros"
 // NOTE(Roskuski): In essence, we create a macro that expands to a bunch of macros that are of a known (i.e X). When then define macro X to something, and that macro then expands as well.
 // NOTE(Roskuski): Remeber that macros are essentially automated Copy and Paste!
+
+
+// NOTE(Brog): Here are the chords
+//
+//             Cmaj7 -- C1, E1, G1, Bb1
+//             Fmaj7 -- C1, Eb1, G1, A1
+//             Gmaj7 -- D1, F1, G1, B1 
+//
+//             Cmaj7 4 bars
+//             Fmaj7 2 bars
+//             Cmaj7 2 bars
+//             Gmaj7 1 bar
+//             Fmaj7 1 bar
+//             Cmaj7 2 bars
+
+
+
+/*
+   To Do:
+   Make notes fade out instead of stopping right away
+   Right and Left keys pressed make it so the two notes are not right next to each other
+   Trills
+   Drum track
+
+
+
+*/
+
 #define NOTES	  \
 	XX(A1, 0) \
-		X(Bb1) \
-		X(B1) \
 		X(C1) \
 		X(D1) \
 		X(Eb1) \
@@ -27,26 +53,29 @@
 		X(Fs1) \
 		X(G1) \
 		X(Gs1) \
+        X(Bb1) \
+		X(B1) \
 		\
-		X(Bb2) \
 		X(C2) \
 		X(Eb2) \
 		X(F2) \
 		X(Fs2) \
 		X(G2) \
+		X(Bb2) \
 		\
 		X(C3) \
-		X(Bb3) \
+		X(Eb3) \
 		X(F3) \
 		X(Fs3) \
 		X(G3) \
+        X(Bb3) \
 		\
-		X(Bb4) \
 		X(C4) \
 		X(Eb4) \
 		X(F4) \
 		X(Fs4) \
 		X(G4) \
+		X(Bb4) \
 		\
 		X(C5)
 		
@@ -97,37 +126,62 @@ int main(void) {
 	
 	int Placement = 0;
   
-	note_name Keyboard[3] = {C1, Eb1, G1};
+	note_name Keyboard[19] = {C2, Eb2, F2, Fs2, G2, Bb2, C3, Eb3, F3, Fs3, G3, Bb3, C4, Eb4, F4, Fs4, G4, Bb4, C5};
     
 	while(!WindowShouldClose()) {
         
-		if (IsKeyPressed(KEY_F)) {
-			if((Placement == 0) || (Placement == 1)) {
+		if (IsKeyPressed(KEY_RIGHT)) {
+			if(!(Placement == 18)) {
 				Placement = Placement + 1;
 			}
 			PlayNote(Keyboard[Placement]);
 		}
         
         
-		if (IsKeyPressed(KEY_D)) {
-			if((Placement == 1) || (Placement == 2)) {
+		if (IsKeyPressed(KEY_LEFT)) {
+			if(!(Placement == 0)) {
 				Placement = Placement - 1;
 			}
 			PlayNote(Keyboard[Placement]);
 		}
         
-		if(IsKeyReleased(KEY_F)) {
+        if (IsKeyPressed(KEY_DOWN)){
+            PlayNote(Keyboard[Placement]);
+        }
+        
+        
+		if(IsKeyReleased(KEY_RIGHT)) {
 			StopNote(Keyboard[Placement]);
 		}            
         
-		if(IsKeyReleased(KEY_D)) {
+		if(IsKeyReleased(KEY_LEFT)) {
 			StopNote(Keyboard[Placement]);
 		}
         
-		if((IsKeyUp(KEY_F)) && (IsKeyUp(KEY_D))) {
+        if (IsKeyReleased(KEY_DOWN)){
+            StopNote(Keyboard[Placement]);
+        }
+        
+		if((IsKeyUp(KEY_RIGHT)) && (IsKeyUp(KEY_LEFT)) && (IsKeyUp(KEY_DOWN))) {
 			StopNote(Keyboard[0]);
 			StopNote(Keyboard[1]);
 			StopNote(Keyboard[2]);
+            StopNote(Keyboard[3]);
+            StopNote(Keyboard[4]);
+            StopNote(Keyboard[5]);
+            StopNote(Keyboard[6]);
+            StopNote(Keyboard[7]);
+            StopNote(Keyboard[8]);
+            StopNote(Keyboard[9]);
+            StopNote(Keyboard[10]);
+            StopNote(Keyboard[11]);
+            StopNote(Keyboard[12]);
+            StopNote(Keyboard[13]);
+            StopNote(Keyboard[14]);
+            StopNote(Keyboard[15]);
+            StopNote(Keyboard[16]);
+            StopNote(Keyboard[17]);
+            StopNote(Keyboard[18]);
 		}
 
 		// Rendering

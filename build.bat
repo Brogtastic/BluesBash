@@ -2,6 +2,8 @@
 rem alway start with the correct working directory
 cd %~dp0
 
+call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
+
 rem ensure output directories do exist.
 if not exist bin mkdir bin
 if not exist bin\obj mkdir bin\obj
