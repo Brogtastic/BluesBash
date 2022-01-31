@@ -172,44 +172,7 @@ int main(void) {
 		if (IsKeyPressed(KEY_DOWN)){
 			PlayNote(Keyboard[Placement], CurrentTime, 0.25);
 		}
-        
-		#if 0
-		if(IsKeyReleased(KEY_RIGHT)) {
-			StopNote(Keyboard[Placement]);
-		}            
-        
-		if(IsKeyReleased(KEY_LEFT)) {
-			StopNote(Keyboard[Placement]);
-		}
-        
-		if (IsKeyReleased(KEY_DOWN)){
-			StopNote(Keyboard[Placement]);
-		}
-		
-        
-		if((IsKeyUp(KEY_RIGHT)) && (IsKeyUp(KEY_LEFT)) && (IsKeyUp(KEY_DOWN))) {
-			StopNote(Keyboard[0]);
-			StopNote(Keyboard[1]);
-			StopNote(Keyboard[2]);
-			StopNote(Keyboard[3]);
-			StopNote(Keyboard[4]);
-			StopNote(Keyboard[5]);
-			StopNote(Keyboard[6]);
-			StopNote(Keyboard[7]);
-			StopNote(Keyboard[8]);
-			StopNote(Keyboard[9]);
-			StopNote(Keyboard[10]);
-			StopNote(Keyboard[11]);
-			StopNote(Keyboard[12]);
-			StopNote(Keyboard[13]);
-			StopNote(Keyboard[14]);
-			StopNote(Keyboard[15]);
-			StopNote(Keyboard[16]);
-			StopNote(Keyboard[17]);
-			StopNote(Keyboard[18]);
-		}
-		#else
-		
+    
 		for (int Index = 0; Index < NoteName_Count; Index++) {
 			if (NoteStateList[Index].State == NotPlaying) {
 				if (NoteStateList[Index].StartTime <= CurrentTime &&
@@ -225,8 +188,6 @@ int main(void) {
 				}
 			}
 		}
-		
-		#endif
 
 		// Rendering
 		{
