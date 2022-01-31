@@ -1,4 +1,5 @@
 #include <raylib.h>
+#include <cstdio>
 
 #define Assert(Cnd) if (!(Cnd)) { __debugbreak(); }
 
@@ -38,7 +39,7 @@
   Right and Left keys pressed make it so the two notes are not right next to each other
   Trills
   Drum track
-
+  Right now, one note cannot play more than once. We might have to move away from "Sound" to something that allows for the same note to be played twice at once. perhpas this is called "wave" in raylib?
 
 
 */
@@ -98,9 +99,17 @@ const char *NoteFileNames[] = {
 };
 #undef NOTES
 
+// 4/4 time signature is assumed for these macros
+#define SIXTEENTH_NOTE(Time) (Time/4)
+#define EIGHTH_NOTE(Time) (Time/2)
+#define QUARTER_NOTE(Time) (Time)
+#define HALF_NOTE(Time) (Time*2)
+#define WHOLE_NOTE(Time) (Time*4)
+
 enum note_state_enum {
 	NotPlaying = 0,
 	Playing,
+	QueuedForPlaying,
 };
 
 struct note_state {
@@ -116,8 +125,11 @@ Sound NoteSoundList[NoteName_Count];
 // Delay is how long we will wait until starting to play the note.
 static inline void PlayNote(note_name Note, float CurrentTime, float Length, float Delay = 0.0f) {
 	Assert(Note != NoteName_Count);
-	NoteStateList[Note].StartTime = CurrentTime + Delay;
-	NoteStateList[Note].EndTime = CurrentTime + Delay + Length;
+	if (NoteStateList[Note].State == NotPlaying) { // Right now, we will not attemt to replay a note if it is already playing, or currently playing.
+		NoteStateList[Note].State = QueuedForPlaying;
+		NoteStateList[Note].StartTime = CurrentTime + Delay;
+		NoteStateList[Note].EndTime = CurrentTime + Delay + Length;
+	}
 }
 
 static inline void StopNote(note_name Note, float CurrentTime) {
@@ -134,6 +146,11 @@ int main(void) {
 
 	InitAudioDevice();
 
+	const float BeatsPerMin = 120;
+	const float BeatsPerSecond = BeatsPerMin / 60;
+	const float SecondsPerBeat = 1 / BeatsPerSecond;
+	printf("SpB: %f\n", SecondsPerBeat);
+
 	// LoadAllNotes
 	for (int Index = 0; Index < NoteName_Count; Index++) {
 		NoteSoundList[Index] = LoadSound(NoteFileNames[Index]);
@@ -147,7 +164,6 @@ int main(void) {
 		float CurrentTime = GetTime();
 		float DeltaTime = (float)GetFrameTime();
 
-		
 		if (IsKeyPressed(KEY_RIGHT)) {
 			if (NoteStateList[Keyboard[Placement]].State == Playing) { Placement += 1; }
 			Placement += 1;
@@ -155,9 +171,8 @@ int main(void) {
 				Placement = 18;
 			}
 			
-			PlayNote(Keyboard[Placement], CurrentTime, 0.25);
+			PlayNote(Keyboard[Placement], CurrentTime, EIGHTH_NOTE(SecondsPerBeat));
 		}
-        
         
 		if (IsKeyPressed(KEY_LEFT)) {
 			if (NoteStateList[Keyboard[Placement]].State == Playing) { Placement -= 1; }
@@ -166,15 +181,15 @@ int main(void) {
 				Placement = 0;
 			}
 			
-			PlayNote(Keyboard[Placement], CurrentTime, 0.25);
+			PlayNote(Keyboard[Placement], CurrentTime, EIGHTH_NOTE(SecondsPerBeat));
 		}
         
 		if (IsKeyPressed(KEY_DOWN)){
-			PlayNote(Keyboard[Placement], CurrentTime, 0.25);
+			PlayNote(Keyboard[Placement], CurrentTime, EIGHTH_NOTE(SecondsPerBeat));
 		}
     
 		for (int Index = 0; Index < NoteName_Count; Index++) {
-			if (NoteStateList[Index].State == NotPlaying) {
+			if (NoteStateList[Index].State == QueuedForPlaying) {
 				if (NoteStateList[Index].StartTime <= CurrentTime &&
 				    NoteStateList[Index].EndTime > CurrentTime) {
 					NoteStateList[Index].State = Playing;
