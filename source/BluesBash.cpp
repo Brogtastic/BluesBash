@@ -33,11 +33,11 @@
 
 
 /*
-   To Do:
-   Make notes fade out instead of stopping right away
-   Right and Left keys pressed make it so the two notes are not right next to each other
-   Trills
-   Drum track
+  To Do:
+  Make notes fade out instead of stopping right away
+  Right and Left keys pressed make it so the two notes are not right next to each other
+  Trills
+  Drum track
 
 
 
@@ -45,39 +45,39 @@
 
 #define NOTES	  \
 	XX(A1, 0) \
-		X(C1) \
-		X(D1) \
-		X(Eb1) \
-		X(E1) \
-		X(F1) \
-		X(Fs1) \
-		X(G1) \
-		X(Gs1) \
-        X(Bb1) \
-		X(B1) \
-		\
-		X(C2) \
-		X(Eb2) \
-		X(F2) \
-		X(Fs2) \
-		X(G2) \
-		X(Bb2) \
-		\
-		X(C3) \
-		X(Eb3) \
-		X(F3) \
-		X(Fs3) \
-		X(G3) \
-        X(Bb3) \
-		\
-		X(C4) \
-		X(Eb4) \
-		X(F4) \
-		X(Fs4) \
-		X(G4) \
-		X(Bb4) \
-		\
-		X(C5)
+	X(C1) \
+	X(D1) \
+	X(Eb1) \
+	X(E1) \
+	X(F1) \
+	X(Fs1) \
+	X(G1) \
+	X(Gs1) \
+	X(Bb1) \
+	X(B1) \
+	  \
+	X(C2) \
+	X(Eb2) \
+	X(F2) \
+	X(Fs2) \
+	X(G2) \
+	X(Bb2) \
+	  \
+	X(C3) \
+	X(Eb3) \
+	X(F3) \
+	X(Fs3) \
+	X(G3) \
+	X(Bb3) \
+	  \
+	X(C4) \
+	X(Eb4) \
+	X(F4) \
+	X(Fs4) \
+	X(G4) \
+	X(Bb4) \
+	  \
+	X(C5)
 		
 		
 enum note_name {
@@ -92,22 +92,37 @@ enum note_name {
 const char *NoteFileNames[] = {
 #define XX(Name, Value) "resources/allNotes/"#Name".mp3",
 #define X(Name) "resources/allNotes/"#Name".mp3",
-NOTES
+	NOTES
 #undef XX
 #undef X
 };
 #undef NOTES
 
-Sound NoteSoundList[NoteName_Count]; // @TODO(Roskuski): I think this could use a better name.
+enum note_state_enum {
+	NotPlaying = 0,
+	Playing,
+};
 
-static inline void PlayNote(note_name Note) {
+struct note_state {
+	note_state_enum State;
+	float StartTime;
+	float EndTime;
+};
+
+note_state NoteStateList[NoteName_Count];
+Sound NoteSoundList[NoteName_Count];
+
+// Length is how long the note will play.
+// Delay is how long we will wait until starting to play the note.
+static inline void PlayNote(note_name Note, float CurrentTime, float Length, float Delay = 0.0f) {
 	Assert(Note != NoteName_Count);
-	PlaySound(NoteSoundList[Note]);
+	NoteStateList[Note].StartTime = CurrentTime + Delay;
+	NoteStateList[Note].EndTime = CurrentTime + Delay + Length;
 }
 
-static inline void StopNote(note_name Note) {
+static inline void StopNote(note_name Note, float CurrentTime) {
 	Assert(Note != NoteName_Count);
-	StopSound(NoteSoundList[Note]);
+	NoteStateList[Note].EndTime = CurrentTime;
 }
 
 int main(void) {
@@ -129,27 +144,36 @@ int main(void) {
 	note_name Keyboard[19] = {C2, Eb2, F2, Fs2, G2, Bb2, C3, Eb3, F3, Fs3, G3, Bb3, C4, Eb4, F4, Fs4, G4, Bb4, C5};
     
 	while(!WindowShouldClose()) {
-        
+		float CurrentTime = GetTime();
+		float DeltaTime = (float)GetFrameTime();
+
+		
 		if (IsKeyPressed(KEY_RIGHT)) {
-			if(!(Placement == 18)) {
-				Placement = Placement + 1;
+			if (NoteStateList[Keyboard[Placement]].State == Playing) { Placement += 1; }
+			Placement += 1;
+			if (Placement >= 18) {
+				Placement = 18;
 			}
-			PlayNote(Keyboard[Placement]);
+			
+			PlayNote(Keyboard[Placement], CurrentTime, 0.25);
 		}
         
         
 		if (IsKeyPressed(KEY_LEFT)) {
-			if(!(Placement == 0)) {
-				Placement = Placement - 1;
+			if (NoteStateList[Keyboard[Placement]].State == Playing) { Placement -= 1; }
+			Placement -= 1;
+			if(Placement <= 0) {
+				Placement = 0;
 			}
-			PlayNote(Keyboard[Placement]);
+			
+			PlayNote(Keyboard[Placement], CurrentTime, 0.25);
 		}
         
-        if (IsKeyPressed(KEY_DOWN)){
-            PlayNote(Keyboard[Placement]);
-        }
+		if (IsKeyPressed(KEY_DOWN)){
+			PlayNote(Keyboard[Placement], CurrentTime, 0.25);
+		}
         
-        
+		#if 0
 		if(IsKeyReleased(KEY_RIGHT)) {
 			StopNote(Keyboard[Placement]);
 		}            
@@ -158,36 +182,61 @@ int main(void) {
 			StopNote(Keyboard[Placement]);
 		}
         
-        if (IsKeyReleased(KEY_DOWN)){
-            StopNote(Keyboard[Placement]);
-        }
+		if (IsKeyReleased(KEY_DOWN)){
+			StopNote(Keyboard[Placement]);
+		}
+		
         
 		if((IsKeyUp(KEY_RIGHT)) && (IsKeyUp(KEY_LEFT)) && (IsKeyUp(KEY_DOWN))) {
 			StopNote(Keyboard[0]);
 			StopNote(Keyboard[1]);
 			StopNote(Keyboard[2]);
-            StopNote(Keyboard[3]);
-            StopNote(Keyboard[4]);
-            StopNote(Keyboard[5]);
-            StopNote(Keyboard[6]);
-            StopNote(Keyboard[7]);
-            StopNote(Keyboard[8]);
-            StopNote(Keyboard[9]);
-            StopNote(Keyboard[10]);
-            StopNote(Keyboard[11]);
-            StopNote(Keyboard[12]);
-            StopNote(Keyboard[13]);
-            StopNote(Keyboard[14]);
-            StopNote(Keyboard[15]);
-            StopNote(Keyboard[16]);
-            StopNote(Keyboard[17]);
-            StopNote(Keyboard[18]);
+			StopNote(Keyboard[3]);
+			StopNote(Keyboard[4]);
+			StopNote(Keyboard[5]);
+			StopNote(Keyboard[6]);
+			StopNote(Keyboard[7]);
+			StopNote(Keyboard[8]);
+			StopNote(Keyboard[9]);
+			StopNote(Keyboard[10]);
+			StopNote(Keyboard[11]);
+			StopNote(Keyboard[12]);
+			StopNote(Keyboard[13]);
+			StopNote(Keyboard[14]);
+			StopNote(Keyboard[15]);
+			StopNote(Keyboard[16]);
+			StopNote(Keyboard[17]);
+			StopNote(Keyboard[18]);
 		}
+		#else
+		
+		for (int Index = 0; Index < NoteName_Count; Index++) {
+			if (NoteStateList[Index].State == NotPlaying) {
+				if (NoteStateList[Index].StartTime <= CurrentTime &&
+				    NoteStateList[Index].EndTime > CurrentTime) {
+					NoteStateList[Index].State = Playing;
+					PlaySound(NoteSoundList[Index]);
+				}
+			}
+			else if (NoteStateList[Index].State == Playing) {
+				if (NoteStateList[Index].EndTime <= CurrentTime) {
+					StopSound(NoteSoundList[Index]);
+					NoteStateList[Index].State = NotPlaying;
+				}
+			}
+		}
+		
+		#endif
 
 		// Rendering
 		{
 			BeginDrawing();
 			ClearBackground(RAYWHITE);
+			Rectangle Rect = {0, 10, 32, 32};
+			for (note_state NoteState : NoteStateList) {
+				DrawRectangleRec(Rect, NoteState.State == Playing ? GREEN : RED);
+				Rect.x += 32;
+			}
 			EndDrawing();
 		}
 	}
