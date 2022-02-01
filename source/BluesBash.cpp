@@ -157,6 +157,7 @@ int main(void) {
 	}
 	
 	int Placement = 0;
+    int LastKeyPressed = 0;
   
 	note_name Keyboard[19] = {C2, Eb2, F2, Fs2, G2, Bb2, C3, Eb3, F3, Fs3, G3, Bb3, C4, Eb4, F4, Fs4, G4, Bb4, C5};
     
@@ -171,6 +172,7 @@ int main(void) {
 				Placement = 18;
 			}
 			
+            LastKeyPressed = 1;
 			PlayNote(Keyboard[Placement], CurrentTime, EIGHTH_NOTE(SecondsPerBeat));
 		}
         
@@ -181,12 +183,26 @@ int main(void) {
 				Placement = 0;
 			}
 			
+            LastKeyPressed = 0;
 			PlayNote(Keyboard[Placement], CurrentTime, EIGHTH_NOTE(SecondsPerBeat));
 		}
         
 		if (IsKeyPressed(KEY_DOWN)){
 			PlayNote(Keyboard[Placement], CurrentTime, EIGHTH_NOTE(SecondsPerBeat));
 		}
+        
+        if(IsKeyPressed(KEY_UP)){
+            if (LastKeyPressed == 0){
+                if (NoteStateList[Keyboard[Placement]].State == Playing) { Placement += 1; }
+                Placement += 1;
+                PlayNote(Keyboard[Placement], CurrentTime, EIGHTH_NOTE(SecondsPerBeat));
+            }
+            if (LastKeyPressed == 1){
+                if (NoteStateList[Keyboard[Placement]].State == Playing) { Placement -= 1; }
+                Placement -= 1;
+                PlayNote(Keyboard[Placement], CurrentTime, EIGHTH_NOTE(SecondsPerBeat));
+            }
+        }
     
 		for (int Index = 0; Index < NoteName_Count; Index++) {
 			if (NoteStateList[Index].State == QueuedForPlaying) {
