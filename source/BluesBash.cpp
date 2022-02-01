@@ -167,8 +167,10 @@ int main(void) {
 
 		if (IsKeyPressed(KEY_RIGHT)) {
 			if (NoteStateList[Keyboard[Placement]].State == Playing) { Placement += 1; }
-			Placement += 1;
-			if (Placement >= 18) {
+			
+            Placement += 1;
+			
+            if (Placement >= 18) {
 				Placement = 18;
 			}
 			
@@ -178,8 +180,10 @@ int main(void) {
         
 		if (IsKeyPressed(KEY_LEFT)) {
 			if (NoteStateList[Keyboard[Placement]].State == Playing) { Placement -= 1; }
-			Placement -= 1;
-			if(Placement <= 0) {
+			
+            Placement -= 1;
+			
+            if(Placement <= 0) {
 				Placement = 0;
 			}
 			
@@ -241,6 +245,7 @@ int main(void) {
 	}
 	CloseWindow();              // Close window and OpenGL context
 	//--------------------------------------------------------------------------------------
+    
 
 	return 0;
 }
