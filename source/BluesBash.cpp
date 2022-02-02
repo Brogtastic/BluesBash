@@ -108,8 +108,9 @@ const char *NoteFileNames[] = {
 
 enum note_state_enum {
 	NotPlaying = 0,
-	Playing,
 	QueuedForPlaying,
+	Playing,
+	PlayingSustained,
 };
 
 struct note_state {
@@ -120,6 +121,40 @@ struct note_state {
 
 note_state NoteStateList[NoteName_Count];
 Sound NoteSoundList[NoteName_Count];
+
+static inline bool IsNotePlaying(note_name Note) {
+	bool Result = false;
+	note_state_enum State = NoteStateList[Note].State;
+	
+	switch(State) {
+	case Playing:
+	case PlayingSustained:
+		Result = true;
+	}
+
+	return Result;
+}
+
+// Plays a note for the duration that a key is held down for.
+static inline void PlayNoteSustained(note_name Note) {
+	Assert(Note >= 0);
+	Assert(Note < NoteName_Count);
+	if (NoteStateList[Note].State == NotPlaying) { // @TODO(Roskuski): This check might be detremental to the sound.
+		NoteStateList[Note].State = PlayingSustained;
+		// @TODO(Roskuski): I think that we're going to need to know the CurrentTime here to facilitate creating replay numbers.
+		PlaySound(NoteSoundList[Note]);
+	}
+}
+
+// Stops a sustained note
+static inline void StopNoteSustained(note_name Note) {
+	Assert(Note >= 0);
+	Assert(Note < NoteName_Count);
+	Assert(NoteStateList[Note].State == PlayingSustained);
+	// @TODO(Roskuski): I think that we're going to need to know the CurrentTime here to facilitate creating replay numbers.
+	StopSound(NoteSoundList[Note]);
+	NoteStateList[Note].State = NotPlaying;
+}
 
 // Length is how long the note will play.
 // Delay is how long we will wait until starting to play the note.
@@ -133,6 +168,7 @@ static inline void PlayNote(note_name Note, float CurrentTime, float Length, flo
 }
 
 static inline void StopNote(note_name Note, float CurrentTime) {
+	Assert(Note >= 0);
 	Assert(Note != NoteName_Count);
 	NoteStateList[Note].EndTime = CurrentTime;
 }
@@ -157,56 +193,74 @@ int main(void) {
 	}
 	
 	int Placement = 0;
-    int LastKeyPressed = 0;
+	int LastKeyPressed = 0;
   
 	note_name Keyboard[19] = {C2, Eb2, F2, Fs2, G2, Bb2, C3, Eb3, F3, Fs3, G3, Bb3, C4, Eb4, F4, Fs4, G4, Bb4, C5};
+	enum sustained_key {
+		Up = 0, Down, Left, Right, SustainedKey_Count,
+	};
+	note_name SustainedNotes[4] = {NoteName_Count, NoteName_Count, NoteName_Count, NoteName_Count}; // Filling this array with some bogus value.
     
 	while(!WindowShouldClose()) {
 		float CurrentTime = GetTime();
 		float DeltaTime = (float)GetFrameTime();
+		// Currently, there are 4 key presses that can emit sounds.
 
 		if (IsKeyPressed(KEY_RIGHT)) {
-			if (NoteStateList[Keyboard[Placement]].State == Playing) { Placement += 1; }
+			if (IsNotePlaying(Keyboard[Placement])) { Placement += 1; }
 			
-            Placement += 1;
+			Placement += 1;
 			
-            if (Placement >= 18) {
+			if (Placement >= 18) {
 				Placement = 18;
 			}
 			
-            LastKeyPressed = 1;
-			PlayNote(Keyboard[Placement], CurrentTime, EIGHTH_NOTE(SecondsPerBeat));
+			LastKeyPressed = 1;
+			PlayNoteSustained(Keyboard[Placement]);
+			SustainedNotes[sustained_key::Right] = Keyboard[Placement];
 		}
         
 		if (IsKeyPressed(KEY_LEFT)) {
-			if (NoteStateList[Keyboard[Placement]].State == Playing) { Placement -= 1; }
+			if (IsNotePlaying(Keyboard[Placement])) { Placement -= 1; }
 			
-            Placement -= 1;
+			Placement -= 1;
 			
-            if(Placement <= 0) {
+			if(Placement <= 0) {
 				Placement = 0;
 			}
 			
-            LastKeyPressed = 0;
-			PlayNote(Keyboard[Placement], CurrentTime, EIGHTH_NOTE(SecondsPerBeat));
+			LastKeyPressed = 0;
+			PlayNoteSustained(Keyboard[Placement]);
+			SustainedNotes[sustained_key::Left] = Keyboard[Placement];
 		}
-        
+
 		if (IsKeyPressed(KEY_DOWN)){
-			PlayNote(Keyboard[Placement], CurrentTime, EIGHTH_NOTE(SecondsPerBeat));
+			PlayNoteSustained(Keyboard[Placement]);
+			SustainedNotes[sustained_key::Down] = Keyboard[Placement];
+		}	
+		
+		if(IsKeyPressed(KEY_UP)){
+			if (LastKeyPressed == 0){
+				if (IsNotePlaying(Keyboard[Placement])) { Placement += 1; }
+				Placement += 1;
+				PlayNoteSustained(Keyboard[Placement]);
+				SustainedNotes[sustained_key::Up] = Keyboard[Placement];
+			}
+			if (LastKeyPressed == 1){
+				if (IsNotePlaying(Keyboard[Placement])) { Placement -= 1; }
+				Placement -= 1;
+				PlayNoteSustained(Keyboard[Placement]);
+				SustainedNotes[sustained_key::Up] = Keyboard[Placement];
+			}
 		}
-        
-        if(IsKeyPressed(KEY_UP)){
-            if (LastKeyPressed == 0){
-                if (NoteStateList[Keyboard[Placement]].State == Playing) { Placement += 1; }
-                Placement += 1;
-                PlayNote(Keyboard[Placement], CurrentTime, EIGHTH_NOTE(SecondsPerBeat));
-            }
-            if (LastKeyPressed == 1){
-                if (NoteStateList[Keyboard[Placement]].State == Playing) { Placement -= 1; }
-                Placement -= 1;
-                PlayNote(Keyboard[Placement], CurrentTime, EIGHTH_NOTE(SecondsPerBeat));
-            }
-        }
+
+		for (int SustainedKey = 0; SustainedKey < SustainedKey_Count; SustainedKey++) {
+			const KeyboardKey SusToRay[SustainedKey_Count] = {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT};
+			if (IsKeyReleased(SusToRay[SustainedKey])) {
+				StopNoteSustained(SustainedNotes[SustainedKey]);
+				SustainedNotes[SustainedKey] = NoteName_Count;
+			}
+		}
     
 		for (int Index = 0; Index < NoteName_Count; Index++) {
 			if (NoteStateList[Index].State == QueuedForPlaying) {
@@ -230,7 +284,19 @@ int main(void) {
 			ClearBackground(RAYWHITE);
 			Rectangle Rect = {0, 10, 32, 32};
 			for (note_state NoteState : NoteStateList) {
-				DrawRectangleRec(Rect, NoteState.State == Playing ? GREEN : RED);
+				Color RectColor = BLACK;
+				switch (NoteState.State) {
+				case note_state_enum::Playing: {
+					RectColor = GREEN;
+				} break;
+				case note_state_enum::NotPlaying: {
+					RectColor = RED;
+				} break;
+				case note_state_enum::PlayingSustained: {
+					RectColor = BLUE;
+				} break;
+				}
+				DrawRectangleRec(Rect, RectColor);
 				Rect.x += 32;
 			}
 			EndDrawing();
