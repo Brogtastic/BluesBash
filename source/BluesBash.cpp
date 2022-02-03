@@ -194,6 +194,8 @@ int main(void) {
 	
 	int Placement = 0;
 	int LastKeyPressed = 0;
+    int TempLastKey=0;
+    int SecondLastKeyPressed;
   
 	note_name Keyboard[19] = {C2, Eb2, F2, Fs2, G2, Bb2, C3, Eb3, F3, Fs3, G3, Bb3, C4, Eb4, F4, Fs4, G4, Bb4, C5};
 	enum sustained_key {
@@ -207,30 +209,30 @@ int main(void) {
 		// Currently, there are 4 key presses that can emit sounds.
 
 		if (IsKeyPressed(KEY_RIGHT)) {
-			if (IsNotePlaying(Keyboard[Placement])) { Placement += 1; }
-			
-			Placement += 1;
+            if (IsNotePlaying(Keyboard[Placement])) { Placement += 1; }
+            Placement += 1;
 			
 			if (Placement >= 18) {
 				Placement = 18;
 			}
 			
-			LastKeyPressed = 1;
 			PlayNoteSustained(Keyboard[Placement]);
+            LastKeyPressed = 1;
 			SustainedNotes[sustained_key::Right] = Keyboard[Placement];
+            
 		}
         
 		if (IsKeyPressed(KEY_LEFT)) {
-			if (IsNotePlaying(Keyboard[Placement])) { Placement -= 1; }
 			
-			Placement -= 1;
+            if (IsNotePlaying(Keyboard[Placement])) { Placement -= 1; }
+            Placement -= 1;
 			
 			if(Placement <= 0) {
 				Placement = 0;
 			}
-			
-			LastKeyPressed = 0;
+            
 			PlayNoteSustained(Keyboard[Placement]);
+            LastKeyPressed = 0;
 			SustainedNotes[sustained_key::Left] = Keyboard[Placement];
 		}
 
@@ -240,18 +242,27 @@ int main(void) {
 		}	
 		
 		if(IsKeyPressed(KEY_UP)){
+            
 			if (LastKeyPressed == 0){
-				if (IsNotePlaying(Keyboard[Placement])) { Placement += 1; }
+				
 				Placement += 1;
 				PlayNoteSustained(Keyboard[Placement]);
 				SustainedNotes[sustained_key::Up] = Keyboard[Placement];
 			}
 			if (LastKeyPressed == 1){
-				if (IsNotePlaying(Keyboard[Placement])) { Placement -= 1; }
+				
 				Placement -= 1;
 				PlayNoteSustained(Keyboard[Placement]);
 				SustainedNotes[sustained_key::Up] = Keyboard[Placement];
 			}
+            if (LastKeyPressed == 2){
+				PlayNoteSustained(Keyboard[Placement]);
+				SustainedNotes[sustained_key::Up] = Keyboard[Placement];
+			}
+            
+            LastKeyPressed = 2;
+            
+            
 		}
 
 		for (int SustainedKey = 0; SustainedKey < SustainedKey_Count; SustainedKey++) {
