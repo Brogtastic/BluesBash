@@ -2,6 +2,7 @@
 #include <cstdio>
 
 #define Assert(Cnd) if (!(Cnd)) { __debugbreak(); }
+#define ArrayCount(Array) (sizeof(Array)/sizeof(Array[0]))
 
 // Tells MSVC what libraries we need.
 #pragma comment(lib, "raylib.lib")
@@ -99,6 +100,10 @@ const char *NoteFileNames[] = {
 };
 #undef NOTES
 
+const float BeatsPerMin = 120;
+const float BeatsPerSecond = BeatsPerMin / 60;
+const float SecondsPerBeat = 1 / BeatsPerSecond;
+
 // 4/4 time signature is assumed for these macros
 #define SIXTEENTH_NOTE(Time) (Time/4)
 #define EIGHTH_NOTE(Time) (Time/2)
@@ -150,10 +155,15 @@ static inline void PlayNoteSustained(note_name Note) {
 static inline void StopNoteSustained(note_name Note) {
 	Assert(Note >= 0);
 	Assert(Note < NoteName_Count);
-	Assert(NoteStateList[Note].State == PlayingSustained);
+	
 	// @TODO(Roskuski): I think that we're going to need to know the CurrentTime here to facilitate creating replay numbers.
-	StopSound(NoteSoundList[Note]);
-	NoteStateList[Note].State = NotPlaying;
+	if (NoteStateList[Note].State == PlayingSustained) {
+		StopSound(NoteSoundList[Note]);
+		NoteStateList[Note].State = NotPlaying;
+	}
+	else {
+		printf("[WARNING]: We tried to stop a note that wasn't in PlayingSustained state! Doing nothing\n");
+	}
 }
 
 // Length is how long the note will play.
@@ -173,6 +183,41 @@ static inline void StopNote(note_name Note, float CurrentTime) {
 	NoteStateList[Note].EndTime = CurrentTime;
 }
 
+int WalkToNextPlacement(int Placement, int Delta, int LowBound, int HighBound, note_name *NoteList) {
+	Placement += Delta;
+	if (Placement < LowBound) { Placement = LowBound; }
+	if (Placement > HighBound) { Placement = HighBound; }
+
+	int Unit = 1; // @TODO(Roskuski): I'm not convinced that defaulting to any particular direction is a great idea when adjancent notes are playing.
+	if (Delta < 0) { Unit = -1; }
+	else if (Delta > 0) { Unit = 1; }
+		
+	while (true) {
+		if (IsNotePlaying(NoteList[Placement])) {
+			Placement += Unit;
+			if (Placement < LowBound) { Placement = LowBound; }
+			if (Placement > HighBound) { Placement = HighBound; }
+		}
+		else if ((Placement != HighBound) && (IsNotePlaying(NoteList[Placement+1]))) {
+			Placement += Unit;
+			if (Placement < LowBound) { Placement = LowBound; }
+			if (Placement > HighBound) { Placement = HighBound; }
+		}
+		else if ((Placement != LowBound) && (IsNotePlaying(NoteList[Placement-1]))) {
+			Placement += Unit;
+			if (Placement < LowBound) { Placement = LowBound; }
+			if (Placement > HighBound) { Placement = HighBound; }
+		}
+		else { break; }
+
+		if ((Unit == -1) && (Placement == LowBound)) { break; }
+		if ((Unit == 1) && (Placement == HighBound)) { break; }
+	}
+	
+	
+	return Placement;
+}
+
 int main(void) {
 	// Initialization
 	//--------------------------------------------------------------------------------------
@@ -182,18 +227,13 @@ int main(void) {
 
 	InitAudioDevice();
 
-	const float BeatsPerMin = 120;
-	const float BeatsPerSecond = BeatsPerMin / 60;
-	const float SecondsPerBeat = 1 / BeatsPerSecond;
-	printf("SpB: %f\n", SecondsPerBeat);
-
 	// LoadAllNotes
 	for (int Index = 0; Index < NoteName_Count; Index++) {
 		NoteSoundList[Index] = LoadSound(NoteFileNames[Index]);
 	}
 	
 	int Placement = 0;
-	int LastKeyPressed = 0;
+	int LastKeyPressed = 0; // @TODO(Roskuski): Change this so that we use named symbols instead of raw numbers
   
 	note_name Keyboard[19] = {C2, Eb2, F2, Fs2, G2, Bb2, C3, Eb3, F3, Fs3, G3, Bb3, C4, Eb4, F4, Fs4, G4, Bb4, C5};
 	enum sustained_key {
@@ -207,48 +247,33 @@ int main(void) {
 		// Currently, there are 4 key presses that can emit sounds.
 
 		if (IsKeyPressed(KEY_RIGHT)) {
-			if (IsNotePlaying(Keyboard[Placement])) { Placement += 1; }
-			
-			Placement += 1;
-			
-			if (Placement >= 18) {
-				Placement = 18;
-			}
-			
-			LastKeyPressed = 1;
+			Placement = WalkToNextPlacement(Placement, 1, 0, ArrayCount(Keyboard)-1, Keyboard);
 			PlayNoteSustained(Keyboard[Placement]);
 			SustainedNotes[sustained_key::Right] = Keyboard[Placement];
+			LastKeyPressed = 1;
 		}
         
 		if (IsKeyPressed(KEY_LEFT)) {
-			if (IsNotePlaying(Keyboard[Placement])) { Placement -= 1; }
-			
-			Placement -= 1;
-			
-			if(Placement <= 0) {
-				Placement = 0;
-			}
-			
-			LastKeyPressed = 0;
+			Placement = WalkToNextPlacement(Placement, -1, 0, ArrayCount(Keyboard)-1, Keyboard);
 			PlayNoteSustained(Keyboard[Placement]);
 			SustainedNotes[sustained_key::Left] = Keyboard[Placement];
+			LastKeyPressed = 0;
 		}
-
+        
 		if (IsKeyPressed(KEY_DOWN)){
+			Placement = WalkToNextPlacement(Placement, 0, 0, ArrayCount(Keyboard)-1, Keyboard);
 			PlayNoteSustained(Keyboard[Placement]);
 			SustainedNotes[sustained_key::Down] = Keyboard[Placement];
 		}	
 		
 		if(IsKeyPressed(KEY_UP)){
 			if (LastKeyPressed == 0){
-				if (IsNotePlaying(Keyboard[Placement])) { Placement += 1; }
-				Placement += 1;
+				Placement = WalkToNextPlacement(Placement, 1, 0, ArrayCount(Keyboard)-1, Keyboard);
 				PlayNoteSustained(Keyboard[Placement]);
 				SustainedNotes[sustained_key::Up] = Keyboard[Placement];
 			}
 			if (LastKeyPressed == 1){
-				if (IsNotePlaying(Keyboard[Placement])) { Placement -= 1; }
-				Placement -= 1;
+				Placement = WalkToNextPlacement(Placement, -1, 0, ArrayCount(Keyboard)-1, Keyboard);
 				PlayNoteSustained(Keyboard[Placement]);
 				SustainedNotes[sustained_key::Up] = Keyboard[Placement];
 			}
