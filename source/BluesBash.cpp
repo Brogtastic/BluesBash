@@ -183,7 +183,7 @@ static inline void StopNote(note_name Note, float CurrentTime) {
 	NoteStateList[Note].EndTime = CurrentTime;
 }
 
-int WalkToNextPlacement(int Placement, int Delta, int LowBound, int HighBound, note_name *NoteList) {
+int WalkToNextPlacement(int Placement, int Delta, int LowBound, int HighBound, note_name *NoteList, bool DoAdjust = true) {
 	Placement += Delta;
 	if (Placement < LowBound) { Placement = LowBound; }
 	if (Placement > HighBound) { Placement = HighBound; }
@@ -192,7 +192,7 @@ int WalkToNextPlacement(int Placement, int Delta, int LowBound, int HighBound, n
 	if (Delta < 0) { Unit = -1; }
 	else if (Delta > 0) { Unit = 1; }
 		
-	while (true) {
+	while (DoAdjust) {
 		if (IsNotePlaying(NoteList[Placement])) {
 			Placement += Unit;
 			if (Placement < LowBound) { Placement = LowBound; }
@@ -214,7 +214,6 @@ int WalkToNextPlacement(int Placement, int Delta, int LowBound, int HighBound, n
 		if ((Unit == 1) && (Placement == HighBound)) { break; }
 	}
 	
-	
 	return Placement;
 }
 
@@ -233,7 +232,7 @@ int main(void) {
 	}
 	
 	int Placement = 0;
-	int LastKeyPressed = 0; // @TODO(Roskuski): Change this so that we use named symbols instead of raw numbers
+	int LastKeyPressed = 0;
   
 	note_name Keyboard[19] = {C2, Eb2, F2, Fs2, G2, Bb2, C3, Eb3, F3, Fs3, G3, Bb3, C4, Eb4, F4, Fs4, G4, Bb4, C5};
 	enum sustained_key {
@@ -247,36 +246,50 @@ int main(void) {
 		// Currently, there are 4 key presses that can emit sounds.
 
 		if (IsKeyPressed(KEY_RIGHT)) {
-			Placement = WalkToNextPlacement(Placement, 1, 0, ArrayCount(Keyboard)-1, Keyboard);
+			bool DoAdjust = true;
+			if (LastKeyPressed == KEY_UP) { DoAdjust = false; }
+			
+			Placement = WalkToNextPlacement(Placement, 1, 0, ArrayCount(Keyboard)-1, Keyboard, DoAdjust);
 			PlayNoteSustained(Keyboard[Placement]);
 			SustainedNotes[sustained_key::Right] = Keyboard[Placement];
-			LastKeyPressed = 1;
+			LastKeyPressed = KEY_RIGHT;
 		}
         
 		if (IsKeyPressed(KEY_LEFT)) {
-			Placement = WalkToNextPlacement(Placement, -1, 0, ArrayCount(Keyboard)-1, Keyboard);
+			bool DoAdjust = true;
+			if (LastKeyPressed == KEY_UP) { DoAdjust = false; }
+			
+			Placement = WalkToNextPlacement(Placement, -1, 0, ArrayCount(Keyboard)-1, Keyboard, DoAdjust);
 			PlayNoteSustained(Keyboard[Placement]);
 			SustainedNotes[sustained_key::Left] = Keyboard[Placement];
-			LastKeyPressed = 0;
+			LastKeyPressed = KEY_LEFT;
 		}
         
 		if (IsKeyPressed(KEY_DOWN)){
 			Placement = WalkToNextPlacement(Placement, 0, 0, ArrayCount(Keyboard)-1, Keyboard);
 			PlayNoteSustained(Keyboard[Placement]);
 			SustainedNotes[sustained_key::Down] = Keyboard[Placement];
+			// @TODO(Roskuski): should we keep track of this key in LastKeyPressed?
 		}	
 		
 		if(IsKeyPressed(KEY_UP)){
-			if (LastKeyPressed == 0){
-				Placement = WalkToNextPlacement(Placement, 1, 0, ArrayCount(Keyboard)-1, Keyboard);
+			static int LastChoice = LastKeyPressed;
+			if (LastKeyPressed == KEY_UP) {
+				LastKeyPressed = LastChoice;
+			}
+			
+			if (LastKeyPressed == KEY_LEFT){
+				Placement = WalkToNextPlacement(Placement, 1, 0, ArrayCount(Keyboard)-1, Keyboard, false);
 				PlayNoteSustained(Keyboard[Placement]);
 				SustainedNotes[sustained_key::Up] = Keyboard[Placement];
 			}
-			if (LastKeyPressed == 1){
-				Placement = WalkToNextPlacement(Placement, -1, 0, ArrayCount(Keyboard)-1, Keyboard);
+			else if (LastKeyPressed == KEY_RIGHT){
+				Placement = WalkToNextPlacement(Placement, -1, 0, ArrayCount(Keyboard)-1, Keyboard, false);
 				PlayNoteSustained(Keyboard[Placement]);
 				SustainedNotes[sustained_key::Up] = Keyboard[Placement];
 			}
+			LastChoice = LastKeyPressed;
+			LastKeyPressed = KEY_UP;
 		}
 
 		for (int SustainedKey = 0; SustainedKey < SustainedKey_Count; SustainedKey++) {
