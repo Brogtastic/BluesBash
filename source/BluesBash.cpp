@@ -4,6 +4,12 @@
 #define Assert(Cnd) if (!(Cnd)) { __debugbreak(); }
 #define ArrayCount(Array) (sizeof(Array)/sizeof(Array[0]))
 
+// Used for static locals.
+#define local_persist static
+
+// Used for static globals/functions
+#define translation_scope static
+
 // Tells MSVC what libraries we need.
 #pragma comment(lib, "raylib.lib")
 // raylib depends on these libraries.
@@ -25,7 +31,7 @@
 //             Fmaj7 -- C1, Eb1, G1, A1
 //             Gmaj7 -- D1, F1, G1, B1 
 //
-//             Cmaj7 4 bars
+//             Cmaj7 2 bars
 //             Fmaj7 2 bars
 //             Cmaj7 2 bars
 //             Gmaj7 1 bar
@@ -92,13 +98,20 @@ enum note_name {
 };
 
 const char *NoteFileNames[] = {
-#define XX(Name, Value) "resources/allNotes/"#Name".mp3",
-#define X(Name) "resources/allNotes/"#Name".mp3",
+#define XX(Name, Value) "resources/allNotes/Brog_Piano/"#Name".mp3",
+#define X(Name) "resources/allNotes/Brog_Piano/"#Name".mp3",
 	NOTES
 #undef XX
 #undef X
 };
 #undef NOTES
+
+enum chord_names { Cmaj7 = 0, Fmaj7, Gmaj7,  };
+const note_name Chords[3][4] = {
+	{C1, E1, G1, Bb1, }, // Cmaj7
+	{C1, Eb1, F1, A1, }, // Fmaj7
+	{D1, F1, G1, B1, }, // Gmaj7
+};
 
 const float BeatsPerMin = 120;
 const float BeatsPerSecond = BeatsPerMin / 60;
@@ -116,6 +129,7 @@ enum note_state_enum {
 	QueuedForPlaying,
 	Playing,
 	PlayingSustained,
+	Stopping,
 };
 
 struct note_state {
@@ -127,7 +141,7 @@ struct note_state {
 note_state NoteStateList[NoteName_Count];
 Sound NoteSoundList[NoteName_Count];
 
-static inline bool IsNotePlaying(note_name Note) {
+translation_scope inline bool IsNotePlaying(note_name Note) {
 	bool Result = false;
 	note_state_enum State = NoteStateList[Note].State;
 	
@@ -141,7 +155,7 @@ static inline bool IsNotePlaying(note_name Note) {
 }
 
 // Plays a note for the duration that a key is held down for.
-static inline void PlayNoteSustained(note_name Note) {
+translation_scope inline void PlayNoteSustained(note_name Note) {
 	Assert(Note >= 0);
 	Assert(Note < NoteName_Count);
 	if (NoteStateList[Note].State == NotPlaying) { // @TODO(Roskuski): This check might be detremental to the sound.
@@ -152,7 +166,7 @@ static inline void PlayNoteSustained(note_name Note) {
 }
 
 // Stops a sustained note
-static inline void StopNoteSustained(note_name Note) {
+translation_scope inline void StopNoteSustained(note_name Note) {
 	Assert(Note >= 0);
 	Assert(Note < NoteName_Count);
 	
@@ -168,16 +182,15 @@ static inline void StopNoteSustained(note_name Note) {
 
 // Length is how long the note will play.
 // Delay is how long we will wait until starting to play the note.
-static inline void PlayNote(note_name Note, float CurrentTime, float Length, float Delay = 0.0f) {
+translation_scope inline void PlayNote(note_name Note, float CurrentTime, float Length, float Delay = 0.0f) {
 	Assert(Note != NoteName_Count);
-	if (NoteStateList[Note].State == NotPlaying) { // Right now, we will not attemt to replay a note if it is already playing, or currently playing.
-		NoteStateList[Note].State = QueuedForPlaying;
-		NoteStateList[Note].StartTime = CurrentTime + Delay;
-		NoteStateList[Note].EndTime = CurrentTime + Delay + Length;
-	}
+	NoteStateList[Note].State = QueuedForPlaying;
+	NoteStateList[Note].StartTime = CurrentTime + Delay;
+	NoteStateList[Note].EndTime = CurrentTime + Delay + Length;
+	
 }
 
-static inline void StopNote(note_name Note, float CurrentTime) {
+translation_scope inline void StopNote(note_name Note, float CurrentTime) {
 	Assert(Note >= 0);
 	Assert(Note != NoteName_Count);
 	NoteStateList[Note].EndTime = CurrentTime;
@@ -235,6 +248,7 @@ int main(void) {
 	int LastKeyPressed = 0;
   
 	note_name Keyboard[19] = {C2, Eb2, F2, Fs2, G2, Bb2, C3, Eb3, F3, Fs3, G3, Bb3, C4, Eb4, F4, Fs4, G4, Bb4, C5};
+
 	enum sustained_key {
 		Up = 0, Down, Left, Right, SustainedKey_Count,
 	};
@@ -264,16 +278,16 @@ int main(void) {
 			SustainedNotes[sustained_key::Left] = Keyboard[Placement];
 			LastKeyPressed = KEY_LEFT;
 		}
-        
+
 		if (IsKeyPressed(KEY_DOWN)){
 			Placement = WalkToNextPlacement(Placement, 0, 0, ArrayCount(Keyboard)-1, Keyboard);
 			PlayNoteSustained(Keyboard[Placement]);
 			SustainedNotes[sustained_key::Down] = Keyboard[Placement];
 			// @TODO(Roskuski): should we keep track of this key in LastKeyPressed?
-		}	
+		}
 		
 		if(IsKeyPressed(KEY_UP)){
-			static int LastChoice = LastKeyPressed;
+			local_persist int LastChoice = LastKeyPressed;
 			if (LastKeyPressed == KEY_UP) {
 				LastKeyPressed = LastChoice;
 			}
@@ -292,6 +306,7 @@ int main(void) {
 			LastKeyPressed = KEY_UP;
 		}
 
+		// Stop Sustained notes that we are no longer holding.
 		for (int SustainedKey = 0; SustainedKey < SustainedKey_Count; SustainedKey++) {
 			const KeyboardKey SusToRay[SustainedKey_Count] = {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT};
 			if (IsKeyReleased(SusToRay[SustainedKey])) {
@@ -299,20 +314,85 @@ int main(void) {
 				SustainedNotes[SustainedKey] = NoteName_Count;
 			}
 		}
-    
+
+		// Do Chords
+		#if 1
+		{
+			const float ChordLength = WHOLE_NOTE(SecondsPerBeat);
+			local_persist float TimeUntilNextChord = 0;
+			TimeUntilNextChord -= DeltaTime;
+			
+			if (TimeUntilNextChord <= 0) {
+				const chord_names ChordSequence[] = {Cmaj7, Fmaj7, Cmaj7, Gmaj7, Fmaj7, Cmaj7};
+				const float ChordRatio[] = {2, 2, 2, 1, 1, 2};
+				local_persist int CurrentChord = ArrayCount(ChordSequence) - 1;
+
+				// Stop the current chord (on start up we can stop notes that are not playing)
+				for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
+					StopNote(Note, CurrentTime);
+				}
+
+				CurrentChord += 1;
+				TimeUntilNextChord = ChordLength * ChordRatio[CurrentChord];
+				if (CurrentChord >= ArrayCount(ChordSequence)) {
+					CurrentChord = 0;
+				}
+
+				// Play the next chord
+				for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
+					PlayNote(Note, CurrentTime, ChordLength * ChordRatio[CurrentChord]);
+				}
+			}
+		}
+		#else
+		{
+			local_persist int CurrentChord = ArrayCount(ChordSequence) - 1;
+			const chord_names ChordSequence[] = {Cmaj7, Fmaj7, Cmaj7, Gmaj7, Fmaj7, };
+			if (IsKeyPressed(KEY_SPACE)) {
+			
+			
+			
+				if (CurrentChord >= ArrayCount(ChordSequence)) {
+					CurrentChord = 0;
+				}
+
+				for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
+					PlayNote(Note, CurrentTime, ChordLength);
+				}
+			}
+
+			if (IsKeyReleased(KEY_SPACE)) {
+				for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
+					StopNote(Note, CurrentTime);
+				}
+			}
+		}|
+		#endif
+		
+		
 		for (int Index = 0; Index < NoteName_Count; Index++) {
-			if (NoteStateList[Index].State == QueuedForPlaying) {
+			switch(NoteStateList[Index].State) {
+
+			case QueuedForPlaying: {
 				if (NoteStateList[Index].StartTime <= CurrentTime &&
 				    NoteStateList[Index].EndTime > CurrentTime) {
 					NoteStateList[Index].State = Playing;
 					PlaySound(NoteSoundList[Index]);
 				}
-			}
-			else if (NoteStateList[Index].State == Playing) {
+			} break;
+				
+			case Playing: {
 				if (NoteStateList[Index].EndTime <= CurrentTime) {
 					StopSound(NoteSoundList[Index]);
 					NoteStateList[Index].State = NotPlaying;
 				}
+			} break;
+
+			case Stopping: {
+				StopSound(NoteSoundList[Index]);
+				NoteStateList[Index].State = NotPlaying;
+			} break;
+
 			}
 		}
 
