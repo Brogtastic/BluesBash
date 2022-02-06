@@ -92,8 +92,8 @@ enum note_name {
 };
 
 const char *NoteFileNames[] = {
-#define XX(Name, Value) "resources/allNotes/"#Name".mp3",
-#define X(Name) "resources/allNotes/"#Name".mp3",
+#define XX(Name, Value) "resources/allNotes/Brog_Piano/"#Name".mp3",
+#define X(Name) "resources/allNotes/Brog_Piano/"#Name".mp3",
 	NOTES
 #undef XX
 #undef X
