@@ -97,6 +97,14 @@ enum note_name {
 #undef X	
 };
 
+const char *NoteNameStrings[] = {
+#define XX(Name, Value) X(Name)
+#define X(Name) #Name,
+	NOTES
+#undef XX
+#undef X
+};
+
 const char *NoteFileNames[] = {
 #define XX(Name, Value) "resources/allNotes/Brog_Piano/"#Name".mp3",
 #define X(Name) "resources/allNotes/Brog_Piano/"#Name".mp3",
@@ -237,6 +245,7 @@ int main(void) {
 	const int screenHeight = 720;
 	InitWindow(1280, 720, "Blues Bash");
     
+    //TITLE SCREEN BG
     Image title = LoadImage("resources/titlescreen.png");  // Load image data into CPU memory (RAM)
     ImageResize(&title, 1280, 720);
     Texture2D titleScreen = LoadTextureFromImage(title);       // Image converted to texture, GPU memory (RAM -> VRAM)
@@ -395,8 +404,9 @@ int main(void) {
 			}
 		}
 		
-		for (int Index = 0; Index < NoteName_Count; Index++) {
-			switch(NoteStateList[Index].State) {
+			for (int Index = 0; Index < NoteName_Count; Index++) {
+				// NOTE(Roskuski): I'm not sure if we want to move all note processing to here or not. Right now PlayingSustained plays and stops their notes elsewhere.
+				switch(NoteStateList[Index].State) {
 
 				case QueuedForPlaying: {
 					if (NoteStateList[Index].StartTime <= CurrentTime &&
@@ -418,8 +428,8 @@ int main(void) {
 					NoteStateList[Index].State = NotPlaying;
 				} break;
 
+				}
 			}
-		}
 
 		// Rendering
 		{
@@ -430,22 +440,34 @@ int main(void) {
             DrawTexture(listenButton, 168, 381, WHITE);
             DrawTexture(settingsButton, 204, 479, WHITE);
             
-			Rectangle Rect = {0, 10, 32, 32};
-			for (note_state NoteState : NoteStateList) {
+			Rectangle Rect = {0, 10, 48, 48};
+			for (int Index = 0; Index < NoteName_Count; Index++) {
+				note_state NoteState = NoteStateList[Index];
+
 				Color RectColor = BLACK;
+				Color TextColor = BLACK;
 				switch (NoteState.State) {
-				case note_state_enum::Playing: {
+				case Playing: {
 					RectColor = GREEN;
 				} break;
-				case note_state_enum::NotPlaying: {
+				case NotPlaying: {
 					RectColor = RED;
+					TextColor = WHITE;
 				} break;
-				case note_state_enum::PlayingSustained: {
+				case PlayingSustained: {
 					RectColor = BLUE;
+					TextColor = WHITE;
 				} break;
 				}
+				if (Index == C2) {
+					Rect.y = 60;
+					Rect.x = 0;
+				}
+				
+				DrawRectangleRec({Rect.x-1, Rect.y-1, Rect.width+2, Rect.height+2}, BLACK);
 				DrawRectangleRec(Rect, RectColor);
-				Rect.x += 32;
+				DrawText(NoteNameStrings[Index], Rect.x, Rect.y, 20, TextColor);
+				Rect.x += 48 + 2;
 			}
             
 			EndDrawing();
