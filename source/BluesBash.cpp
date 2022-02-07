@@ -18,13 +18,6 @@
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "Shell32.lib")
 
-// NOTE(Roskuski): I'm pretty sure these are in pitch order. I'm not certain though.
-// NOTE(Roskuski): this is a macro that is used to define `NoteName`, and `NoteFileNames`. This will alow us to keep those two data structurs in sync easily.
-// NOTE(Roskuski): If you want to read more about this Technique, it is called "X-Macros"
-// NOTE(Roskuski): In essence, we create a macro that expands to a bunch of macros that are of a known (i.e X). When then define macro X to something, and that macro then expands as well.
-// NOTE(Roskuski): Remeber that macros are essentially automated Copy and Paste!
-
-
 // NOTE(Brog): Here are the chords
 //
 //             Cmaj7 -- C1, E1, G1, Bb1
@@ -38,8 +31,6 @@
 //             Fmaj7 1 bar
 //             Cmaj7 2 bars
 
-
-
 /*
   To Do:
   Make notes fade out instead of stopping right away
@@ -50,6 +41,14 @@
 
 
 */
+
+const int ScreenWidth = 1280;
+const int ScreenHeight = 720;
+
+// NOTE(Roskuski): this is a macro that is used to define `NoteName`, and `NoteFileNames`. This will alow us to keep those two data structurs in sync easily.
+// NOTE(Roskuski): If you want to read more about this Technique, it is called "X-Macros"
+// NOTE(Roskuski): In essence, we create a macro that expands to a bunch of macros that are of a known (i.e X). When then define macro X to something, and that macro then expands as well.
+// NOTE(Roskuski): Remeber that macros are essentially automated Copy and Paste!
 
 #define NOTES	  \
 	XX(A1, 0) \
@@ -238,13 +237,221 @@ int WalkToNextPlacement(int Placement, int Delta, int LowBound, int HighBound, n
 	return Placement;
 }
 
+
+enum prog_state {
+	Player,
+	TopMenu,
+};
+
+prog_state ProgState;
+
+enum sustained_key {
+	Up = 0, Down, Left, Right, SustainedKey_Count,
+};
+
+struct player_info {
+	int Placement;
+	int LastKeyPressed;
+	int LastChoice;
+	note_name Keyboard[19];
+	note_name SustainedNotes[4];
+};
+player_info PlayerInfo;
+
+void ProcessAndRenderPlayer(float CurrentTime, float DeltaTime) {
+	// @TODO(Roskuski): @RemoveMe move to a different initilatizion system for state init.
+	local_persist bool IsInitilized = false;
+	if (!IsInitilized) {
+		IsInitilized = true;
+		PlayerInfo.Placement = 0;
+		PlayerInfo.LastChoice = KEY_LEFT;
+		PlayerInfo.LastKeyPressed = KEY_LEFT;
+
+		for (int Index = 0; Index < ArrayCount(PlayerInfo.Keyboard); Index++) {
+			const note_name KeyboardRef[19] = {C2, Eb2, F2, Fs2, G2, Bb2, C3, Eb3, F3, Fs3, G3, Bb3, C4, Eb4, F4, Fs4, G4, Bb4, C5};
+			PlayerInfo.Keyboard[Index] = KeyboardRef[Index];
+		}
+		
+		for (int Index = 0; Index < ArrayCount(PlayerInfo.SustainedNotes); Index++) {
+			PlayerInfo.SustainedNotes[Index] = NoteName_Count;
+		}
+	}
+	
+	if (IsKeyPressed(KEY_RIGHT)) {
+		bool DoAdjust = true;
+		if (PlayerInfo.LastKeyPressed == KEY_UP) { DoAdjust = false; }
+			
+		PlayerInfo.Placement = WalkToNextPlacement(PlayerInfo.Placement, 1, 0, ArrayCount(PlayerInfo.Keyboard)-1, PlayerInfo.Keyboard, DoAdjust);
+		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
+		PlayerInfo.SustainedNotes[sustained_key::Right] = PlayerInfo.Keyboard[PlayerInfo.Placement];
+		PlayerInfo.LastKeyPressed = KEY_RIGHT;
+	}
+        
+	if (IsKeyPressed(KEY_LEFT)) {
+		bool DoAdjust = true;
+		if (PlayerInfo.LastKeyPressed == KEY_UP) { DoAdjust = false; }
+			
+		PlayerInfo.Placement = WalkToNextPlacement(PlayerInfo.Placement, -1, 0, ArrayCount(PlayerInfo.Keyboard)-1, PlayerInfo.Keyboard, DoAdjust);
+		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
+		PlayerInfo.SustainedNotes[sustained_key::Left] = PlayerInfo.Keyboard[PlayerInfo.Placement];
+		PlayerInfo.LastKeyPressed = KEY_LEFT;
+	}
+
+	if (IsKeyPressed(KEY_DOWN)){
+		PlayerInfo.Placement = WalkToNextPlacement(PlayerInfo.Placement, 0, 0, ArrayCount(PlayerInfo.Keyboard)-1, PlayerInfo.Keyboard);
+		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
+		PlayerInfo.SustainedNotes[sustained_key::Down] = PlayerInfo.Keyboard[PlayerInfo.Placement];
+		// @TODO(Roskuski): should we keep track of this key in PlayerInfo.LastKeyPressed?
+	}
+		
+	if(IsKeyPressed(KEY_UP)){
+		PlayerInfo.LastChoice = PlayerInfo.LastKeyPressed;
+		if (PlayerInfo.LastKeyPressed == KEY_UP) {
+			PlayerInfo.LastKeyPressed = PlayerInfo.LastChoice;
+		}
+			
+		if (PlayerInfo.LastKeyPressed == KEY_LEFT){
+			PlayerInfo.Placement = WalkToNextPlacement(PlayerInfo.Placement, 1, 0, ArrayCount(PlayerInfo.Keyboard)-1, PlayerInfo.Keyboard, false);
+			PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
+			PlayerInfo.SustainedNotes[sustained_key::Up] = PlayerInfo.Keyboard[PlayerInfo.Placement];
+		}
+		else if (PlayerInfo.LastKeyPressed == KEY_RIGHT){
+			PlayerInfo.Placement = WalkToNextPlacement(PlayerInfo.Placement, -1, 0, ArrayCount(PlayerInfo.Keyboard)-1, PlayerInfo.Keyboard, false);
+			PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
+			PlayerInfo.SustainedNotes[sustained_key::Up] = PlayerInfo.Keyboard[PlayerInfo.Placement];
+		}
+		PlayerInfo.LastChoice = PlayerInfo.LastKeyPressed;
+		PlayerInfo.LastKeyPressed = KEY_UP;
+	}
+
+	// Stop Sustained notes that we are no longer holding.
+	for (int SustainedKey = 0; SustainedKey < SustainedKey_Count; SustainedKey++) {
+		const KeyboardKey SusToRay[SustainedKey_Count] = {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT};
+		if (IsKeyReleased(SusToRay[SustainedKey])) {
+			StopNoteSustained(PlayerInfo.SustainedNotes[SustainedKey]);
+			PlayerInfo.SustainedNotes[SustainedKey] = NoteName_Count;
+		}
+	}
+
+	// Do Chords
+	{
+		const float ChordLength = WHOLE_NOTE(SecondsPerBeat);
+		local_persist float TimeUntilNextChord = 0;
+		TimeUntilNextChord -= DeltaTime;
+			
+		if (TimeUntilNextChord <= 0) {
+			const chord_names ChordSequence[] = {Cmaj7, Fmaj7, Cmaj7, Gmaj7, Fmaj7, Cmaj7};
+			const float ChordRatio[] = {2, 2, 2, 1, 1, 2};
+			local_persist int CurrentChord = ArrayCount(ChordSequence) - 1;
+
+			// Stop the current chord (on start up we can stop notes that are not playing)
+			for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
+				StopNote(Note, CurrentTime);
+			}
+
+			CurrentChord += 1;
+			TimeUntilNextChord = ChordLength * ChordRatio[CurrentChord];
+			if (CurrentChord >= ArrayCount(ChordSequence)) {
+				CurrentChord = 0;
+			}
+
+			// Play the next chord
+			for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
+				PlayNote(Note, CurrentTime, ChordLength * ChordRatio[CurrentChord]);
+			}
+		}
+	}
+		
+	for (int Index = 0; Index < NoteName_Count; Index++) {
+		// NOTE(Roskuski): I'm not sure if we want to move all note processing to here or not. Right now PlayingSustained plays and stops their notes elsewhere.
+		switch(NoteStateList[Index].State) {
+
+		case QueuedForPlaying: {
+			if (NoteStateList[Index].StartTime <= CurrentTime &&
+			    NoteStateList[Index].EndTime > CurrentTime) {
+				NoteStateList[Index].State = Playing;
+				PlaySound(NoteSoundList[Index]);
+			}
+		} break;
+				
+		case Playing: {
+			if (NoteStateList[Index].EndTime <= CurrentTime) {
+				StopSound(NoteSoundList[Index]);
+				NoteStateList[Index].State = NotPlaying;
+			}
+		} break;
+
+		case Stopping: {
+			StopSound(NoteSoundList[Index]);
+			NoteStateList[Index].State = NotPlaying;
+		} break;
+
+		}
+	}
+
+	// Rendering
+	{
+		BeginDrawing();
+		ClearBackground(RAYWHITE);
+            
+		Rectangle Rect = {0, 10, 48, 48};
+		for (int Index = 0; Index < NoteName_Count; Index++) {
+			note_state NoteState = NoteStateList[Index];
+
+			Color RectColor = BLACK;
+			Color TextColor = BLACK;
+			switch (NoteState.State) {
+			case Playing: {
+				RectColor = GREEN;
+			} break;
+			case NotPlaying: {
+				RectColor = RED;
+				TextColor = WHITE;
+			} break;
+			case PlayingSustained: {
+				RectColor = BLUE;
+				TextColor = WHITE;
+			} break;
+			}
+			if (Index == C2) {
+				Rect.y = 60;
+				Rect.x = 0;
+			}
+				
+			DrawRectangleRec({Rect.x-1, Rect.y-1, Rect.width+2, Rect.height+2}, BLACK);
+			DrawRectangleRec(Rect, RectColor);
+			DrawText(NoteNameStrings[Index], Rect.x, Rect.y, 20, TextColor);
+			Rect.x += 48 + 2;
+		}
+            
+		EndDrawing();
+	}
+}
+
+void ProcessAndRenderTopMenu(Texture2D titleScreen, Texture2D playButton, Texture2D listenButton, Texture2D settingsButton) {
+
+	// @TODO(Roskuski): Implment changing from top menu into other states.
+
+	// Draw 
+	{
+		BeginDrawing();
+		
+		DrawTexture(titleScreen, ScreenWidth/2 - titleScreen.width/2, ScreenHeight/2 - titleScreen.height/2, WHITE);
+		DrawTexture(playButton, 127, 287, WHITE);
+		DrawTexture(listenButton, 168, 381, WHITE);
+		DrawTexture(settingsButton, 204, 479, WHITE);
+
+		EndDrawing();
+	}
+}
+
 int main(void) {
 	// Initialization
 	//--------------------------------------------------------------------------------------
-	const int screenWidth = 1280;
-	const int screenHeight = 720;
-	InitWindow(1280, 720, "Blues Bash");
-    
+	InitWindow(ScreenWidth, ScreenHeight, "Blues Bash");
+	ProgState = TopMenu;
+
+	// @TODO(Roskuski): We'll likely want to have a more sophiscated way of talking about these resouces.
 	//TITLE SCREEN BG
 	Image title = LoadImage("resources/titlescreen.png");
 	ImageResize(&title, 1280, 720);
@@ -299,174 +506,20 @@ int main(void) {
 	for (int Index = 0; Index < NoteName_Count; Index++) {
 		NoteSoundList[Index] = LoadSound(NoteFileNames[Index]);
 	}
-	
-	int Placement = 0;
-	int LastKeyPressed = 0;
-  
-	note_name Keyboard[19] = {C2, Eb2, F2, Fs2, G2, Bb2, C3, Eb3, F3, Fs3, G3, Bb3, C4, Eb4, F4, Fs4, G4, Bb4, C5};
-
-	enum sustained_key {
-		Up = 0, Down, Left, Right, SustainedKey_Count,
-	};
-	note_name SustainedNotes[4] = {NoteName_Count, NoteName_Count, NoteName_Count, NoteName_Count}; // Filling this array with some bogus value.
-    
+	  
 	while(!WindowShouldClose()) {
 		float CurrentTime = GetTime();
 		float DeltaTime = (float)GetFrameTime();
 		// Currently, there are 4 key presses that can emit sounds.
+		switch(ProgState) {
+		case Player: {
+			ProcessAndRenderPlayer(CurrentTime, DeltaTime);
+		} break;
 
-		if (IsKeyPressed(KEY_RIGHT)) {
-			bool DoAdjust = true;
-			if (LastKeyPressed == KEY_UP) { DoAdjust = false; }
+		case TopMenu: {
+			ProcessAndRenderTopMenu(titleScreen, playButton, listenButton, settingsButton);
+		} break;
 			
-			Placement = WalkToNextPlacement(Placement, 1, 0, ArrayCount(Keyboard)-1, Keyboard, DoAdjust);
-			PlayNoteSustained(Keyboard[Placement]);
-			SustainedNotes[sustained_key::Right] = Keyboard[Placement];
-			LastKeyPressed = KEY_RIGHT;
-		}
-        
-		if (IsKeyPressed(KEY_LEFT)) {
-			bool DoAdjust = true;
-			if (LastKeyPressed == KEY_UP) { DoAdjust = false; }
-			
-			Placement = WalkToNextPlacement(Placement, -1, 0, ArrayCount(Keyboard)-1, Keyboard, DoAdjust);
-			PlayNoteSustained(Keyboard[Placement]);
-			SustainedNotes[sustained_key::Left] = Keyboard[Placement];
-			LastKeyPressed = KEY_LEFT;
-		}
-
-		if (IsKeyPressed(KEY_DOWN)){
-			Placement = WalkToNextPlacement(Placement, 0, 0, ArrayCount(Keyboard)-1, Keyboard);
-			PlayNoteSustained(Keyboard[Placement]);
-			SustainedNotes[sustained_key::Down] = Keyboard[Placement];
-			// @TODO(Roskuski): should we keep track of this key in LastKeyPressed?
-		}
-		
-		if(IsKeyPressed(KEY_UP)){
-			local_persist int LastChoice = LastKeyPressed;
-			if (LastKeyPressed == KEY_UP) {
-				LastKeyPressed = LastChoice;
-			}
-			
-			if (LastKeyPressed == KEY_LEFT){
-				Placement = WalkToNextPlacement(Placement, 1, 0, ArrayCount(Keyboard)-1, Keyboard, false);
-				PlayNoteSustained(Keyboard[Placement]);
-				SustainedNotes[sustained_key::Up] = Keyboard[Placement];
-			}
-			else if (LastKeyPressed == KEY_RIGHT){
-				Placement = WalkToNextPlacement(Placement, -1, 0, ArrayCount(Keyboard)-1, Keyboard, false);
-				PlayNoteSustained(Keyboard[Placement]);
-				SustainedNotes[sustained_key::Up] = Keyboard[Placement];
-			}
-			LastChoice = LastKeyPressed;
-			LastKeyPressed = KEY_UP;
-		}
-
-		// Stop Sustained notes that we are no longer holding.
-		for (int SustainedKey = 0; SustainedKey < SustainedKey_Count; SustainedKey++) {
-			const KeyboardKey SusToRay[SustainedKey_Count] = {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT};
-			if (IsKeyReleased(SusToRay[SustainedKey])) {
-				StopNoteSustained(SustainedNotes[SustainedKey]);
-				SustainedNotes[SustainedKey] = NoteName_Count;
-			}
-		}
-
-		// Do Chords
-		{
-			const float ChordLength = WHOLE_NOTE(SecondsPerBeat);
-			local_persist float TimeUntilNextChord = 0;
-			TimeUntilNextChord -= DeltaTime;
-			
-			if (TimeUntilNextChord <= 0) {
-				const chord_names ChordSequence[] = {Cmaj7, Fmaj7, Cmaj7, Gmaj7, Fmaj7, Cmaj7};
-				const float ChordRatio[] = {2, 2, 2, 1, 1, 2};
-				local_persist int CurrentChord = ArrayCount(ChordSequence) - 1;
-
-				// Stop the current chord (on start up we can stop notes that are not playing)
-				for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
-					StopNote(Note, CurrentTime);
-				}
-
-				CurrentChord += 1;
-				TimeUntilNextChord = ChordLength * ChordRatio[CurrentChord];
-				if (CurrentChord >= ArrayCount(ChordSequence)) {
-					CurrentChord = 0;
-				}
-
-				// Play the next chord
-				for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
-					PlayNote(Note, CurrentTime, ChordLength * ChordRatio[CurrentChord]);
-				}
-			}
-		}
-		
-		for (int Index = 0; Index < NoteName_Count; Index++) {
-			// NOTE(Roskuski): I'm not sure if we want to move all note processing to here or not. Right now PlayingSustained plays and stops their notes elsewhere.
-			switch(NoteStateList[Index].State) {
-
-			case QueuedForPlaying: {
-				if (NoteStateList[Index].StartTime <= CurrentTime &&
-				    NoteStateList[Index].EndTime > CurrentTime) {
-					NoteStateList[Index].State = Playing;
-					PlaySound(NoteSoundList[Index]);
-				}
-			} break;
-				
-			case Playing: {
-				if (NoteStateList[Index].EndTime <= CurrentTime) {
-					StopSound(NoteSoundList[Index]);
-					NoteStateList[Index].State = NotPlaying;
-				}
-			} break;
-
-			case Stopping: {
-				StopSound(NoteSoundList[Index]);
-				NoteStateList[Index].State = NotPlaying;
-			} break;
-
-			}
-		}
-
-		// Rendering
-		{
-			BeginDrawing();
-			ClearBackground(RAYWHITE);
-			DrawTexture(titleScreen, screenWidth/2 - titleScreen.width/2, screenHeight/2 - titleScreen.height/2, WHITE);
-			DrawTexture(playButton, 127, 287, WHITE);
-			DrawTexture(listenButton, 168, 381, WHITE);
-			DrawTexture(settingsButton, 204, 479, WHITE);
-            
-			Rectangle Rect = {0, 10, 48, 48};
-			for (int Index = 0; Index < NoteName_Count; Index++) {
-				note_state NoteState = NoteStateList[Index];
-
-				Color RectColor = BLACK;
-				Color TextColor = BLACK;
-				switch (NoteState.State) {
-				case Playing: {
-					RectColor = GREEN;
-				} break;
-				case NotPlaying: {
-					RectColor = RED;
-					TextColor = WHITE;
-				} break;
-				case PlayingSustained: {
-					RectColor = BLUE;
-					TextColor = WHITE;
-				} break;
-				}
-				if (Index == C2) {
-					Rect.y = 60;
-					Rect.x = 0;
-				}
-				
-				DrawRectangleRec({Rect.x-1, Rect.y-1, Rect.width+2, Rect.height+2}, BLACK);
-				DrawRectangleRec(Rect, RectColor);
-				DrawText(NoteNameStrings[Index], Rect.x, Rect.y, 20, TextColor);
-				Rect.x += 48 + 2;
-			}
-            
-			EndDrawing();
 		}
 	}
 
