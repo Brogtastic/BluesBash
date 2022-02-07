@@ -245,57 +245,53 @@ int main(void) {
 	const int screenHeight = 720;
 	InitWindow(1280, 720, "Blues Bash");
     
-    //TITLE SCREEN BG
-    Image title = LoadImage("resources/titlescreen.png");  // Load image data into CPU memory (RAM)
-    ImageResize(&title, 1280, 720);
-    Texture2D titleScreen = LoadTextureFromImage(title);       // Image converted to texture, GPU memory (RAM -> VRAM)
-    UnloadImage(title);                                    // Unload image data from CPU memory (RAM)
+	//TITLE SCREEN BG
+	Image title = LoadImage("resources/titlescreen.png");
+	ImageResize(&title, 1280, 720);
+	Texture2D titleScreen = LoadTextureFromImage(title);
+	UnloadImage(title);
 
-    title = LoadImageFromTexture(titleScreen);                 // Load image from GPU texture (VRAM -> RAM)
-    UnloadTexture(titleScreen);                                // Unload texture from GPU memory (VRAM)
+	title = LoadImageFromTexture(titleScreen);
+	UnloadTexture(titleScreen);
 
-    titleScreen = LoadTextureFromImage(title);                 // Recreate texture from retrieved image data (RAM -> VRAM)
-    UnloadImage(title);
+	titleScreen = LoadTextureFromImage(title);
+	UnloadImage(title);
     
-    //PLAY BUTTON
-    Image play = LoadImage("resources/animations/play/play1.png");  // Load image data into CPU memory (RAM)
-    ImageResize(&play, 365, 205.35);
-    Texture2D playButton = LoadTextureFromImage(play);       // Image converted to texture, GPU memory (RAM -> VRAM)
-    UnloadImage(play);                                    // Unload image data from CPU memory (RAM)
+	//PLAY BUTTON
+	Image play = LoadImage("resources/animations/play/play1.png");
+	ImageResize(&play, 365, 205.35);
+	Texture2D playButton = LoadTextureFromImage(play);
+	UnloadImage(play);
 
-    play = LoadImageFromTexture(playButton);                 // Load image from GPU texture (VRAM -> RAM)
-    UnloadTexture(playButton);                                // Unload texture from GPU memory (VRAM)
+	play = LoadImageFromTexture(playButton);
+	UnloadTexture(playButton);
 
-    playButton = LoadTextureFromImage(play);                 // Recreate texture from retrieved image data (RAM -> VRAM)
-    UnloadImage(play);
+	playButton = LoadTextureFromImage(play);
+	UnloadImage(play);
     
-    //LISTEN BUTTON
-    Image listen = LoadImage("resources/animations/listen/listen1.png");  // Load image data into CPU memory (RAM)
-    ImageResize(&listen, 365, 205.35);
-    Texture2D listenButton = LoadTextureFromImage(listen);       // Image converted to texture, GPU memory (RAM -> VRAM)
-    UnloadImage(listen);                                    // Unload image data from CPU memory (RAM)
+	//LISTEN BUTTON
+	Image listen = LoadImage("resources/animations/listen/listen1.png");
+	ImageResize(&listen, 365, 205.35);
+	Texture2D listenButton = LoadTextureFromImage(listen);
+	UnloadImage(listen);
 
-    listen = LoadImageFromTexture(listenButton);                 // Load image from GPU texture (VRAM -> RAM)
-    UnloadTexture(listenButton);                                // Unload texture from GPU memory (VRAM)
+	listen = LoadImageFromTexture(listenButton);
+	UnloadTexture(listenButton);
 
-    listenButton = LoadTextureFromImage(listen);                 // Recreate texture from retrieved image data (RAM -> VRAM)
-    UnloadImage(listen);
+	listenButton = LoadTextureFromImage(listen);
+	UnloadImage(listen);
     
-    //SETTINGS BUTTON
-    Image settings = LoadImage("resources/animations/settings/settings1.png");  // Load image data into CPU memory (RAM)
-    ImageResize(&settings, 365, 205.35);
-    Texture2D settingsButton = LoadTextureFromImage(settings);       // Image converted to texture, GPU memory (RAM -> VRAM)
-    UnloadImage(settings);                                    // Unload image data from CPU memory (RAM)
+	//SETTINGS BUTTON
+	Image settings = LoadImage("resources/animations/settings/settings1.png");
+	ImageResize(&settings, 365, 205.35);
+	Texture2D settingsButton = LoadTextureFromImage(settings);
+	UnloadImage(settings);
 
-    settings = LoadImageFromTexture(settingsButton);                 // Load image from GPU texture (VRAM -> RAM)
-    UnloadTexture(settingsButton);                                // Unload texture from GPU memory (VRAM)
+	settings = LoadImageFromTexture(settingsButton);
+	UnloadTexture(settingsButton);
 
-    settingsButton = LoadTextureFromImage(settings);                 // Recreate texture from retrieved image data (RAM -> VRAM)
-    UnloadImage(settings);
-
-
-
-
+	settingsButton = LoadTextureFromImage(settings);
+	UnloadImage(settings);
 
 	InitAudioDevice();
 
@@ -404,41 +400,41 @@ int main(void) {
 			}
 		}
 		
-			for (int Index = 0; Index < NoteName_Count; Index++) {
-				// NOTE(Roskuski): I'm not sure if we want to move all note processing to here or not. Right now PlayingSustained plays and stops their notes elsewhere.
-				switch(NoteStateList[Index].State) {
+		for (int Index = 0; Index < NoteName_Count; Index++) {
+			// NOTE(Roskuski): I'm not sure if we want to move all note processing to here or not. Right now PlayingSustained plays and stops their notes elsewhere.
+			switch(NoteStateList[Index].State) {
 
-				case QueuedForPlaying: {
-					if (NoteStateList[Index].StartTime <= CurrentTime &&
-					    NoteStateList[Index].EndTime > CurrentTime) {
-						NoteStateList[Index].State = Playing;
-						PlaySound(NoteSoundList[Index]);
-					}
-				} break;
+			case QueuedForPlaying: {
+				if (NoteStateList[Index].StartTime <= CurrentTime &&
+				    NoteStateList[Index].EndTime > CurrentTime) {
+					NoteStateList[Index].State = Playing;
+					PlaySound(NoteSoundList[Index]);
+				}
+			} break;
 				
-				case Playing: {
-					if (NoteStateList[Index].EndTime <= CurrentTime) {
-						StopSound(NoteSoundList[Index]);
-						NoteStateList[Index].State = NotPlaying;
-					}
-				} break;
-
-				case Stopping: {
+			case Playing: {
+				if (NoteStateList[Index].EndTime <= CurrentTime) {
 					StopSound(NoteSoundList[Index]);
 					NoteStateList[Index].State = NotPlaying;
-				} break;
-
 				}
+			} break;
+
+			case Stopping: {
+				StopSound(NoteSoundList[Index]);
+				NoteStateList[Index].State = NotPlaying;
+			} break;
+
 			}
+		}
 
 		// Rendering
 		{
 			BeginDrawing();
 			ClearBackground(RAYWHITE);
-            DrawTexture(titleScreen, screenWidth/2 - titleScreen.width/2, screenHeight/2 - titleScreen.height/2, WHITE);
-            DrawTexture(playButton, 127, 287, WHITE);
-            DrawTexture(listenButton, 168, 381, WHITE);
-            DrawTexture(settingsButton, 204, 479, WHITE);
+			DrawTexture(titleScreen, screenWidth/2 - titleScreen.width/2, screenHeight/2 - titleScreen.height/2, WHITE);
+			DrawTexture(playButton, 127, 287, WHITE);
+			DrawTexture(listenButton, 168, 381, WHITE);
+			DrawTexture(settingsButton, 204, 479, WHITE);
             
 			Rectangle Rect = {0, 10, 48, 48};
 			for (int Index = 0; Index < NoteName_Count; Index++) {
@@ -481,9 +477,9 @@ int main(void) {
 		UnloadSound(NoteSoundList[Index]);
 	}
     
-    UnloadTexture(titleScreen);       // Texture unloading
+	UnloadTexture(titleScreen);       // Texture unloading
 	
-    CloseWindow();              // Close window and OpenGL context
+	CloseWindow();              // Close window and OpenGL context
 	//--------------------------------------------------------------------------------------
     
 
