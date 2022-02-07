@@ -28,7 +28,7 @@
 // NOTE(Brog): Here are the chords
 //
 //             Cmaj7 -- C1, E1, G1, Bb1
-//             Fmaj7 -- C1, Eb1, G1, A1
+//             Fmaj7 -- C1, Eb1, F1, A1
 //             Gmaj7 -- D1, F1, G1, B1 
 //
 //             Cmaj7 2 bars
