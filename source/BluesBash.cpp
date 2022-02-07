@@ -237,7 +237,6 @@ int main(void) {
 	const int screenHeight = 720;
 	InitWindow(1280, 720, "Blues Bash");
     
-    //TITLE SCREEN BG
     Image title = LoadImage("resources/titlescreen.png");  // Load image data into CPU memory (RAM)
     ImageResize(&title, 1280, 720);
     Texture2D titleScreen = LoadTextureFromImage(title);       // Image converted to texture, GPU memory (RAM -> VRAM)
@@ -368,7 +367,6 @@ int main(void) {
 		}
 
 		// Do Chords
-		#if 1
 		{
 			const float ChordLength = WHOLE_NOTE(SecondsPerBeat);
 			local_persist float TimeUntilNextChord = 0;
@@ -396,54 +394,29 @@ int main(void) {
 				}
 			}
 		}
-		#else
-		{
-			local_persist int CurrentChord = ArrayCount(ChordSequence) - 1;
-			const chord_names ChordSequence[] = {Cmaj7, Fmaj7, Cmaj7, Gmaj7, Fmaj7, };
-			if (IsKeyPressed(KEY_SPACE)) {
-			
-			
-			
-				if (CurrentChord >= ArrayCount(ChordSequence)) {
-					CurrentChord = 0;
-				}
-
-				for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
-					PlayNote(Note, CurrentTime, ChordLength);
-				}
-			}
-
-			if (IsKeyReleased(KEY_SPACE)) {
-				for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
-					StopNote(Note, CurrentTime);
-				}
-			}
-		}|
-		#endif
-		
 		
 		for (int Index = 0; Index < NoteName_Count; Index++) {
 			switch(NoteStateList[Index].State) {
 
-			case QueuedForPlaying: {
-				if (NoteStateList[Index].StartTime <= CurrentTime &&
-				    NoteStateList[Index].EndTime > CurrentTime) {
-					NoteStateList[Index].State = Playing;
-					PlaySound(NoteSoundList[Index]);
-				}
-			} break;
+				case QueuedForPlaying: {
+					if (NoteStateList[Index].StartTime <= CurrentTime &&
+					    NoteStateList[Index].EndTime > CurrentTime) {
+						NoteStateList[Index].State = Playing;
+						PlaySound(NoteSoundList[Index]);
+					}
+				} break;
 				
-			case Playing: {
-				if (NoteStateList[Index].EndTime <= CurrentTime) {
+				case Playing: {
+					if (NoteStateList[Index].EndTime <= CurrentTime) {
+						StopSound(NoteSoundList[Index]);
+						NoteStateList[Index].State = NotPlaying;
+					}
+				} break;
+
+				case Stopping: {
 					StopSound(NoteSoundList[Index]);
 					NoteStateList[Index].State = NotPlaying;
-				}
-			} break;
-
-			case Stopping: {
-				StopSound(NoteSoundList[Index]);
-				NoteStateList[Index].State = NotPlaying;
-			} break;
+				} break;
 
 			}
 		}
