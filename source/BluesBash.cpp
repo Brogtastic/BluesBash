@@ -237,16 +237,57 @@ int main(void) {
 	const int screenHeight = 720;
 	InitWindow(1280, 720, "Blues Bash");
     
-    Image image = LoadImage("resources/titlescreen.png");  // Load image data into CPU memory (RAM)
-    ImageResize(&image, 1280, 720);
-    Texture2D titleScreen = LoadTextureFromImage(image);       // Image converted to texture, GPU memory (RAM -> VRAM)
-    UnloadImage(image);                                    // Unload image data from CPU memory (RAM)
+    //TITLE SCREEN BG
+    Image title = LoadImage("resources/titlescreen.png");  // Load image data into CPU memory (RAM)
+    ImageResize(&title, 1280, 720);
+    Texture2D titleScreen = LoadTextureFromImage(title);       // Image converted to texture, GPU memory (RAM -> VRAM)
+    UnloadImage(title);                                    // Unload image data from CPU memory (RAM)
 
-    image = LoadImageFromTexture(titleScreen);                 // Load image from GPU texture (VRAM -> RAM)
+    title = LoadImageFromTexture(titleScreen);                 // Load image from GPU texture (VRAM -> RAM)
     UnloadTexture(titleScreen);                                // Unload texture from GPU memory (VRAM)
 
-    titleScreen = LoadTextureFromImage(image);                 // Recreate texture from retrieved image data (RAM -> VRAM)
-    UnloadImage(image);        
+    titleScreen = LoadTextureFromImage(title);                 // Recreate texture from retrieved image data (RAM -> VRAM)
+    UnloadImage(title);
+    
+    //PLAY BUTTON
+    Image play = LoadImage("resources/animations/play/play1.png");  // Load image data into CPU memory (RAM)
+    ImageResize(&play, 365, 205.35);
+    Texture2D playButton = LoadTextureFromImage(play);       // Image converted to texture, GPU memory (RAM -> VRAM)
+    UnloadImage(play);                                    // Unload image data from CPU memory (RAM)
+
+    play = LoadImageFromTexture(playButton);                 // Load image from GPU texture (VRAM -> RAM)
+    UnloadTexture(playButton);                                // Unload texture from GPU memory (VRAM)
+
+    playButton = LoadTextureFromImage(play);                 // Recreate texture from retrieved image data (RAM -> VRAM)
+    UnloadImage(play);
+    
+    //LISTEN BUTTON
+    Image listen = LoadImage("resources/animations/listen/listen1.png");  // Load image data into CPU memory (RAM)
+    ImageResize(&listen, 365, 205.35);
+    Texture2D listenButton = LoadTextureFromImage(listen);       // Image converted to texture, GPU memory (RAM -> VRAM)
+    UnloadImage(listen);                                    // Unload image data from CPU memory (RAM)
+
+    listen = LoadImageFromTexture(listenButton);                 // Load image from GPU texture (VRAM -> RAM)
+    UnloadTexture(listenButton);                                // Unload texture from GPU memory (VRAM)
+
+    listenButton = LoadTextureFromImage(listen);                 // Recreate texture from retrieved image data (RAM -> VRAM)
+    UnloadImage(listen);
+    
+    //SETTINGS BUTTON
+    Image settings = LoadImage("resources/animations/settings/settings1.png");  // Load image data into CPU memory (RAM)
+    ImageResize(&settings, 365, 205.35);
+    Texture2D settingsButton = LoadTextureFromImage(settings);       // Image converted to texture, GPU memory (RAM -> VRAM)
+    UnloadImage(settings);                                    // Unload image data from CPU memory (RAM)
+
+    settings = LoadImageFromTexture(settingsButton);                 // Load image from GPU texture (VRAM -> RAM)
+    UnloadTexture(settingsButton);                                // Unload texture from GPU memory (VRAM)
+
+    settingsButton = LoadTextureFromImage(settings);                 // Recreate texture from retrieved image data (RAM -> VRAM)
+    UnloadImage(settings);
+
+
+
+
 
 	InitAudioDevice();
 
@@ -412,6 +453,9 @@ int main(void) {
 			BeginDrawing();
 			ClearBackground(RAYWHITE);
             DrawTexture(titleScreen, screenWidth/2 - titleScreen.width/2, screenHeight/2 - titleScreen.height/2, WHITE);
+            DrawTexture(playButton, 127, 287, WHITE);
+            DrawTexture(listenButton, 168, 381, WHITE);
+            DrawTexture(settingsButton, 204, 479, WHITE);
             
 			Rectangle Rect = {0, 10, 32, 32};
 			for (note_state NoteState : NoteStateList) {
