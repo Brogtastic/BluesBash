@@ -305,10 +305,10 @@ void ProcessAndRenderPlayer(float CurrentTime, float DeltaTime) {
 	}
 		
 	if(IsKeyPressed(KEY_UP)){
-		PlayerInfo.LastChoice = PlayerInfo.LastKeyPressed;
 		if (PlayerInfo.LastKeyPressed == KEY_UP) {
 			PlayerInfo.LastKeyPressed = PlayerInfo.LastChoice;
 		}
+		PlayerInfo.LastChoice = PlayerInfo.LastKeyPressed;
 			
 		if (PlayerInfo.LastKeyPressed == KEY_LEFT){
 			PlayerInfo.Placement = WalkToNextPlacement(PlayerInfo.Placement, 1, 0, ArrayCount(PlayerInfo.Keyboard)-1, PlayerInfo.Keyboard, false);
@@ -449,7 +449,7 @@ int main(void) {
 	// Initialization
 	//--------------------------------------------------------------------------------------
 	InitWindow(ScreenWidth, ScreenHeight, "Blues Bash");
-	ProgState = TopMenu;
+	ProgState = Player;
 
 	// @TODO(Roskuski): We'll likely want to have a more sophiscated way of talking about these resouces.
 	//TITLE SCREEN BG
