@@ -1,5 +1,6 @@
 #include <raylib.h>
 #include <cstdio>
+#include <string> 
 
 #define Assert(Cnd) if (!(Cnd)) { __debugbreak(); }
 #define ArrayCount(Array) (sizeof(Array)/sizeof(Array[0]))
@@ -445,11 +446,19 @@ void ProcessAndRenderTopMenu(Texture2D titleScreen, Texture2D playButton, Textur
 	}
 }
 
+struct animation {
+	float FrameTime;
+	float CurrentTime;
+	int CurrentFrame;
+	int FrameCount;
+	Texture2D *Frames;
+};
+
 int main(void) {
 	// Initialization
 	//--------------------------------------------------------------------------------------
 	InitWindow(ScreenWidth, ScreenHeight, "Blues Bash");
-	ProgState = Player;
+	ProgState = TopMenu;
 
 	// @TODO(Roskuski): We'll likely want to have a more sophiscated way of talking about these resouces.
 	//TITLE SCREEN BG
@@ -465,16 +474,22 @@ int main(void) {
 	UnloadImage(title);
     
 	//PLAY BUTTON
-	Image play = LoadImage("resources/animations/play/play1.png");
-	ImageResize(&play, 365, 205.35);
-	Texture2D playButton = LoadTextureFromImage(play);
-	UnloadImage(play);
-
-	play = LoadImageFromTexture(playButton);
-	UnloadTexture(playButton);
-
-	playButton = LoadTextureFromImage(play);
-	UnloadImage(play);
+    animation PlayAnimation;
+    // @TODO(Roskuski): This should be able to be pulled out into a standalone function. "LoadAniamtion"?
+	{
+        PlayAnimation.FrameTime = 0.05;
+        PlayAnimation.Frames = (Texture2D*) malloc(sizeof(Texture2D) * 8);
+        PlayAnimation.FrameCount = 8;
+		char *Buffer = (char*)malloc(sizeof(char) * 256);
+		for(int i=0; i<=8; i++){
+			sprintf(Buffer, "resources/animations/play/play%d.png", i+1);
+            Image Temp = LoadImage(Buffer);
+            ImageResize(&Temp, 365, 205.35);
+			PlayAnimation.Frames[i] = LoadTextureFromImage(Temp);
+            UnloadImage(Temp);
+		}
+		free(Buffer);
+	}
     
 	//LISTEN BUTTON
 	Image listen = LoadImage("resources/animations/listen/listen1.png");
@@ -517,7 +532,20 @@ int main(void) {
 		} break;
 
 		case TopMenu: {
-			ProcessAndRenderTopMenu(titleScreen, playButton, listenButton, settingsButton);
+
+            // @TODO(Roskuski): This can be pulled out into it's own function. "void UpdateAniamtion(float DeltaTime)"?
+            {
+                PlayAnimation.CurrentTime += DeltaTime;
+                if (PlayAnimation.CurrentTime > PlayAnimation.FrameTime) {
+                    PlayAnimation.CurrentTime = 0;
+                    PlayAnimation.CurrentFrame += 1;
+                    if (PlayAnimation.CurrentFrame == PlayAnimation.FrameCount) {
+                        PlayAnimation.CurrentFrame = 0;
+                    }
+                }
+            }
+            
+			ProcessAndRenderTopMenu(titleScreen, PlayAnimation.Frames[PlayAnimation.CurrentFrame], listenButton, settingsButton);
 		} break;
 			
 		}
