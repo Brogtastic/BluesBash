@@ -474,19 +474,20 @@ int main(void) {
 	UnloadImage(title);
     
 	//PLAY BUTTON
-    animation PlayAnimation;
-    // @TODO(Roskuski): This should be able to be pulled out into a standalone function. "LoadAniamtion"?
+	animation PlayAnimation = {};
+	// @TODO(Roskuski): This should be able to be pulled out into a standalone function. "LoadAniamtion"?
 	{
-        PlayAnimation.FrameTime = 0.05;
-        PlayAnimation.Frames = (Texture2D*) malloc(sizeof(Texture2D) * 8);
-        PlayAnimation.FrameCount = 8;
+		PlayAnimation.FrameTime = 0.05;
+		PlayAnimation.Frames = (Texture2D*) malloc(sizeof(Texture2D) * 8);
+		PlayAnimation.FrameCount = 8;
+		PlayAnimation.CurrentFrame = 0;
 		char *Buffer = (char*)malloc(sizeof(char) * 256);
 		for(int i=0; i<=8; i++){
 			sprintf(Buffer, "resources/animations/play/play%d.png", i+1);
-            Image Temp = LoadImage(Buffer);
-            ImageResize(&Temp, 365, 205.35);
+			Image Temp = LoadImage(Buffer);
+			ImageResize(&Temp, 365, 205.35);
 			PlayAnimation.Frames[i] = LoadTextureFromImage(Temp);
-            UnloadImage(Temp);
+			UnloadImage(Temp);
 		}
 		free(Buffer);
 	}
@@ -533,29 +534,29 @@ int main(void) {
 
 		case TopMenu: {
             
-            int mousex = GetMousePosition().x;
-            int mousey = GetMousePosition().y;
+			int mousex = GetMousePosition().x;
+			int mousey = GetMousePosition().y;
             
             
-            // @TODO(Roskuski): This can be pulled out into it's own function. "void UpdateAniamtion(float DeltaTime)"?
-            {
-                PlayAnimation.CurrentTime += DeltaTime;
-                if ((PlayAnimation.CurrentTime > PlayAnimation.FrameTime) && (mousex > 236)&&(mousex < 366)){
-                    PlayAnimation.CurrentTime = 0;
-                    PlayAnimation.CurrentFrame += 1;
-                    if (PlayAnimation.CurrentFrame == PlayAnimation.FrameCount) {
+			// @TODO(Roskuski): This can be pulled out into it's own function. "void UpdateAniamtion(float DeltaTime)"?
+			{
+				PlayAnimation.CurrentTime += DeltaTime;
+				if ((PlayAnimation.CurrentTime > PlayAnimation.FrameTime) && (mousex > 236)&&(mousex < 366)){
+					PlayAnimation.CurrentTime = 0;
+					PlayAnimation.CurrentFrame += 1;
+					if (PlayAnimation.CurrentFrame == PlayAnimation.FrameCount) {
                         
-                        if((mousex > 236)&&(mousex < 366)){
-                            PlayAnimation.CurrentFrame = 7;
-                        }
-                        else{
-                            PlayAnimation.CurrentFrame = 0;
-                        }
+						if((mousex > 236)&&(mousex < 366)){
+							PlayAnimation.CurrentFrame = 7;
+						}
+						else{
+							PlayAnimation.CurrentFrame = 0;
+						}
                         
-                    }
-                }
+					}
+				}
                 
-            }
+			}
             
 			ProcessAndRenderTopMenu(titleScreen, PlayAnimation.Frames[PlayAnimation.CurrentFrame], listenButton, settingsButton);
 		} break;
