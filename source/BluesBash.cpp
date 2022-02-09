@@ -532,17 +532,29 @@ int main(void) {
 		} break;
 
 		case TopMenu: {
-
+            
+            int mousex = GetMousePosition().x;
+            int mousey = GetMousePosition().y;
+            
+            
             // @TODO(Roskuski): This can be pulled out into it's own function. "void UpdateAniamtion(float DeltaTime)"?
             {
                 PlayAnimation.CurrentTime += DeltaTime;
-                if (PlayAnimation.CurrentTime > PlayAnimation.FrameTime) {
+                if ((PlayAnimation.CurrentTime > PlayAnimation.FrameTime) && (mousex > 236)&&(mousex < 366)){
                     PlayAnimation.CurrentTime = 0;
                     PlayAnimation.CurrentFrame += 1;
                     if (PlayAnimation.CurrentFrame == PlayAnimation.FrameCount) {
-                        PlayAnimation.CurrentFrame = 0;
+                        
+                        if((mousex > 236)&&(mousex < 366)){
+                            PlayAnimation.CurrentFrame = 7;
+                        }
+                        else{
+                            PlayAnimation.CurrentFrame = 0;
+                        }
+                        
                     }
                 }
+                
             }
             
 			ProcessAndRenderTopMenu(titleScreen, PlayAnimation.Frames[PlayAnimation.CurrentFrame], listenButton, settingsButton);
