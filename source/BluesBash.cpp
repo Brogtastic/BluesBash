@@ -19,19 +19,6 @@
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "Shell32.lib")
 
-// NOTE(Brog): Here are the chords
-//
-//             Cmaj7 -- C1, E1, G1, Bb1
-//             Fmaj7 -- C1, Eb1, F1, A1
-//             Gmaj7 -- D1, F1, G1, B1 
-//
-//             Cmaj7 2 bars
-//             Fmaj7 2 bars
-//             Cmaj7 2 bars
-//             Gmaj7 1 bar
-//             Fmaj7 1 bar
-//             Cmaj7 2 bars
-
 /*
   To Do:
   Make notes fade out instead of stopping right away
@@ -39,91 +26,32 @@
   Trills
   Drum track
   Right now, one note cannot play more than once. We might have to move away from "Sound" to something that allows for the same note to be played twice at once. perhpas this is called "wave" in raylib?
-
-
 */
 
+#include "BluesBash_Note.h"
+
+struct animation {
+	float FrameTime;
+	float CurrentTime;
+	int CurrentFrame;
+	int FrameCount;
+	Texture2D *Frames;
+};
+
+enum animation_enum {
+	PlayButton,
+	ListenButton,
+	SettingsButton,
+	
+	AnimationEnum_Count, // NOTE(Roskuski): Keep this at the end.
+};
+
+// Constants and globals should be defined here.
 const int ScreenWidth = 1280;
 const int ScreenHeight = 720;
 
-// NOTE(Roskuski): this is a macro that is used to define `NoteName`, and `NoteFileNames`. This will alow us to keep those two data structurs in sync easily.
-// NOTE(Roskuski): If you want to read more about this Technique, it is called "X-Macros"
-// NOTE(Roskuski): In essence, we create a macro that expands to a bunch of macros that are of a known (i.e X). When then define macro X to something, and that macro then expands as well.
-// NOTE(Roskuski): Remeber that macros are essentially automated Copy and Paste!
-
-#define NOTES	  \
-	XX(A1, 0) \
-	X(C1) \
-	X(D1) \
-	X(Eb1) \
-	X(E1) \
-	X(F1) \
-	X(Fs1) \
-	X(G1) \
-	X(Gs1) \
-	X(Bb1) \
-	X(B1) \
-	  \
-	X(C2) \
-	X(Eb2) \
-	X(F2) \
-	X(Fs2) \
-	X(G2) \
-	X(Bb2) \
-	  \
-	X(C3) \
-	X(Eb3) \
-	X(F3) \
-	X(Fs3) \
-	X(G3) \
-	X(Bb3) \
-	  \
-	X(C4) \
-	X(Eb4) \
-	X(F4) \
-	X(Fs4) \
-	X(G4) \
-	X(Bb4) \
-	  \
-	X(C5)
-		
-		
-enum note_name {
-#define XX(Name, Value) Name = Value,
-#define X(Name) Name,
-	NOTES
-	NoteName_Count, // This entry's value is how many notes we have.
-#undef XX
-#undef X	
-};
-
-const char *NoteNameStrings[] = {
-#define XX(Name, Value) X(Name)
-#define X(Name) #Name,
-	NOTES
-#undef XX
-#undef X
-};
-
-const char *NoteFileNames[] = {
-#define XX(Name, Value) "resources/allNotes/Brog_Piano/"#Name".mp3",
-#define X(Name) "resources/allNotes/Brog_Piano/"#Name".mp3",
-	NOTES
-#undef XX
-#undef X
-};
-#undef NOTES
-
-enum chord_names { Cmaj7 = 0, Fmaj7, Gmaj7,  };
-const note_name Chords[3][4] = {
-	{C1, E1, G1, Bb1, }, // Cmaj7
-	{C1, Eb1, F1, A1, }, // Fmaj7
-	{D1, F1, G1, B1, }, // Gmaj7
-};
-
 const float BeatsPerMin = 120;
-const float BeatsPerSecond = BeatsPerMin / 60;
-const float SecondsPerBeat = 1 / BeatsPerSecond;
+const float SecondsPerBeat = 1.f / (BeatsPerMin / 60.f);
 
 // 4/4 time signature is assumed for these macros
 #define SIXTEENTH_NOTE(Time) (Time/4)
@@ -132,76 +60,27 @@ const float SecondsPerBeat = 1 / BeatsPerSecond;
 #define HALF_NOTE(Time) (Time*2)
 #define WHOLE_NOTE(Time) (Time*4)
 
-enum note_state_enum {
-	NotPlaying = 0,
-	QueuedForPlaying,
-	Playing,
-	PlayingSustained,
-	Stopping,
-};
-
-struct note_state {
-	note_state_enum State;
-	float StartTime;
-	float EndTime;
-};
-
 note_state NoteStateList[NoteName_Count];
 Sound NoteSoundList[NoteName_Count];
 
-translation_scope inline bool IsNotePlaying(note_name Note) {
-	bool Result = false;
-	note_state_enum State = NoteStateList[Note].State;
-	
-	switch(State) {
-	case Playing:
-	case PlayingSustained:
-		Result = true;
-	}
+animation AnimationList[AnimationEnum_Count] = {};
 
+#include "BluesBash_Note.cpp"
+
+Texture2D* LoadAnimationFrames(int FrameCount, const char *PathFormatString) {
+	Texture2D *Result = (Texture2D*)malloc(FrameCount * sizeof(Texture2D));
+	char *Buffer = (char*)malloc(sizeof(char) * 256); // @TODO(Roskuski): We should actually calculate a safe value instead of just shooting in the dark.
+	
+	for(int Index = 0; Index < FrameCount; Index++){
+		sprintf(Buffer, PathFormatString, Index + 1);
+		Image Temp = LoadImage(Buffer);
+		ImageResize(&Temp, 365, 205.35); // @TODO(Roskuski): We should change these magic numbes into named constants
+		Result[Index] = LoadTextureFromImage(Temp);
+		UnloadImage(Temp);
+	}
+	free(Buffer);
+	
 	return Result;
-}
-
-// Plays a note for the duration that a key is held down for.
-translation_scope inline void PlayNoteSustained(note_name Note) {
-	Assert(Note >= 0);
-	Assert(Note < NoteName_Count);
-	if (NoteStateList[Note].State == NotPlaying) { // @TODO(Roskuski): This check might be detremental to the sound.
-		NoteStateList[Note].State = PlayingSustained;
-		// @TODO(Roskuski): I think that we're going to need to know the CurrentTime here to facilitate creating replay numbers.
-		PlaySound(NoteSoundList[Note]);
-	}
-}
-
-// Stops a sustained note
-translation_scope inline void StopNoteSustained(note_name Note) {
-	Assert(Note >= 0);
-	Assert(Note < NoteName_Count);
-	
-	// @TODO(Roskuski): I think that we're going to need to know the CurrentTime here to facilitate creating replay numbers.
-	if (NoteStateList[Note].State == PlayingSustained) {
-		StopSound(NoteSoundList[Note]);
-		NoteStateList[Note].State = NotPlaying;
-	}
-	else {
-		printf("[WARNING]: We tried to stop a note that wasn't in PlayingSustained state! Doing nothing\n");
-	}
-}
-
-// Length is how long the note will play.
-// Delay is how long we will wait until starting to play the note.
-translation_scope inline void PlayNote(note_name Note, float CurrentTime, float Length, float Delay = 0.0f) {
-	Assert(Note != NoteName_Count);
-	NoteStateList[Note].State = QueuedForPlaying;
-	NoteStateList[Note].StartTime = CurrentTime + Delay;
-	NoteStateList[Note].EndTime = CurrentTime + Delay + Length;
-	
-}
-
-translation_scope inline void StopNote(note_name Note, float CurrentTime) {
-	Assert(Note >= 0);
-	Assert(Note != NoteName_Count);
-	NoteStateList[Note].EndTime = CurrentTime;
 }
 
 int WalkToNextPlacement(int Placement, int Delta, int LowBound, int HighBound, note_name *NoteList, bool DoAdjust = true) {
@@ -429,7 +308,11 @@ void ProcessAndRenderPlayer(float CurrentTime, float DeltaTime) {
 	}
 }
 
-void ProcessAndRenderTopMenu(Texture2D titleScreen, Texture2D playButton, Texture2D listenButton, Texture2D settingsButton) {
+inline Texture2D* GetCurrentFrame(animation_enum Index) {
+	return &AnimationList[Index].Frames[AnimationList[Index].CurrentFrame];
+}
+
+void ProcessAndRenderTopMenu(Texture2D titleScreen) {
 
 	// @TODO(Roskuski): Implment changing from top menu into other states.
 
@@ -438,26 +321,20 @@ void ProcessAndRenderTopMenu(Texture2D titleScreen, Texture2D playButton, Textur
 		BeginDrawing();
 		
 		DrawTexture(titleScreen, ScreenWidth/2 - titleScreen.width/2, ScreenHeight/2 - titleScreen.height/2, WHITE);
-		DrawTexture(playButton, 127, 287, WHITE);
-		DrawTexture(listenButton, 168, 381, WHITE);
-		DrawTexture(settingsButton, 204, 479, WHITE);
+		DrawTexture(*GetCurrentFrame(PlayButton), 127, 287, WHITE);
+		DrawTexture(*GetCurrentFrame(ListenButton), 168, 381, WHITE);
+		DrawTexture(*GetCurrentFrame(SettingsButton), 204, 479, WHITE);
+		DrawFPS(10, 10);
 
 		EndDrawing();
 	}
 }
 
-struct animation {
-	float FrameTime;
-	float CurrentTime;
-	int CurrentFrame;
-	int FrameCount;
-	Texture2D *Frames;
-};
-
 int main(void) {
 	// Initialization
 	//--------------------------------------------------------------------------------------
 	InitWindow(ScreenWidth, ScreenHeight, "Blues Bash");
+	SetTargetFPS(60);
 	ProgState = TopMenu;
 
 	// @TODO(Roskuski): We'll likely want to have a more sophiscated way of talking about these resouces.
@@ -472,50 +349,25 @@ int main(void) {
 
 	titleScreen = LoadTextureFromImage(title);
 	UnloadImage(title);
+
+	AnimationList[PlayButton].FrameTime = 0.05;
+	AnimationList[PlayButton].Frames = 0;
+	AnimationList[PlayButton].FrameCount = 8;
+	AnimationList[PlayButton].CurrentFrame = 0;
+	AnimationList[PlayButton].Frames = LoadAnimationFrames(AnimationList[PlayButton].FrameCount, "resources/animations/play/play%d.png");
+	
+	AnimationList[ListenButton].FrameTime = 0.05;
+	AnimationList[ListenButton].Frames = 0;
+	AnimationList[ListenButton].FrameCount = 8;
+	AnimationList[ListenButton].CurrentFrame = 0;
+	AnimationList[ListenButton].Frames = LoadAnimationFrames(AnimationList[ListenButton].FrameCount, "resources/animations/listen/listen%d.png");
     
-	//PLAY BUTTON
-	animation PlayAnimation = {};
-	// @TODO(Roskuski): This should be able to be pulled out into a standalone function. "LoadAniamtion"?
-	{
-		PlayAnimation.FrameTime = 0.05;
-		PlayAnimation.Frames = (Texture2D*) malloc(sizeof(Texture2D) * 8);
-		PlayAnimation.FrameCount = 8;
-		PlayAnimation.CurrentFrame = 0;
-		char *Buffer = (char*)malloc(sizeof(char) * 256);
-		for(int i=0; i<=8; i++){
-			sprintf(Buffer, "resources/animations/play/play%d.png", i+1);
-			Image Temp = LoadImage(Buffer);
-			ImageResize(&Temp, 365, 205.35);
-			PlayAnimation.Frames[i] = LoadTextureFromImage(Temp);
-			UnloadImage(Temp);
-		}
-		free(Buffer);
-	}
-    
-	//LISTEN BUTTON
-	Image listen = LoadImage("resources/animations/listen/listen1.png");
-	ImageResize(&listen, 365, 205.35);
-	Texture2D listenButton = LoadTextureFromImage(listen);
-	UnloadImage(listen);
-
-	listen = LoadImageFromTexture(listenButton);
-	UnloadTexture(listenButton);
-
-	listenButton = LoadTextureFromImage(listen);
-	UnloadImage(listen);
-    
-	//SETTINGS BUTTON
-	Image settings = LoadImage("resources/animations/settings/settings1.png");
-	ImageResize(&settings, 365, 205.35);
-	Texture2D settingsButton = LoadTextureFromImage(settings);
-	UnloadImage(settings);
-
-	settings = LoadImageFromTexture(settingsButton);
-	UnloadTexture(settingsButton);
-
-	settingsButton = LoadTextureFromImage(settings);
-	UnloadImage(settings);
-
+	AnimationList[SettingsButton].FrameTime = 0.05;
+	AnimationList[SettingsButton].Frames = 0;
+	AnimationList[SettingsButton].FrameCount = 8;
+	AnimationList[SettingsButton].CurrentFrame = 0;
+	AnimationList[SettingsButton].Frames = LoadAnimationFrames(AnimationList[SettingsButton].FrameCount, "resources/animations/settings/settings%d.png");	
+  
 	InitAudioDevice();
 
 	// LoadAllNotes
@@ -532,35 +384,19 @@ int main(void) {
 			ProcessAndRenderPlayer(CurrentTime, DeltaTime);
 		} break;
 
-		case TopMenu: {
-            
-			int mousex = GetMousePosition().x;
-			int mousey = GetMousePosition().y;
-            
-            
+		case TopMenu: {      
 			// @TODO(Roskuski): This can be pulled out into it's own function. "void UpdateAniamtion(float DeltaTime)"?
-			{
-				PlayAnimation.CurrentTime += DeltaTime;
-				if ((PlayAnimation.CurrentTime > PlayAnimation.FrameTime) && (mousex > 236)&&(mousex < 366)){
-					PlayAnimation.CurrentTime = 0;
-					PlayAnimation.CurrentFrame += 1;
-					if (PlayAnimation.CurrentFrame == PlayAnimation.FrameCount) {
-                        
-						if((mousex > 236)&&(mousex < 366)){
-							PlayAnimation.CurrentFrame = 7;
-						}
-						else{
-							PlayAnimation.CurrentFrame = 0;
-						}
-                        
-					}
+			for (int Index = 0; Index < AnimationEnum_Count; Index++) {
+				animation * const Animation = &AnimationList[Index];
+				Animation->CurrentTime += DeltaTime;
+				Animation->CurrentTime = 0;
+				Animation->CurrentFrame += 1;
+				if (Animation->CurrentFrame == Animation->FrameCount) {
+					Animation->CurrentFrame = 0;
 				}
-                
-			}
-            
-			ProcessAndRenderTopMenu(titleScreen, PlayAnimation.Frames[PlayAnimation.CurrentFrame], listenButton, settingsButton);
-		} break;
-			
+			}     
+			ProcessAndRenderTopMenu(titleScreen);
+		} break;	
 		}
 	}
 
