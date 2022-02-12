@@ -12,20 +12,20 @@ if not exist libs (
 	 exit
 )
 
-set IncludePaths=-I./libs/raylib/include
-set LibraryPaths=/LIBPATH:./libs/raylib/lib
-set TranslationUnits=source/BluesBash.cpp
+set IncludePaths=-I../libs/raylib/include
+set LibraryPaths=/LIBPATH:../libs/raylib/lib
+set TranslationUnits=BluesBash.cpp
 
-set CFlags=-nologo -Fo./bin/obj/ -MD
-set LFlags=-link /OUT:./bin/BluesBash.exe /nologo
+set CFlags=-nologo -Fo../bin/obj/ -MD
+set LFlags=-link /OUT:../bin/BluesBash.exe /nologo
 
 if "%1"=="debug" (
 	 set CFlags=%CFlags% -Zi -Od
 	 set LFlags=%LFlags% /DEBUG
 )
 
-
-
+pushd source
 @echo on
 cl %CFlags% %IncludePaths% %TranslationUnits% %LFlags% %LibraryPaths%
 @echo off
+popd
