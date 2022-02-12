@@ -10,6 +10,7 @@
 
 // Used for static globals/functions
 #define translation_scope static
+#define global_var static
 
 // Tells MSVC what libraries we need.
 #pragma comment(lib, "raylib.lib")
@@ -29,21 +30,23 @@
 */
 
 #include "BluesBash_Note.h"
+#include "BluesBash_Animation.h"
 
-struct animation {
-	float FrameTime;
-	float CurrentTime;
-	int CurrentFrame;
-	int FrameCount;
-	Texture2D *Frames;
+enum prog_state {
+	Player,
+	TopMenu,
 };
 
-enum animation_enum {
-	PlayButton,
-	ListenButton,
-	SettingsButton,
-	
-	AnimationEnum_Count, // NOTE(Roskuski): Keep this at the end.
+enum sustained_key {
+	Up = 0, Down, Left, Right, SustainedKey_Count,
+};
+
+struct player_info {
+	int Placement;
+	int LastKeyPressed;
+	int LastChoice;
+	note_name Keyboard[19];
+	note_name SustainedNotes[4];
 };
 
 // Constants and globals should be defined here.
@@ -53,6 +56,9 @@ const int ScreenHeight = 720;
 const float BeatsPerMin = 120;
 const float SecondsPerBeat = 1.f / (BeatsPerMin / 60.f);
 
+global_var prog_state ProgState;
+global_var player_info PlayerInfo;
+
 // 4/4 time signature is assumed for these macros
 #define SIXTEENTH_NOTE(Time) (Time/4)
 #define EIGHTH_NOTE(Time) (Time/2)
@@ -60,28 +66,8 @@ const float SecondsPerBeat = 1.f / (BeatsPerMin / 60.f);
 #define HALF_NOTE(Time) (Time*2)
 #define WHOLE_NOTE(Time) (Time*4)
 
-note_state NoteStateList[NoteName_Count];
-Sound NoteSoundList[NoteName_Count];
-
-animation AnimationList[AnimationEnum_Count] = {};
-
 #include "BluesBash_Note.cpp"
-
-Texture2D* LoadAnimationFrames(int FrameCount, const char *PathFormatString) {
-	Texture2D *Result = (Texture2D*)malloc(FrameCount * sizeof(Texture2D));
-	char *Buffer = (char*)malloc(sizeof(char) * 256); // @TODO(Roskuski): We should actually calculate a safe value instead of just shooting in the dark.
-	
-	for(int Index = 0; Index < FrameCount; Index++){
-		sprintf(Buffer, PathFormatString, Index + 1);
-		Image Temp = LoadImage(Buffer);
-		ImageResize(&Temp, 365, 205.35); // @TODO(Roskuski): We should change these magic numbes into named constants
-		Result[Index] = LoadTextureFromImage(Temp);
-		UnloadImage(Temp);
-	}
-	free(Buffer);
-	
-	return Result;
-}
+#include "BluesBash_Animation.cpp"
 
 int WalkToNextPlacement(int Placement, int Delta, int LowBound, int HighBound, note_name *NoteList, bool DoAdjust = true) {
 	Placement += Delta;
@@ -116,27 +102,6 @@ int WalkToNextPlacement(int Placement, int Delta, int LowBound, int HighBound, n
 	
 	return Placement;
 }
-
-
-enum prog_state {
-	Player,
-	TopMenu,
-};
-
-prog_state ProgState;
-
-enum sustained_key {
-	Up = 0, Down, Left, Right, SustainedKey_Count,
-};
-
-struct player_info {
-	int Placement;
-	int LastKeyPressed;
-	int LastChoice;
-	note_name Keyboard[19];
-	note_name SustainedNotes[4];
-};
-player_info PlayerInfo;
 
 void ProcessAndRenderPlayer(float CurrentTime, float DeltaTime) {
 	// @TODO(Roskuski): @RemoveMe move to a different initilatizion system for state init.
@@ -308,15 +273,7 @@ void ProcessAndRenderPlayer(float CurrentTime, float DeltaTime) {
 	}
 }
 
-inline Texture2D* GetCurrentFrame(animation_enum Index) {
-	return &AnimationList[Index].Frames[AnimationList[Index].CurrentFrame];
-}
-
 void ProcessAndRenderTopMenu(Texture2D titleScreen) {
-
-	// @TODO(Roskuski): Implment changing from top menu into other states.
-
-	// Draw 
 	{
 		BeginDrawing();
 		
@@ -350,23 +307,9 @@ int main(void) {
 	titleScreen = LoadTextureFromImage(title);
 	UnloadImage(title);
 
-	AnimationList[PlayButton].FrameTime = 0.05;
-	AnimationList[PlayButton].Frames = 0;
-	AnimationList[PlayButton].FrameCount = 8;
-	AnimationList[PlayButton].CurrentFrame = 0;
-	AnimationList[PlayButton].Frames = LoadAnimationFrames(AnimationList[PlayButton].FrameCount, "resources/animations/play/play%d.png");
-	
-	AnimationList[ListenButton].FrameTime = 0.05;
-	AnimationList[ListenButton].Frames = 0;
-	AnimationList[ListenButton].FrameCount = 8;
-	AnimationList[ListenButton].CurrentFrame = 0;
-	AnimationList[ListenButton].Frames = LoadAnimationFrames(AnimationList[ListenButton].FrameCount, "resources/animations/listen/listen%d.png");
-    
-	AnimationList[SettingsButton].FrameTime = 0.05;
-	AnimationList[SettingsButton].Frames = 0;
-	AnimationList[SettingsButton].FrameCount = 8;
-	AnimationList[SettingsButton].CurrentFrame = 0;
-	AnimationList[SettingsButton].Frames = LoadAnimationFrames(AnimationList[SettingsButton].FrameCount, "resources/animations/settings/settings%d.png");	
+	LoadAnimationFromFiles(PlayButton, 0.05, 8, "resources/animations/play/play%d.png");
+	LoadAnimationFromFiles(ListenButton, 0.05, 8, "resources/animations/listen/listen%d.png");
+	LoadAnimationFromFiles(SettingsButton, 0.05, 8, "resources/animations/settings/settings%d.png");
   
 	InitAudioDevice();
 

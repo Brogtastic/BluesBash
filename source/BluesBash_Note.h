@@ -73,7 +73,7 @@ const char *NoteNameStrings[] = {
 };
 
 const char *NoteFileNames[] = {
-#define XX(Name, Value) "resources/allNotes/Brog_Piano/"#Name".mp3",
+#define XX(Name, Value) X(Name)
 #define X(Name) "resources/allNotes/Brog_Piano/"#Name".mp3",
 	NOTES
 #undef XX
@@ -108,3 +108,7 @@ struct note_state {
 	float StartTime;
 	float EndTime;
 };
+
+
+global_var note_state NoteStateList[NoteName_Count];
+global_var Sound NoteSoundList[NoteName_Count];
