@@ -4,8 +4,6 @@ void LoadAnimationFromFiles(animation_enum Index, float FrameTime, int FrameCoun
 	animation * const Animation = &AnimationList[Index];
 	Animation->FrameTime = FrameTime;
 	Animation->FrameCount = FrameCount;
-	Animation->CurrentFrame = 0;
-	Animation->CurrentTime = 0;
 
 	Animation->Frames = (Texture2D*)malloc(FrameCount * sizeof(Texture2D));
 	char *Buffer = (char*)malloc(sizeof(char) * 256); // @TODO(Roskuski): We should actually calculate a safe value instead of just shooting in the dark.
@@ -20,6 +18,41 @@ void LoadAnimationFromFiles(animation_enum Index, float FrameTime, int FrameCoun
 	free(Buffer);
 }
 
-inline Texture2D* GetCurrentFrame(animation_enum Index) {
-	return &AnimationList[Index].Frames[AnimationList[Index].CurrentFrame];
+inline Texture2D* GetCurrentFrame(animation_state State) {
+	return &(AnimationList[State.Index].Frames[State.CurrentFrame]);
+}
+
+void AnimateForwards(animation_state &State, float DeltaTime, bool Loop) {
+	const animation &Animation = AnimationList[State.Index];
+	State.CurrentTime += DeltaTime;
+	if (State.CurrentTime > Animation.FrameTime) {
+		State.CurrentTime = 0;
+		State.CurrentFrame += 1;
+		if (State.CurrentFrame >= Animation.FrameCount) {
+			if (Loop) {
+				State.CurrentFrame = 0;
+			}
+			else {
+				State.CurrentFrame = Animation.FrameCount - 1;
+				State.CurrentTime = Animation.FrameTime;
+			}
+		}
+	}
+}
+
+void AnimateBackwards(animation_state &State, float DeltaTime, bool Loop) {
+	const animation &Animation = AnimationList[State.Index];
+	State.CurrentTime -= DeltaTime;
+	if (State.CurrentTime < 0) {
+		State.CurrentTime = Animation.FrameTime;
+		State.CurrentFrame -= 1;
+		if (State.CurrentFrame < 0) {
+			if (Loop) {
+				State.CurrentFrame = Animation.FrameCount - 1;
+			}
+			else {
+				State.CurrentFrame = 0;
+			}
+		}
+	}
 }

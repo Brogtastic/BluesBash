@@ -103,7 +103,7 @@ int WalkToNextPlacement(int Placement, int Delta, int LowBound, int HighBound, n
 	return Placement;
 }
 
-void ProcessAndRenderPlayer(float CurrentTime, float DeltaTime) {
+void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 	// @TODO(Roskuski): @RemoveMe move to a different initilatizion system for state init.
 	local_persist bool IsInitilized = false;
 	if (!IsInitilized) {
@@ -273,18 +273,70 @@ void ProcessAndRenderPlayer(float CurrentTime, float DeltaTime) {
 	}
 }
 
-void ProcessAndRenderTopMenu(Texture2D titleScreen) {
-	{
-		BeginDrawing();
-		
-		DrawTexture(titleScreen, ScreenWidth/2 - titleScreen.width/2, ScreenHeight/2 - titleScreen.height/2, WHITE);
-		DrawTexture(*GetCurrentFrame(PlayButton), 127, 287, WHITE);
-		DrawTexture(*GetCurrentFrame(ListenButton), 168, 381, WHITE);
-		DrawTexture(*GetCurrentFrame(SettingsButton), 204, 479, WHITE);
-		DrawFPS(10, 10);
+// @TODO(Roskuski): Find a better way to talk about titleScreen here. I want to fold it into the same system we have for animations
+	
+void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D titleScreen) {
+	// NOTE(Roskuski): This var is used in DoUIButtonAuto
+	void * const CurrentFunction = ProcessAndRenderTopMenu;
 
-		EndDrawing();
+	local_persist animation_state PlayButtonState = {PlayButton, 0, 0};
+	local_persist animation_state ListenButtonState = {ListenButton, 0, 0};
+	local_persist animation_state SettingsButtonState = {SettingsButton, 0, 0};
+	
+	BeginDrawing();
+
+	ClearBackground(RAYWHITE);
+	DrawTexture(titleScreen, ScreenWidth/2 - titleScreen.width/2, ScreenHeight/2 - titleScreen.height/2, WHITE);
+	
+	// Do UI
+	ui_result UIResult = {false, false};
+	UIResult = DoUIButtonAutoId({127, 287, 100, 100}, PlayButtonState);
+	
+	if (UIResult.PerformAction) {
+		ProgState = Player;
 	}
+	if (UIResult.Hot) {
+		AnimateForwards(PlayButtonState, DeltaTime, false);
+	}
+	else {
+		AnimateBackwards(PlayButtonState, DeltaTime, false);
+	}
+	
+	UIResult = DoUIButtonAutoId({168, 381, 0, 0}, ListenButtonState);
+
+	if (UIResult.PerformAction) {
+		// @TODO(Roskuski): Implment State Transition
+		printf("Listen Button Action\n");
+	}
+	if (UIResult.Hot) {
+		AnimateForwards(ListenButtonState, DeltaTime, false);
+	}
+	else {
+		AnimateBackwards(ListenButtonState, DeltaTime, false);
+	}	
+
+	UIResult = DoUIButtonAutoId({204, 479, 0, 0}, SettingsButtonState);
+
+	if (UIResult.PerformAction) {
+		// @TODO(Roskuski): Implment State Transition
+		printf("Settings Button Action\n");
+	}
+	if (UIResult.Hot) {
+		AnimateForwards(SettingsButtonState, DeltaTime, false);
+	}
+	else {
+		AnimateBackwards(SettingsButtonState, DeltaTime, false);
+	}
+
+	// Debug Info
+	DrawFPS(10, 10);
+	{
+		char Buffer[256] = {};
+		sprintf(Buffer, "Hot Index: %d, Active Index: %d", UIContext.Hot.Index, UIContext.Active.Index);
+		DrawText(Buffer, 10, 30, 20, WHITE);
+	} 
+
+	EndDrawing();
 }
 
 int main(void) {
@@ -324,21 +376,11 @@ int main(void) {
 		// Currently, there are 4 key presses that can emit sounds.
 		switch(ProgState) {
 		case Player: {
-			ProcessAndRenderPlayer(CurrentTime, DeltaTime);
+			ProcessAndRenderPlayer(DeltaTime, CurrentTime);
 		} break;
 
-		case TopMenu: {      
-			// @TODO(Roskuski): This can be pulled out into it's own function. "void UpdateAniamtion(float DeltaTime)"?
-			for (int Index = 0; Index < AnimationEnum_Count; Index++) {
-				animation * const Animation = &AnimationList[Index];
-				Animation->CurrentTime += DeltaTime;
-				Animation->CurrentTime = 0;
-				Animation->CurrentFrame += 1;
-				if (Animation->CurrentFrame == Animation->FrameCount) {
-					Animation->CurrentFrame = 0;
-				}
-			}     
-			ProcessAndRenderTopMenu(titleScreen);
+		case TopMenu: {
+			ProcessAndRenderTopMenu(DeltaTime, CurrentTime, titleScreen);
 		} break;	
 		}
 	}
