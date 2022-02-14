@@ -31,6 +31,7 @@
 
 #include "BluesBash_Note.h"
 #include "BluesBash_Animation.h"
+#include "BluesBash_UI.h"
 
 enum prog_state {
 	Player,
@@ -68,8 +69,9 @@ global_var player_info PlayerInfo;
 
 #include "BluesBash_Note.cpp"
 #include "BluesBash_Animation.cpp"
+#include "BluesBash_UI.cpp"
 
-int WalkToNextPlacement(int Delta, int LowBound, int HighBound, bool DoAdjust) {
+void WalkToNextPlacement(int Delta, int LowBound, int HighBound, bool DoAdjust) {
 	PlayerInfo.Placement += Delta;
 	if (PlayerInfo.Placement < LowBound) { PlayerInfo.Placement = LowBound; }
 	if (PlayerInfo.Placement > HighBound) { PlayerInfo.Placement = HighBound; }

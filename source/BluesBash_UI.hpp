@@ -17,3 +17,8 @@ struct ui_result {
 	bool PerformAction;
 	bool Hot;
 };
+
+bool IsActive(ui_id Id);
+bool IsHot(ui_id Id);
+
+ui_result DoUIButton(ui_id Id, Rectangle HitRect, animation_state State);

@@ -1,10 +1,10 @@
-#include "BluesBash_UI.hpp"
+#include "BluesBash_UI.h"
 
-inline bool IsActive(ui_id Id) {
+bool IsActive(ui_id Id) {
 	return (Id.OwnerFunc == UIContext.Active.OwnerFunc) && (Id.Index == UIContext.Active.Index);
 }
 
-inline bool IsHot(ui_id Id) {
+bool IsHot(ui_id Id) {
 	return (Id.OwnerFunc == UIContext.Hot.OwnerFunc) && (Id.Index == UIContext.Hot.Index);
 }
 
