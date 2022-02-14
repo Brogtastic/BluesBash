@@ -69,38 +69,36 @@ global_var player_info PlayerInfo;
 #include "BluesBash_Note.cpp"
 #include "BluesBash_Animation.cpp"
 
-int WalkToNextPlacement(int Placement, int Delta, int LowBound, int HighBound, note_name *NoteList, bool DoAdjust = true) {
-	Placement += Delta;
-	if (Placement < LowBound) { Placement = LowBound; }
-	if (Placement > HighBound) { Placement = HighBound; }
+int WalkToNextPlacement(int Delta, int LowBound, int HighBound, bool DoAdjust) {
+	PlayerInfo.Placement += Delta;
+	if (PlayerInfo.Placement < LowBound) { PlayerInfo.Placement = LowBound; }
+	if (PlayerInfo.Placement > HighBound) { PlayerInfo.Placement = HighBound; }
 
-	int Unit = 1; // @TODO(Roskuski): I'm not convinced that defaulting to any particular direction is a great idea when adjancent notes are playing.
+	int Unit = 1; // @TODO(Roskuski): in the case where Delta == 0, we should try to choose a direction based on some other metric, instead of defaulting to a particular direction
 	if (Delta < 0) { Unit = -1; }
 	else if (Delta > 0) { Unit = 1; }
 		
 	while (DoAdjust) {
-		if (IsNotePlaying(NoteList[Placement])) {
-			Placement += Unit;
-			if (Placement < LowBound) { Placement = LowBound; }
-			if (Placement > HighBound) { Placement = HighBound; }
+		if (IsNotePlaying(PlayerInfo.Keyboard[PlayerInfo.Placement])) {
+			PlayerInfo.Placement += Unit;
+			if (PlayerInfo.Placement < LowBound) { PlayerInfo.Placement = LowBound; }
+			if (PlayerInfo.Placement > HighBound) { PlayerInfo.Placement = HighBound; }
 		}
-		else if ((Placement != HighBound) && (IsNotePlaying(NoteList[Placement+1]))) {
-			Placement += Unit;
-			if (Placement < LowBound) { Placement = LowBound; }
-			if (Placement > HighBound) { Placement = HighBound; }
+		else if ((PlayerInfo.Placement != HighBound) && (IsNotePlaying(PlayerInfo.Keyboard[PlayerInfo.Placement+1]))) {
+			PlayerInfo.Placement += Unit;
+			if (PlayerInfo.Placement < LowBound) { PlayerInfo.Placement = LowBound; }
+			if (PlayerInfo.Placement > HighBound) { PlayerInfo.Placement = HighBound; }
 		}
-		else if ((Placement != LowBound) && (IsNotePlaying(NoteList[Placement-1]))) {
-			Placement += Unit;
-			if (Placement < LowBound) { Placement = LowBound; }
-			if (Placement > HighBound) { Placement = HighBound; }
+		else if ((PlayerInfo.Placement != LowBound) && (IsNotePlaying(PlayerInfo.Keyboard[PlayerInfo.Placement-1]))) {
+			PlayerInfo.Placement += Unit;
+			if (PlayerInfo.Placement < LowBound) { PlayerInfo.Placement = LowBound; }
+			if (PlayerInfo.Placement > HighBound) { PlayerInfo.Placement = HighBound; }
 		}
 		else { break; }
 
-		if ((Unit == -1) && (Placement == LowBound)) { break; }
-		if ((Unit == 1) && (Placement == HighBound)) { break; }
+		if ((Unit == -1) && (PlayerInfo.Placement == LowBound)) { break; }
+		if ((Unit == 1) && (PlayerInfo.Placement == HighBound)) { break; }
 	}
-	
-	return Placement;
 }
 
 void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
@@ -126,7 +124,7 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 		bool DoAdjust = true;
 		if (PlayerInfo.LastKeyPressed == KEY_UP) { DoAdjust = false; }
 			
-		PlayerInfo.Placement = WalkToNextPlacement(PlayerInfo.Placement, 1, 0, ArrayCount(PlayerInfo.Keyboard)-1, PlayerInfo.Keyboard, DoAdjust);
+		WalkToNextPlacement(1, 0, ArrayCount(PlayerInfo.Keyboard)-1, DoAdjust);
 		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
 		PlayerInfo.SustainedNotes[sustained_key::Right] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		PlayerInfo.LastKeyPressed = KEY_RIGHT;
@@ -136,14 +134,14 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 		bool DoAdjust = true;
 		if (PlayerInfo.LastKeyPressed == KEY_UP) { DoAdjust = false; }
 			
-		PlayerInfo.Placement = WalkToNextPlacement(PlayerInfo.Placement, -1, 0, ArrayCount(PlayerInfo.Keyboard)-1, PlayerInfo.Keyboard, DoAdjust);
+		WalkToNextPlacement(-1, 0, ArrayCount(PlayerInfo.Keyboard)-1, DoAdjust);
 		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
 		PlayerInfo.SustainedNotes[sustained_key::Left] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		PlayerInfo.LastKeyPressed = KEY_LEFT;
 	}
 
 	if (IsKeyPressed(KEY_DOWN)){
-		PlayerInfo.Placement = WalkToNextPlacement(PlayerInfo.Placement, 0, 0, ArrayCount(PlayerInfo.Keyboard)-1, PlayerInfo.Keyboard);
+		WalkToNextPlacement(0, 0, ArrayCount(PlayerInfo.Keyboard)-1, true);
 		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
 		PlayerInfo.SustainedNotes[sustained_key::Down] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		// @TODO(Roskuski): should we keep track of this key in PlayerInfo.LastKeyPressed?
@@ -156,12 +154,12 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 		PlayerInfo.LastChoice = PlayerInfo.LastKeyPressed;
 			
 		if (PlayerInfo.LastKeyPressed == KEY_LEFT){
-			PlayerInfo.Placement = WalkToNextPlacement(PlayerInfo.Placement, 1, 0, ArrayCount(PlayerInfo.Keyboard)-1, PlayerInfo.Keyboard, false);
+			WalkToNextPlacement(1, 0, ArrayCount(PlayerInfo.Keyboard)-1, false);
 			PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
 			PlayerInfo.SustainedNotes[sustained_key::Up] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		}
 		else if (PlayerInfo.LastKeyPressed == KEY_RIGHT){
-			PlayerInfo.Placement = WalkToNextPlacement(PlayerInfo.Placement, -1, 0, ArrayCount(PlayerInfo.Keyboard)-1, PlayerInfo.Keyboard, false);
+			WalkToNextPlacement(-1, 0, ArrayCount(PlayerInfo.Keyboard)-1, false);
 			PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
 			PlayerInfo.SustainedNotes[sustained_key::Up] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		}
@@ -274,7 +272,6 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 }
 
 // @TODO(Roskuski): Find a better way to talk about titleScreen here. I want to fold it into the same system we have for animations
-	
 void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D titleScreen) {
 	// NOTE(Roskuski): This var is used in DoUIButtonAuto
 	void * const CurrentFunction = ProcessAndRenderTopMenu;
