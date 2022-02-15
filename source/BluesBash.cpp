@@ -282,6 +282,10 @@ void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D title
 	local_persist animation_state ListenButtonState = {ListenButton, 0, 0};
 	local_persist animation_state SettingsButtonState = {SettingsButton, 0, 0};
 	
+	local_persist animation_state TopMenuLightState = {TopMenuLight, 0, 0};
+	local_persist bool LightIsAnimating = false;
+	local_persist float LightAnimationCooldown = 0;
+	
 	BeginDrawing();
 
 	ClearBackground(RAYWHITE);
@@ -289,7 +293,27 @@ void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D title
 	
 	// Do UI
 	ui_result UIResult = {false, false};
-	UIResult = DoUIButtonAutoId({127, 287, 100, 100}, PlayButtonState);
+
+	UIResult = DoUIButtonAutoId({141, 0, 561, ScreenHeight}, {150, 55, 112, 66}, TopMenuLightState);
+	if (UIResult.Hot && LightAnimationCooldown <= 0) {
+		LightIsAnimating = true;
+	}
+	
+	if (UIResult.Hot) {
+		LightAnimationCooldown = 0.5;
+	}
+	LightAnimationCooldown -= DeltaTime;
+	
+	if (LightIsAnimating) {
+		if (AnimateForwards(TopMenuLightState, DeltaTime, false) == true) {
+			LightIsAnimating = false;
+			TopMenuLightState.CurrentFrame = 0;
+			TopMenuLightState.CurrentTime = 0;
+		}
+	}
+	
+	// 884 616
+	UIResult = DoUIButtonAutoId({167, 289, 884/4, 616/4}, {167, 289, 884/4, 616/4}, PlayButtonState);
 	
 	if (UIResult.PerformAction) {
 		ProgState = Player;
@@ -300,8 +324,9 @@ void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D title
 	else {
 		AnimateBackwards(PlayButtonState, DeltaTime, false);
 	}
+
 	
-	UIResult = DoUIButtonAutoId({168, 381, 0, 0}, ListenButtonState);
+	UIResult = DoUIButtonAutoId({168, 481, 100, 100}, {168, 481, 100, 100}, ListenButtonState);
 
 	if (UIResult.PerformAction) {
 		// @TODO(Roskuski): Implment State Transition
@@ -314,7 +339,7 @@ void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D title
 		AnimateBackwards(ListenButtonState, DeltaTime, false);
 	}	
 
-	UIResult = DoUIButtonAutoId({204, 479, 0, 0}, SettingsButtonState);
+	UIResult = DoUIButtonAutoId({204, 579, 100, 100}, {204, 579, 100, 100}, SettingsButtonState);
 
 	if (UIResult.PerformAction) {
 		// @TODO(Roskuski): Implment State Transition
@@ -331,7 +356,7 @@ void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D title
 	DrawFPS(10, 10);
 	{
 		char Buffer[256] = {};
-		sprintf(Buffer, "Hot Index: %d, Active Index: %d", UIContext.Hot.Index, UIContext.Active.Index);
+		sprintf(Buffer, "Hot Index: %d, Active Index: %d\nMousePos: %d %d", UIContext.Hot.Index, UIContext.Active.Index, GetMouseX(), GetMouseY());
 		DrawText(Buffer, 10, 30, 20, WHITE);
 	} 
 
@@ -358,10 +383,14 @@ int main(void) {
 	titleScreen = LoadTextureFromImage(title);
 	UnloadImage(title);
 
-	LoadAnimationFromFiles(PlayButton, 0.05, 8, "resources/animations/play/play%d.png");
-	LoadAnimationFromFiles(ListenButton, 0.05, 8, "resources/animations/listen/listen%d.png");
-	LoadAnimationFromFiles(SettingsButton, 0.05, 8, "resources/animations/settings/settings%d.png");
-  
+	{
+		float fps15 = 1.f/15.f;
+		LoadAnimationFromFiles(PlayButton, fps15, 5, "resources/animations/play/play%d.png");
+		LoadAnimationFromFiles(ListenButton, fps15, 5, "resources/animations/listen/listen%d.png");
+		LoadAnimationFromFiles(SettingsButton, fps15, 5, "resources/animations/settings/settings%d.png");
+		LoadAnimationFromFiles(TopMenuLight, fps15, 13, "resources/animations/light/Light%d.png");
+	}
+	                       
 	InitAudioDevice();
 
 	// LoadAllNotes
