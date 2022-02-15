@@ -202,7 +202,7 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 
 			// Play the next chord
 			for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
-				PlayNote(Note, CurrentTime, ChordLength * ChordRatio[CurrentChord]);
+				PlayNote(Note, CurrentTime, ChordLength * ChordRatio[CurrentChord], 0);
 			}
 		}
 	}

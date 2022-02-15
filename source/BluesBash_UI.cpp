@@ -8,17 +8,12 @@ bool IsHot(ui_id Id) {
 	return (Id.OwnerFunc == UIContext.Hot.OwnerFunc) && (Id.Index == UIContext.Hot.Index);
 }
 
-// NOTE(Roskuski): If HitRect.width or HitRect.height are 0, those properties are set to the width of the texture of the button.
-ui_result DoUIButton(ui_id Id, Rectangle HitRect, animation_state State) {
+ui_result DoUIButton(ui_id Id, Rectangle GraphicsRect, Rectangle HitRect, animation_state State) {
 	ui_result Result = {false, false};
 
 	Texture2D *CurrentFrame = GetCurrentFrame(State);
-	if ((HitRect.width == 0) || (HitRect.height == 0)) {
-		HitRect.width = CurrentFrame->width;
-		HitRect.height = CurrentFrame->height;
-	}
 	
-	DrawTexture(*CurrentFrame, HitRect.x, HitRect.y, WHITE);
+	DrawTextureQuad(*CurrentFrame, {1, 1}, {0, 0}, GraphicsRect, WHITE);
 	
 	const Vector2 MousePos = GetMousePosition();
 
@@ -45,6 +40,7 @@ ui_result DoUIButton(ui_id Id, Rectangle HitRect, animation_state State) {
 	}
 	
 	// NOTE(Roskuski): Debug display of the button HitRect
+	// @TODO(Roskuski): We should disable this in non-debug builds.
 	{
 		Color Temp;
 		if (IsActive(Id)) {
@@ -63,7 +59,3 @@ ui_result DoUIButton(ui_id Id, Rectangle HitRect, animation_state State) {
 	
 	return Result; 
 }
-
-// NOTE(Roskuski): I decided that the lowest friction way to do this right now, is to use line number as our "index" for UI elements that are made in the same function.
-// NOTE(Roskuski): As long as we don't make two different UI elements on the same line, this should be a fine assumption...
-#define DoUIButtonAutoId(...) DoUIButton({CurrentFunction, __LINE__}, __VA_ARGS__)

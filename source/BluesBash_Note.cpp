@@ -1,6 +1,6 @@
 #include "BluesBash_Note.h"
 
-translation_scope inline bool IsNotePlaying(note_name Note) {
+bool IsNotePlaying(note_name Note) {
 	bool Result = false;
 	note_state_enum State = NoteStateList[Note].State;
 	
@@ -13,8 +13,7 @@ translation_scope inline bool IsNotePlaying(note_name Note) {
 	return Result;
 }
 
-// Plays a note for the duration that a key is held down for.
-translation_scope inline void PlayNoteSustained(note_name Note) {
+void PlayNoteSustained(note_name Note) {
 	Assert(Note >= 0);
 	Assert(Note < NoteName_Count);
 	if (NoteStateList[Note].State == NotPlaying) { // @TODO(Roskuski): This check might be detremental to the sound.
@@ -24,8 +23,7 @@ translation_scope inline void PlayNoteSustained(note_name Note) {
 	}
 }
 
-// Stops a sustained note
-translation_scope inline void StopNoteSustained(note_name Note) {
+void StopNoteSustained(note_name Note) {
 	Assert(Note >= 0);
 	Assert(Note < NoteName_Count);
 	
@@ -39,16 +37,14 @@ translation_scope inline void StopNoteSustained(note_name Note) {
 	}
 }
 
-// Length is how long the note will play.
-// Delay is how long we will wait until starting to play the note.
-translation_scope inline void PlayNote(note_name Note, float CurrentTime, float Length, float Delay = 0.0f) {
+void PlayNote(note_name Note, float CurrentTime, float Length, float Delay) {
 	Assert(Note != NoteName_Count);
 	NoteStateList[Note].State = QueuedForPlaying;
 	NoteStateList[Note].StartTime = CurrentTime + Delay;
 	NoteStateList[Note].EndTime = CurrentTime + Delay + Length;	
 }
 
-translation_scope inline void StopNote(note_name Note, float CurrentTime) {
+void StopNote(note_name Note, float CurrentTime) {
 	Assert(Note >= 0);
 	Assert(Note != NoteName_Count);
 	NoteStateList[Note].EndTime = CurrentTime;

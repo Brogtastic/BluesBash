@@ -10,25 +10,26 @@ void LoadAnimationFromFiles(animation_enum Index, float FrameTime, int FrameCoun
 	
 	for(int Index = 0; Index < FrameCount; Index++){
 		sprintf(Buffer, PathFormatString, Index + 1);
-		Image Temp = LoadImage(Buffer);
-		ImageResize(&Temp, 365, 205.35); // @TODO(Roskuski): We should change these magic numbes into named constants, Also why do these magic numbers have these values.
-		Animation->Frames[Index] = LoadTextureFromImage(Temp);
-		UnloadImage(Temp);
+		Animation->Frames[Index] = LoadTexture(Buffer);
 	}
 	free(Buffer);
 }
 
-inline Texture2D* GetCurrentFrame(animation_state State) {
+
+Texture2D* GetCurrentFrame(animation_state State) {
 	return &(AnimationList[State.Index].Frames[State.CurrentFrame]);
 }
 
-void AnimateForwards(animation_state &State, float DeltaTime, bool Loop) {
+bool AnimateForwards(animation_state &State, float DeltaTime, bool Loop) {
 	const animation &Animation = AnimationList[State.Index];
+	bool Result = false;
+	
 	State.CurrentTime += DeltaTime;
 	if (State.CurrentTime > Animation.FrameTime) {
 		State.CurrentTime = 0;
 		State.CurrentFrame += 1;
 		if (State.CurrentFrame >= Animation.FrameCount) {
+			Result = true;	
 			if (Loop) {
 				State.CurrentFrame = 0;
 			}
@@ -38,15 +39,20 @@ void AnimateForwards(animation_state &State, float DeltaTime, bool Loop) {
 			}
 		}
 	}
+
+	return Result;
 }
 
-void AnimateBackwards(animation_state &State, float DeltaTime, bool Loop) {
+bool AnimateBackwards(animation_state &State, float DeltaTime, bool Loop) {
 	const animation &Animation = AnimationList[State.Index];
+	bool Result = false;
+	
 	State.CurrentTime -= DeltaTime;
 	if (State.CurrentTime < 0) {
 		State.CurrentTime = Animation.FrameTime;
 		State.CurrentFrame -= 1;
 		if (State.CurrentFrame < 0) {
+			Result = true;
 			if (Loop) {
 				State.CurrentFrame = Animation.FrameCount - 1;
 			}
@@ -55,4 +61,6 @@ void AnimateBackwards(animation_state &State, float DeltaTime, bool Loop) {
 			}
 		}
 	}
+
+	return Result;
 }

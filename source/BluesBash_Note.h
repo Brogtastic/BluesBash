@@ -96,11 +96,11 @@ const note_name Chords[3][4] = {
 #define WHOLE_NOTE(Time) (Time*4)
 
 enum note_state_enum {
-	NotPlaying = 0,
-	QueuedForPlaying,
-	Playing,
-	PlayingSustained,
-	Stopping,
+	NotPlaying = 0, // Note isn't playing
+	QueuedForPlaying, // Note will play when StartTime is less than CurrentTime
+	Playing, // Note is playing
+	PlayingSustained, // Note is playing until we stop it
+	Stopping, // Note is stopping playing
 };
 
 struct note_state {
@@ -112,3 +112,23 @@ struct note_state {
 
 global_var note_state NoteStateList[NoteName_Count];
 global_var Sound NoteSoundList[NoteName_Count];
+
+// Returns true if the note that's passed in is currently playing
+bool IsNotePlaying(note_name Note);
+
+// Plays the note that's passed in until StopNoteSustained is called with the same note
+void PlayNoteSustained(note_name Note);
+
+// Stops the note that's passed in if it was played by PlayNoteSustained
+void StopNoteSustained(note_name Note);
+
+// Note: Note to play
+// CurrentTime: the CurrentTime
+// Length: How long to play the note
+// Delay: How long we should wait until we start playing
+void PlayNote(note_name Note, float CurrentTime, float Length, float Delay);
+
+// Stops the note that's passed in. Make sure you pass what the current time is as well.
+void StopNote(note_name Note, float CurrentTime);
+
+
