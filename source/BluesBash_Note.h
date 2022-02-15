@@ -107,6 +107,7 @@ struct note_state {
 	note_state_enum State;
 	float StartTime;
 	float EndTime;
+	float Volume;
 };
 
 
@@ -117,7 +118,8 @@ global_var Sound NoteSoundList[NoteName_Count];
 bool IsNotePlaying(note_name Note);
 
 // Plays the note that's passed in until StopNoteSustained is called with the same note
-void PlayNoteSustained(note_name Note);
+// Volume: the loudness of the note we're playing from 1.0 to 0
+void PlayNoteSustained(note_name Note, float Volume);
 
 // Stops the note that's passed in if it was played by PlayNoteSustained
 void StopNoteSustained(note_name Note);
@@ -126,7 +128,8 @@ void StopNoteSustained(note_name Note);
 // CurrentTime: the CurrentTime
 // Length: How long to play the note
 // Delay: How long we should wait until we start playing
-void PlayNote(note_name Note, float CurrentTime, float Length, float Delay);
+// Volume: The Loudness of the note we're playing. From 1.0 to 0
+void PlayNote(note_name Note, float CurrentTime, float Length, float Delay, float Volume);
 
 // Stops the note that's passed in. Make sure you pass what the current time is as well.
 void StopNote(note_name Note, float CurrentTime);

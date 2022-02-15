@@ -121,13 +121,17 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 			PlayerInfo.SustainedNotes[Index] = NoteName_Count;
 		}
 	}
+
+	// @TODO(Roskuski): Right now, all of the player's key presses have the same volume.
+	// We could make it so that each concurrently playing note make the next played not quiter?
+	const float SustainedVolume = 0.30;
 	
 	if (IsKeyPressed(KEY_RIGHT)) {
 		bool DoAdjust = true;
 		if (PlayerInfo.LastKeyPressed == KEY_UP) { DoAdjust = false; }
 			
 		WalkToNextPlacement(1, 0, ArrayCount(PlayerInfo.Keyboard)-1, DoAdjust);
-		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
+		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement], SustainedVolume);
 		PlayerInfo.SustainedNotes[sustained_key::Right] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		PlayerInfo.LastKeyPressed = KEY_RIGHT;
 	}
@@ -137,14 +141,14 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 		if (PlayerInfo.LastKeyPressed == KEY_UP) { DoAdjust = false; }
 			
 		WalkToNextPlacement(-1, 0, ArrayCount(PlayerInfo.Keyboard)-1, DoAdjust);
-		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
+		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement], SustainedVolume);
 		PlayerInfo.SustainedNotes[sustained_key::Left] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		PlayerInfo.LastKeyPressed = KEY_LEFT;
 	}
 
 	if (IsKeyPressed(KEY_DOWN)){
 		WalkToNextPlacement(0, 0, ArrayCount(PlayerInfo.Keyboard)-1, true);
-		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
+		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement], SustainedVolume);
 		PlayerInfo.SustainedNotes[sustained_key::Down] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		// @TODO(Roskuski): should we keep track of this key in PlayerInfo.LastKeyPressed?
 	}
@@ -157,12 +161,12 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 			
 		if (PlayerInfo.LastKeyPressed == KEY_LEFT){
 			WalkToNextPlacement(1, 0, ArrayCount(PlayerInfo.Keyboard)-1, false);
-			PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
+			PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement], SustainedVolume);
 			PlayerInfo.SustainedNotes[sustained_key::Up] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		}
 		else if (PlayerInfo.LastKeyPressed == KEY_RIGHT){
 			WalkToNextPlacement(-1, 0, ArrayCount(PlayerInfo.Keyboard)-1, false);
-			PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement]);
+			PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement], SustainedVolume);
 			PlayerInfo.SustainedNotes[sustained_key::Up] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		}
 		PlayerInfo.LastChoice = PlayerInfo.LastKeyPressed;
@@ -202,7 +206,7 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 
 			// Play the next chord
 			for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
-				PlayNote(Note, CurrentTime, ChordLength * ChordRatio[CurrentChord], 0);
+				PlayNote(Note, CurrentTime, ChordLength * ChordRatio[CurrentChord], 0, 0.25);
 			}
 		}
 	}
@@ -215,6 +219,7 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 			if (NoteStateList[Index].StartTime <= CurrentTime &&
 			    NoteStateList[Index].EndTime > CurrentTime) {
 				NoteStateList[Index].State = Playing;
+				SetSoundVolume(NoteSoundList[Index], NoteStateList[Index].Volume);
 				PlaySound(NoteSoundList[Index]);
 			}
 		} break;
@@ -228,6 +233,7 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 
 		case Stopping: {
 			StopSound(NoteSoundList[Index]);
+			SetSoundVolume(NoteSoundList[Index], 1.0);
 			NoteStateList[Index].State = NotPlaying;
 		} break;
 

@@ -13,12 +13,15 @@ bool IsNotePlaying(note_name Note) {
 	return Result;
 }
 
-void PlayNoteSustained(note_name Note) {
+void PlayNoteSustained(note_name Note, float Volume) {
 	Assert(Note >= 0);
 	Assert(Note < NoteName_Count);
 	if (NoteStateList[Note].State == NotPlaying) { // @TODO(Roskuski): This check might be detremental to the sound.
+		// @TODO(Roskuski): I think that we're going to need to know the CurrentTime here to facilitate creating replay numbers. 
 		NoteStateList[Note].State = PlayingSustained;
-		// @TODO(Roskuski): I think that we're going to need to know the CurrentTime here to facilitate creating replay numbers.
+		NoteStateList[Note].Volume = Volume;
+		
+		SetSoundVolume(NoteSoundList[Note], Volume);
 		PlaySound(NoteSoundList[Note]);
 	}
 }
@@ -30,6 +33,9 @@ void StopNoteSustained(note_name Note) {
 	// @TODO(Roskuski): I think that we're going to need to know the CurrentTime here to facilitate creating replay numbers.
 	if (NoteStateList[Note].State == PlayingSustained) {
 		StopSound(NoteSoundList[Note]);
+		SetSoundVolume(NoteSoundList[Note], 1.0);
+		
+		NoteStateList[Note].Volume = 1.0;
 		NoteStateList[Note].State = NotPlaying;
 	}
 	else {
@@ -37,11 +43,12 @@ void StopNoteSustained(note_name Note) {
 	}
 }
 
-void PlayNote(note_name Note, float CurrentTime, float Length, float Delay) {
+void PlayNote(note_name Note, float CurrentTime, float Length, float Delay, float Volume) {
 	Assert(Note != NoteName_Count);
 	NoteStateList[Note].State = QueuedForPlaying;
 	NoteStateList[Note].StartTime = CurrentTime + Delay;
-	NoteStateList[Note].EndTime = CurrentTime + Delay + Length;	
+	NoteStateList[Note].EndTime = CurrentTime + Delay + Length;
+	NoteStateList[Note].Volume = Volume;
 }
 
 void StopNote(note_name Note, float CurrentTime) {
