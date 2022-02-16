@@ -103,6 +103,10 @@ void WalkToNextPlacement(int Delta, int LowBound, int HighBound, bool DoAdjust) 
 	}
 }
 
+float Lerp(float Start, float End, float Ratio) {
+	return Start + (End - Start) * Ratio;
+}
+
 void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 	// @TODO(Roskuski): @RemoveMe move to a different initilatizion system for state init.
 	local_persist bool IsInitilized = false;
@@ -226,15 +230,29 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 				
 		case Playing: {
 			if (NoteStateList[Index].EndTime <= CurrentTime) {
-				StopSound(NoteSoundList[Index]);
-				NoteStateList[Index].State = NotPlaying;
+				NoteStateList[Index].State = Stopping;
 			}
 		} break;
 
 		case Stopping: {
-			StopSound(NoteSoundList[Index]);
-			SetSoundVolume(NoteSoundList[Index], 1.0);
-			NoteStateList[Index].State = NotPlaying;
+			if (NoteStateList[Index].FadeRatio <= 0) {
+				StopSound(NoteSoundList[Index]);
+				NoteStateList[Index].State = NotPlaying;
+			}
+
+			const float FadeTime = SIXTEENTH_NOTE(SecondsPerBeat);
+			//const float FadeTime = WHOLE_NOTE(SecondsPerBeat);
+			NoteStateList[Index].FadeRatio = ((NoteStateList[Index].FadeRatio * FadeTime) - DeltaTime)/FadeTime;
+
+			if (NoteStateList[Index].FadeRatio < 0) { NoteStateList[Index].FadeRatio = 0; }
+			float NewVolume = Lerp(0, NoteStateList[Index].Volume, NoteStateList[Index].FadeRatio);
+				
+			SetSoundVolume(NoteSoundList[Index], NewVolume);
+			if (Index == C2) {
+				char Buffer[50];
+				sprintf(Buffer, "Ratio: %lf, NewVolume: %lf", NoteStateList[Index].FadeRatio, NewVolume);
+				DrawText(Buffer, 10, 150, 20, BLACK);
+			}
 		} break;
 
 		}
@@ -263,6 +281,11 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 				RectColor = BLUE;
 				TextColor = WHITE;
 			} break;
+			case Stopping: {
+				RectColor = BLACK;
+				TextColor = WHITE;
+				RectColor.r = (char)(0xff * Lerp(1, 0, NoteState.FadeRatio));
+			}
 			}
 			if (Index == C2) {
 				Rect.y = 60;

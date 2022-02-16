@@ -16,10 +16,11 @@ bool IsNotePlaying(note_name Note) {
 void PlayNoteSustained(note_name Note, float Volume) {
 	Assert(Note >= 0);
 	Assert(Note < NoteName_Count);
-	if (NoteStateList[Note].State == NotPlaying) { // @TODO(Roskuski): This check might be detremental to the sound.
+	if (!IsNotePlaying(Note)) {
 		// @TODO(Roskuski): I think that we're going to need to know the CurrentTime here to facilitate creating replay numbers. 
 		NoteStateList[Note].State = PlayingSustained;
 		NoteStateList[Note].Volume = Volume;
+		NoteStateList[Note].FadeRatio = 1;
 		
 		SetSoundVolume(NoteSoundList[Note], Volume);
 		PlaySound(NoteSoundList[Note]);
@@ -32,11 +33,7 @@ void StopNoteSustained(note_name Note) {
 	
 	// @TODO(Roskuski): I think that we're going to need to know the CurrentTime here to facilitate creating replay numbers.
 	if (NoteStateList[Note].State == PlayingSustained) {
-		StopSound(NoteSoundList[Note]);
-		SetSoundVolume(NoteSoundList[Note], 1.0);
-		
-		NoteStateList[Note].Volume = 1.0;
-		NoteStateList[Note].State = NotPlaying;
+		NoteStateList[Note].State = Stopping;
 	}
 	else {
 		printf("[WARNING]: We tried to stop a note that wasn't in PlayingSustained state! Doing nothing\n");
@@ -49,6 +46,7 @@ void PlayNote(note_name Note, float CurrentTime, float Length, float Delay, floa
 	NoteStateList[Note].StartTime = CurrentTime + Delay;
 	NoteStateList[Note].EndTime = CurrentTime + Delay + Length;
 	NoteStateList[Note].Volume = Volume;
+	NoteStateList[Note].FadeRatio = 1;
 }
 
 void StopNote(note_name Note, float CurrentTime) {

@@ -108,6 +108,7 @@ struct note_state {
 	float StartTime;
 	float EndTime;
 	float Volume;
+	float FadeRatio;
 };
 
 
