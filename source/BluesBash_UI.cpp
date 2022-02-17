@@ -10,12 +10,10 @@ bool IsHot(ui_id Id) {
 
 ui_result DoUIButton(ui_id Id, Rectangle GraphicsRect, Rectangle HitRect, animation_state State) {
 	ui_result Result = {false, false};
-
 	Texture2D *CurrentFrame = GetCurrentFrame(State);
+	const Vector2 MousePos = GetMousePosition();
 	
 	DrawTextureQuad(*CurrentFrame, {1, 1}, {0, 0}, GraphicsRect, WHITE);
-	
-	const Vector2 MousePos = GetMousePosition();
 
 	if (CheckCollisionPointRec(MousePos, HitRect)) {
 		UIContext.Hot = Id;

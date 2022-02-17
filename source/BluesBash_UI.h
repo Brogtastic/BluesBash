@@ -34,6 +34,6 @@ ui_result DoUIButton(ui_id Id, Rectangle GraphicsRect, Rectangle HitRect, animat
 // NOTE(Roskuski): If we make UI Elements in a function, there must be a void* variable called `CurrentFunction` that is a pointer to the function. You can do this by:
 // NOTE(Rosksuki):`void *CurrentFunction = FunctionName` Note that FunctionName here doesn't have parenthesis.
 // NOTE(Roskuski): As long as we don't make two different UI elements on the same line, this should be a fine assumption...
-
-// NOTE(Roskuski): To Brog, if you make a new UI element, use this function, and then refer to `DoUIButton`'s parameters and ignore that first parameter exists. The purpose of this macro is to automatically populate the first parameter with a value that we do not have to think about.
 #define DoUIButtonAutoId(...) DoUIButton({CurrentFunction, __LINE__}, __VA_ARGS__)
+// NOTE(Roskuski): To Brog, if you make a new UI element, use this function, and then refer to `DoUIButton`'s parameters and ignore that first parameter exists. The purpose of this macro is to automatically populate the first parameter with a value that we do not have to think about.
+

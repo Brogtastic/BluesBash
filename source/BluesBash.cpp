@@ -54,8 +54,8 @@ struct player_info {
 const int ScreenWidth = 1280;
 const int ScreenHeight = 720;
 
-const float BeatsPerMin = 120;
-const float SecondsPerBeat = 1.f / (BeatsPerMin / 60.f);
+const double BeatsPerMin = 120;
+const double SecondsPerBeat = 1.f / (BeatsPerMin / 60.f);
 
 global_var prog_state ProgState;
 global_var player_info PlayerInfo;
@@ -107,7 +107,7 @@ float Lerp(float Start, float End, float Ratio) {
 	return Start + (End - Start) * Ratio;
 }
 
-void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
+void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	// @TODO(Roskuski): @RemoveMe move to a different initilatizion system for state init.
 	local_persist bool IsInitilized = false;
 	if (!IsInitilized) {
@@ -188,18 +188,18 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 
 	// Do Chords
 	{
-		const float ChordLength = WHOLE_NOTE(SecondsPerBeat);
-		local_persist float TimeUntilNextChord = 0;
+		const double ChordLength = WHOLE_NOTE(SecondsPerBeat);
+		local_persist double TimeUntilNextChord = 0;
 		TimeUntilNextChord -= DeltaTime;
 			
 		if (TimeUntilNextChord <= 0) {
 			const chord_names ChordSequence[] = {Cmaj7, Fmaj7, Cmaj7, Gmaj7, Fmaj7, Cmaj7};
-			const float ChordRatio[] = {2, 2, 2, 1, 1, 2};
+			const double ChordRatio[] = {2, 2, 2, 1, 1, 2};
 			local_persist int CurrentChord = ArrayCount(ChordSequence) - 1;
 
 			// Stop the current chord (on start up we can stop notes that are not playing)
 			for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
-				StopNote(Note, CurrentTime);
+				StopNote(Note);
 			}
 
 			CurrentChord += 1;
@@ -240,8 +240,7 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 				NoteStateList[Index].State = NotPlaying;
 			}
 
-			const float FadeTime = SIXTEENTH_NOTE(SecondsPerBeat);
-			//const float FadeTime = WHOLE_NOTE(SecondsPerBeat);
+			const double FadeTime = SIXTEENTH_NOTE(SecondsPerBeat);
 			NoteStateList[Index].FadeRatio = ((NoteStateList[Index].FadeRatio * FadeTime) - DeltaTime)/FadeTime;
 
 			if (NoteStateList[Index].FadeRatio < 0) { NoteStateList[Index].FadeRatio = 0; }
@@ -303,7 +302,7 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 }
 
 // @TODO(Roskuski): Find a better way to talk about titleScreen here. I want to fold it into the same system we have for animations
-void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D titleScreen) {
+void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime, Texture2D titleScreen) {
 	// NOTE(Roskuski): This var is used in DoUIButtonAuto
 	void * const CurrentFunction = ProcessAndRenderTopMenu;
 
@@ -313,7 +312,7 @@ void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D title
 	
 	local_persist animation_state TopMenuLightState = {TopMenuLight, 0, 0};
 	local_persist bool LightIsAnimating = false;
-	local_persist float LightAnimationCooldown = 0;
+	local_persist double LightAnimationCooldown = 0;
 	
 	BeginDrawing();
 
@@ -413,7 +412,7 @@ int main(void) {
 	UnloadImage(title);
 
 	{
-		float fps15 = 1.f/15.f;
+		double fps15 = 1.f/15.f;
 		LoadAnimationFromFiles(PlayButton, fps15, 5, "resources/animations/play/play%d.png");
 		LoadAnimationFromFiles(ListenButton, fps15, 5, "resources/animations/listen/listen%d.png");
 		LoadAnimationFromFiles(SettingsButton, fps15, 5, "resources/animations/settings/settings%d.png");
@@ -428,9 +427,10 @@ int main(void) {
 	}
 	  
 	while(!WindowShouldClose()) {
-		float CurrentTime = GetTime();
-		float DeltaTime = (float)GetFrameTime();
-		// Currently, there are 4 key presses that can emit sounds.
+		double DeltaTime = GetFrameTime();
+		local_persist double CurrentTime = 0;
+		CurrentTime += DeltaTime;
+		
 		switch(ProgState) {
 		case Player: {
 			ProcessAndRenderPlayer(DeltaTime, CurrentTime);
