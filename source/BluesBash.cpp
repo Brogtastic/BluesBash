@@ -341,8 +341,7 @@ void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D title
 		}
 	}
 	
-	// 884 616
-	UIResult = DoUIButtonAutoId({167, 289, 884/4, 616/4}, {167, 289, 884/4, 616/4}, PlayButtonState);
+	UIResult = DoUIButtonAutoId({211, 330 - 64, 167, 117}, {211, 330 - 64, 167, 117}, PlayButtonState);
 	
 	if (UIResult.PerformAction) {
 		ProgState = Player;
@@ -354,8 +353,7 @@ void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D title
 		AnimateBackwards(PlayButtonState, DeltaTime, false);
 	}
 
-	
-	UIResult = DoUIButtonAutoId({168, 481, 100, 100}, {168, 481, 100, 100}, ListenButtonState);
+	UIResult = DoUIButtonAutoId({221, 450 - 64, 243, 134}, {221, 450 - 64, 243, 134}, ListenButtonState);
 
 	if (UIResult.PerformAction) {
 		// @TODO(Roskuski): Implment State Transition
@@ -368,7 +366,7 @@ void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D title
 		AnimateBackwards(ListenButtonState, DeltaTime, false);
 	}	
 
-	UIResult = DoUIButtonAutoId({204, 579, 100, 100}, {204, 579, 100, 100}, SettingsButtonState);
+	UIResult = DoUIButtonAutoId({221, 510, 331, 173}, {221, 510, 331, 173}, SettingsButtonState);
 
 	if (UIResult.PerformAction) {
 		// @TODO(Roskuski): Implment State Transition
