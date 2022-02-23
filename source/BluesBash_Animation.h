@@ -5,12 +5,16 @@ struct animation {
 	Texture2D *Frames;
 };
 
+
 // NOTE(Roskuski): Used as a index into AnimationList
 enum animation_enum {
 	PlayButton,
 	ListenButton,
 	SettingsButton,
 	TopMenuLight,
+
+	LoginMenuBackground,
+	PrePlayMenuStill,
 	
 	AnimationEnum_Count, // NOTE(Roskuski): Keep this at the end.
 };

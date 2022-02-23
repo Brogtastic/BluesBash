@@ -36,6 +36,8 @@
 enum prog_state {
 	Player,
 	TopMenu,
+	LoginMenu,
+	PrePlayMenu,
 };
 
 enum sustained_key {
@@ -452,11 +454,13 @@ int main(void) {
 	UnloadImage(title);
 
 	{
-		double fps15 = 1.f/15.f;
+		double fps15 = 1.0/15.0;
 		LoadAnimationFromFiles(PlayButton, fps15, 5, "resources/animations/play/play%d.png");
 		LoadAnimationFromFiles(ListenButton, fps15, 5, "resources/animations/listen/listen%d.png");
 		LoadAnimationFromFiles(SettingsButton, fps15, 5, "resources/animations/settings/settings%d.png");
 		LoadAnimationFromFiles(TopMenuLight, fps15, 13, "resources/animations/light/Light%d.png");
+		LoadAnimationFromFiles(LoginMenuBackground, fps15, 28, "resources/animations/login page/login%d.png");
+		LoadAnimationFromFiles(PrePlayMenuStill, 0, 1, "resources/preplayscreen2.png");
 	}
 	                       
 	InitAudioDevice();
@@ -470,6 +474,9 @@ int main(void) {
 		double DeltaTime = GetFrameTime();
 		local_persist double CurrentTime = 0;
 		CurrentTime += DeltaTime;
+
+		if (IsKeyPressed(KEY_ONE)) { ProgState = LoginMenu; }
+		if (IsKeyPressed(KEY_TWO)) { ProgState = PrePlayMenu; }
 		
 		switch(ProgState) {
 		case Player: {
@@ -478,7 +485,22 @@ int main(void) {
 
 		case TopMenu: {
 			ProcessAndRenderTopMenu(DeltaTime, CurrentTime, titleScreen);
-		} break;	
+		} break;
+
+		case LoginMenu: {
+			local_persist animation_state LoginMenuState = { LoginMenuBackground, 0, 0};
+			AnimateForwards(LoginMenuState, DeltaTime, true);
+			BeginDrawing();
+			DrawTextureQuad(*GetCurrentFrame(LoginMenuState), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
+			EndDrawing();
+		} break;
+
+		case PrePlayMenu: {
+			local_persist animation_state PrePlayState = { PrePlayMenuStill, 0, 0};
+			BeginDrawing();
+			DrawTextureQuad(*GetCurrentFrame(PrePlayState), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
+			EndDrawing();
+		} break;
 		}
 	}
 
