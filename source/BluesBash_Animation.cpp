@@ -1,6 +1,6 @@
 #include "BluesBash_Animation.h"
 
-void LoadAnimationFromFiles(animation_enum Index, float FrameTime, int FrameCount, const char *PathFormatString) {
+void LoadAnimationFromFiles(animation_enum Index, double FrameTime, int FrameCount, const char *PathFormatString) {
 	animation * const Animation = &AnimationList[Index];
 	Animation->FrameTime = FrameTime;
 	Animation->FrameCount = FrameCount;
@@ -20,7 +20,7 @@ Texture2D* GetCurrentFrame(animation_state State) {
 	return &(AnimationList[State.Index].Frames[State.CurrentFrame]);
 }
 
-bool AnimateForwards(animation_state &State, float DeltaTime, bool Loop) {
+bool AnimateForwards(animation_state &State, double DeltaTime, bool Loop) {
 	const animation &Animation = AnimationList[State.Index];
 	bool Result = false;
 	
@@ -43,7 +43,7 @@ bool AnimateForwards(animation_state &State, float DeltaTime, bool Loop) {
 	return Result;
 }
 
-bool AnimateBackwards(animation_state &State, float DeltaTime, bool Loop) {
+bool AnimateBackwards(animation_state &State, double DeltaTime, bool Loop) {
 	const animation &Animation = AnimationList[State.Index];
 	bool Result = false;
 	

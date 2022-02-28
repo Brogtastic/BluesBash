@@ -16,12 +16,15 @@ set IncludePaths=-I../libs/raylib/include
 set LibraryPaths=/LIBPATH:../libs/raylib/lib
 set TranslationUnits=BluesBash.cpp
 
-set CFlags=-nologo -Fo../bin/obj/ -MD
+set CFlags=-nologo -Fo../bin/obj/
 set LFlags=-link /OUT:../bin/BluesBash.exe /nologo
 
 if "%1"=="debug" (
-	 set CFlags=%CFlags% -Zi -Od
+	 set CFlags=%CFlags% -Zi -Od -MD
 	 set LFlags=%LFlags% /DEBUG
+) else (
+	 set CFlags=%CFlags% -O2 -MT
+	 set LFlags=%LFlags% 
 )
 
 pushd source

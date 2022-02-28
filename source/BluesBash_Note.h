@@ -105,8 +105,8 @@ enum note_state_enum {
 
 struct note_state {
 	note_state_enum State;
-	float StartTime;
-	float EndTime;
+	double StartTime;
+	double EndTime;
 	float Volume;
 	float FadeRatio;
 };
@@ -130,9 +130,9 @@ void StopNoteSustained(note_name Note);
 // Length: How long to play the note
 // Delay: How long we should wait until we start playing
 // Volume: The Loudness of the note we're playing. From 1.0 to 0
-void PlayNote(note_name Note, float CurrentTime, float Length, float Delay, float Volume);
+void PlayNote(note_name Note, double CurrentTime, double Length, double Delay, float Volume);
 
 // Stops the note that's passed in. Make sure you pass what the current time is as well.
-void StopNote(note_name Note, float CurrentTime);
+void StopNote(note_name Note);
 
 

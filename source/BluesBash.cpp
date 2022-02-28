@@ -36,6 +36,8 @@
 enum prog_state {
 	Player,
 	TopMenu,
+	LoginMenu,
+	PrePlayMenu,
 };
 
 enum sustained_key {
@@ -46,16 +48,22 @@ struct player_info {
 	int Placement;
 	int LastKeyPressed;
 	int LastChoice;
+
+	double TimeUntilNextChord;
+	int CurrentChord;
+	
 	note_name Keyboard[19];
 	note_name SustainedNotes[4];
+
+	double NoteEaseRatio[19];
 };
 
 // Constants and globals should be defined here.
 const int ScreenWidth = 1280;
 const int ScreenHeight = 720;
 
-const float BeatsPerMin = 120;
-const float SecondsPerBeat = 1.f / (BeatsPerMin / 60.f);
+const double BeatsPerMin = 120;
+const double SecondsPerBeat = 1.f / (BeatsPerMin / 60.f);
 
 global_var prog_state ProgState;
 global_var player_info PlayerInfo;
@@ -103,11 +111,21 @@ void WalkToNextPlacement(int Delta, int LowBound, int HighBound, bool DoAdjust) 
 	}
 }
 
-float Lerp(float Start, float End, float Ratio) {
+// @TODO(Roskuski): Having other functions for non-linear interpolation would be nice!
+float LinearInterp(float Start, float End, float Ratio) {
 	return Start + (End - Start) * Ratio;
 }
 
-void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
+double LinearInterp(double Start, double End, double Ratio) {
+	return Start + (End - Start) * Ratio;
+}
+
+void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
+	// @TODO(Roskuski): The constants here should be folded into PlayerInfo.
+	const double ChordLength = WHOLE_NOTE(SecondsPerBeat);
+	const chord_names ChordSequence[] = {Cmaj7, Fmaj7, Cmaj7, Gmaj7, Fmaj7, Cmaj7};
+	const double ChordRatio[] = {2, 2, 2, 1, 1, 2};
+	
 	// @TODO(Roskuski): @RemoveMe move to a different initilatizion system for state init.
 	local_persist bool IsInitilized = false;
 	if (!IsInitilized) {
@@ -115,6 +133,9 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 		PlayerInfo.Placement = 0;
 		PlayerInfo.LastChoice = KEY_LEFT;
 		PlayerInfo.LastKeyPressed = KEY_LEFT;
+
+		PlayerInfo.TimeUntilNextChord = 0;
+		PlayerInfo.CurrentChord = ArrayCount(ChordSequence) - 1;
 
 		for (int Index = 0; Index < ArrayCount(PlayerInfo.Keyboard); Index++) {
 			const note_name KeyboardRef[19] = {C2, Eb2, F2, Fs2, G2, Bb2, C3, Eb3, F3, Fs3, G3, Bb3, C4, Eb4, F4, Fs4, G4, Bb4, C5};
@@ -125,6 +146,8 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 			PlayerInfo.SustainedNotes[Index] = NoteName_Count;
 		}
 	}
+
+	local_persist float OffsetYEaseRatio = 1;
 
 	// @TODO(Roskuski): Right now, all of the player's key presses have the same volume.
 	// We could make it so that each concurrently playing note make the next played not quiter?
@@ -138,6 +161,8 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement], SustainedVolume);
 		PlayerInfo.SustainedNotes[sustained_key::Right] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		PlayerInfo.LastKeyPressed = KEY_RIGHT;
+		
+		OffsetYEaseRatio = 0;
 	}
         
 	if (IsKeyPressed(KEY_LEFT)) {
@@ -148,6 +173,8 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement], SustainedVolume);
 		PlayerInfo.SustainedNotes[sustained_key::Left] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		PlayerInfo.LastKeyPressed = KEY_LEFT;
+
+		OffsetYEaseRatio = 0;
 	}
 
 	if (IsKeyPressed(KEY_DOWN)){
@@ -155,6 +182,8 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement], SustainedVolume);
 		PlayerInfo.SustainedNotes[sustained_key::Down] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		// @TODO(Roskuski): should we keep track of this key in PlayerInfo.LastKeyPressed?
+
+		OffsetYEaseRatio = 0;
 	}
 		
 	if(IsKeyPressed(KEY_UP)){
@@ -175,6 +204,8 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 		}
 		PlayerInfo.LastChoice = PlayerInfo.LastKeyPressed;
 		PlayerInfo.LastKeyPressed = KEY_UP;
+
+		OffsetYEaseRatio = 0;
 	}
 
 	// Stop Sustained notes that we are no longer holding.
@@ -188,29 +219,23 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 
 	// Do Chords
 	{
-		const float ChordLength = WHOLE_NOTE(SecondsPerBeat);
-		local_persist float TimeUntilNextChord = 0;
-		TimeUntilNextChord -= DeltaTime;
+		PlayerInfo.TimeUntilNextChord -= DeltaTime;
 			
-		if (TimeUntilNextChord <= 0) {
-			const chord_names ChordSequence[] = {Cmaj7, Fmaj7, Cmaj7, Gmaj7, Fmaj7, Cmaj7};
-			const float ChordRatio[] = {2, 2, 2, 1, 1, 2};
-			local_persist int CurrentChord = ArrayCount(ChordSequence) - 1;
-
+		if (PlayerInfo.TimeUntilNextChord <= 0) {
 			// Stop the current chord (on start up we can stop notes that are not playing)
-			for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
-				StopNote(Note, CurrentTime);
+			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
+				StopNote(Note);
 			}
 
-			CurrentChord += 1;
-			TimeUntilNextChord = ChordLength * ChordRatio[CurrentChord];
-			if (CurrentChord >= ArrayCount(ChordSequence)) {
-				CurrentChord = 0;
+			PlayerInfo.CurrentChord += 1;
+			PlayerInfo.TimeUntilNextChord = ChordLength * ChordRatio[PlayerInfo.CurrentChord];
+			if (PlayerInfo.CurrentChord >= ArrayCount(ChordSequence)) {
+				PlayerInfo.CurrentChord = 0;
 			}
 
 			// Play the next chord
-			for (note_name Note : Chords[ChordSequence[CurrentChord]]) {
-				PlayNote(Note, CurrentTime, ChordLength * ChordRatio[CurrentChord], 0, 0.25);
+			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
+				PlayNote(Note, CurrentTime, ChordLength * ChordRatio[PlayerInfo.CurrentChord], 0, 0.25);
 			}
 		}
 	}
@@ -240,12 +265,11 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 				NoteStateList[Index].State = NotPlaying;
 			}
 
-			const float FadeTime = SIXTEENTH_NOTE(SecondsPerBeat);
-			//const float FadeTime = WHOLE_NOTE(SecondsPerBeat);
+			const double FadeTime = SIXTEENTH_NOTE(SecondsPerBeat);
 			NoteStateList[Index].FadeRatio = ((NoteStateList[Index].FadeRatio * FadeTime) - DeltaTime)/FadeTime;
 
 			if (NoteStateList[Index].FadeRatio < 0) { NoteStateList[Index].FadeRatio = 0; }
-			float NewVolume = Lerp(0, NoteStateList[Index].Volume, NoteStateList[Index].FadeRatio);
+			float NewVolume = LinearInterp(0, NoteStateList[Index].Volume, NoteStateList[Index].FadeRatio);
 				
 			SetSoundVolume(NoteSoundList[Index], NewVolume);
 			if (Index == C2) {
@@ -262,10 +286,18 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 	{
 		BeginDrawing();
 		ClearBackground(RAYWHITE);
-            
-		Rectangle Rect = {0, 10, 48, 48};
-		for (int Index = 0; Index < NoteName_Count; Index++) {
-			note_state NoteState = NoteStateList[Index];
+
+		// @TODO progress bar
+		DrawRectangleRec({ScreenWidth/2 - 200 - 2, ScreenHeight*(13.0/16.0) - 1, 400 + 2, 32 + 2}, BLACK);
+		DrawRectangleRec({ScreenWidth/2 - 200 - 1, ScreenHeight*(13.0/16.0), 400, 32}, WHITE);
+		double ChordProgress = (1 - PlayerInfo.TimeUntilNextChord/(ChordRatio[PlayerInfo.CurrentChord] * ChordLength));
+		DrawRectangleRec({ScreenWidth/2 - 200 - 1, ScreenHeight*(13.0/16.0), (float)LinearInterp(0, 400, ChordProgress), 32}, GREEN);
+
+		int KeyboardRollStartX = (ScreenWidth/2) - ((48+2) * ArrayCount(PlayerInfo.Keyboard)/2);
+		int KeyboardRollAdvance = 48 + 2;
+		Rectangle Rect = {(float)KeyboardRollStartX, (float)ScreenHeight - 48, 48, 48};
+		for (int Index = 0; Index < ArrayCount(PlayerInfo.Keyboard); Index++) {
+			note_state NoteState = NoteStateList[PlayerInfo.Keyboard[Index]];
 
 			Color RectColor = BLACK;
 			Color TextColor = BLACK;
@@ -284,26 +316,35 @@ void ProcessAndRenderPlayer(float DeltaTime, float CurrentTime) {
 			case Stopping: {
 				RectColor = BLACK;
 				TextColor = WHITE;
-				RectColor.r = (char)(0xff * Lerp(1, 0, NoteState.FadeRatio));
+				RectColor.r = (char)(0xff * LinearInterp(1, 0, NoteState.FadeRatio));
 			}
 			}
-			if (Index == C2) {
-				Rect.y = 60;
-				Rect.x = 0;
+
+			int OffsetY = 0;
+			if (Index == PlayerInfo.Placement) {
+				OffsetY = -48;
 			}
-				
-			DrawRectangleRec({Rect.x-1, Rect.y-1, Rect.width+2, Rect.height+2}, BLACK);
-			DrawRectangleRec(Rect, RectColor);
-			DrawText(NoteNameStrings[Index], Rect.x, Rect.y, 20, TextColor);
-			Rect.x += 48 + 2;
+			if (OffsetYEaseRatio >= 1) {
+				OffsetYEaseRatio = 1;
+			}
+			else {
+				OffsetYEaseRatio += DeltaTime;
+			}
+
+			OffsetY = LinearInterp(0, OffsetY, OffsetYEaseRatio);
+			
+			DrawRectangleRec({Rect.x-1, Rect.y-1 + OffsetY, Rect.width+2, Rect.height+2}, BLACK);
+			DrawRectangleRec({Rect.x, Rect.y + OffsetY, Rect.width, Rect.height}, RectColor);
+			DrawText(NoteNameStrings[PlayerInfo.Keyboard[Index]], Rect.x, Rect.y + OffsetY, 20, TextColor);
+			Rect.x += KeyboardRollAdvance;
 		}
-            
+		
 		EndDrawing();
 	}
 }
 
 // @TODO(Roskuski): Find a better way to talk about titleScreen here. I want to fold it into the same system we have for animations
-void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D titleScreen) {
+void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime, Texture2D titleScreen) {
 	// NOTE(Roskuski): This var is used in DoUIButtonAuto
 	void * const CurrentFunction = ProcessAndRenderTopMenu;
 
@@ -313,7 +354,7 @@ void ProcessAndRenderTopMenu(float DeltaTime, float CurrentTime, Texture2D title
 	
 	local_persist animation_state TopMenuLightState = {TopMenuLight, 0, 0};
 	local_persist bool LightIsAnimating = false;
-	local_persist float LightAnimationCooldown = 0;
+	local_persist double LightAnimationCooldown = 0;
 	
 	BeginDrawing();
 
@@ -411,11 +452,13 @@ int main(void) {
 	UnloadImage(title);
 
 	{
-		float fps15 = 1.f/15.f;
+		double fps15 = 1.0/15.0;
 		LoadAnimationFromFiles(PlayButton, fps15, 5, "resources/animations/play/play%d.png");
 		LoadAnimationFromFiles(ListenButton, fps15, 5, "resources/animations/listen/listen%d.png");
 		LoadAnimationFromFiles(SettingsButton, fps15, 5, "resources/animations/settings/settings%d.png");
 		LoadAnimationFromFiles(TopMenuLight, fps15, 13, "resources/animations/light/Light%d.png");
+		LoadAnimationFromFiles(LoginMenuBackground, fps15, 28, "resources/animations/login page/login%d.png");
+		LoadAnimationFromFiles(PrePlayMenuStill, 0, 1, "resources/preplayscreen2.png");
 	}
 	                       
 	InitAudioDevice();
@@ -426,9 +469,13 @@ int main(void) {
 	}
 	  
 	while(!WindowShouldClose()) {
-		float CurrentTime = GetTime();
-		float DeltaTime = (float)GetFrameTime();
-		// Currently, there are 4 key presses that can emit sounds.
+		double DeltaTime = GetFrameTime();
+		local_persist double CurrentTime = 0;
+		CurrentTime += DeltaTime;
+
+		if (IsKeyPressed(KEY_ONE)) { ProgState = LoginMenu; }
+		if (IsKeyPressed(KEY_TWO)) { ProgState = PrePlayMenu; }
+		
 		switch(ProgState) {
 		case Player: {
 			ProcessAndRenderPlayer(DeltaTime, CurrentTime);
@@ -436,7 +483,22 @@ int main(void) {
 
 		case TopMenu: {
 			ProcessAndRenderTopMenu(DeltaTime, CurrentTime, titleScreen);
-		} break;	
+		} break;
+
+		case LoginMenu: {
+			local_persist animation_state LoginMenuState = { LoginMenuBackground, 0, 0};
+			AnimateForwards(LoginMenuState, DeltaTime, true);
+			BeginDrawing();
+			DrawTextureQuad(*GetCurrentFrame(LoginMenuState), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
+			EndDrawing();
+		} break;
+
+		case PrePlayMenu: {
+			local_persist animation_state PrePlayState = { PrePlayMenuStill, 0, 0};
+			BeginDrawing();
+			DrawTextureQuad(*GetCurrentFrame(PrePlayState), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
+			EndDrawing();
+		} break;
 		}
 	}
 

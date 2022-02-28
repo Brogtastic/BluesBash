@@ -40,7 +40,7 @@ void StopNoteSustained(note_name Note) {
 	}
 }
 
-void PlayNote(note_name Note, float CurrentTime, float Length, float Delay, float Volume) {
+void PlayNote(note_name Note, double CurrentTime, double Length, double Delay, float Volume) {
 	Assert(Note != NoteName_Count);
 	NoteStateList[Note].State = QueuedForPlaying;
 	NoteStateList[Note].StartTime = CurrentTime + Delay;
@@ -49,8 +49,8 @@ void PlayNote(note_name Note, float CurrentTime, float Length, float Delay, floa
 	NoteStateList[Note].FadeRatio = 1;
 }
 
-void StopNote(note_name Note, float CurrentTime) {
+void StopNote(note_name Note) {
 	Assert(Note >= 0);
 	Assert(Note != NoteName_Count);
-	NoteStateList[Note].EndTime = CurrentTime;
+	NoteStateList[Note].State = Stopping;
 }
