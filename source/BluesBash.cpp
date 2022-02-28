@@ -13,7 +13,7 @@
 #define global_var static
 
 // Tells MSVC what libraries we need.
-#pragma comment(lib, "raylib.lib")
+#pragma comment(lib, "raylibdll.lib")
 // raylib depends on these libraries.
 #pragma comment(lib, "Gdi32.lib")
 #pragma comment(lib, "winmm.lib")

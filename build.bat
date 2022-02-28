@@ -29,6 +29,6 @@ if "%1"=="debug" (
 
 pushd source
 @echo on
-cl %CFlags% %IncludePaths% %TranslationUnits% %LFlags% %LibraryPaths%
+cl %CFlags% %IncludePaths% %TranslationUnits% raylibdll.lib %LFlags% %LibraryPaths%
 @echo off
 popd
