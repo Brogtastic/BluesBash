@@ -14,7 +14,13 @@ enum animation_enum {
 	TopMenuLight,
 
 	LoginMenuBackground,
-	PrePlayMenuStill,
+	
+	TEMP_PrePlayMenuBG,
+	TEMP_JamSessionBG,
+	TEMP_PlayerBG,
+	TEMP_ViewTopBG,
+	TEMP_ViewDetailBG,
+	TEMP_PlayerHelp,
 	
 	AnimationEnum_Count, // NOTE(Roskuski): Keep this at the end.
 };

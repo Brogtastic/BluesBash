@@ -37,7 +37,11 @@ enum prog_state {
 	Player,
 	TopMenu,
 	LoginMenu,
-	PrePlayMenu,
+	TEMP_PrePlayMenu,
+	TEMP_ViewTop,
+	TEMP_ViewDetail,
+	TEMP_JamSession,
+	
 };
 
 enum sustained_key {
@@ -286,6 +290,10 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	{
 		BeginDrawing();
 		ClearBackground(RAYWHITE);
+		{
+			local_persist animation_state Background = { TEMP_PlayerBG, 0, 0};
+			DrawTextureQuad(*GetCurrentFrame(Background), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
+		}
 
 		// @TODO progress bar
 		DrawRectangleRec({ScreenWidth/2 - 200 - 2, ScreenHeight*(13.0/16.0) - 1, 400 + 2, 32 + 2}, BLACK);
@@ -337,6 +345,15 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 			DrawRectangleRec({Rect.x, Rect.y + OffsetY, Rect.width, Rect.height}, RectColor);
 			DrawText(NoteNameStrings[PlayerInfo.Keyboard[Index]], Rect.x, Rect.y + OffsetY, 20, TextColor);
 			Rect.x += KeyboardRollAdvance;
+		}
+
+		{
+			local_persist animation_state Help = { TEMP_PlayerHelp, 0, 0};
+			if (IsKeyDown(KEY_H)) {
+				Color Trans = WHITE;
+				Trans.a = 1.0 * 0xff;
+				DrawTextureQuad(*GetCurrentFrame(Help), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, Trans);
+			}
 		}
 		
 		EndDrawing();
@@ -458,7 +475,13 @@ int main(void) {
 		LoadAnimationFromFiles(SettingsButton, fps15, 5, "resources/animations/settings/settings%d.png");
 		LoadAnimationFromFiles(TopMenuLight, fps15, 13, "resources/animations/light/Light%d.png");
 		LoadAnimationFromFiles(LoginMenuBackground, fps15, 28, "resources/animations/login page/login%d.png");
-		LoadAnimationFromFiles(PrePlayMenuStill, 0, 1, "resources/preplayscreen2.png");
+		
+		LoadAnimationFromFiles(TEMP_PrePlayMenuBG, 0, 1, "resources/preplayscreen2.png");
+		LoadAnimationFromFiles(TEMP_ViewTopBG, 0, 1, "resources/Jam Sesh Screen.png");
+		LoadAnimationFromFiles(TEMP_PlayerBG, 0, 1, "resources/gameplay screen.png");
+		LoadAnimationFromFiles(TEMP_ViewDetailBG, 0, 1, "resources/Viewing Screen.png");
+		LoadAnimationFromFiles(TEMP_PlayerHelp, 0, 1, "resources/Gameplay Instructions Overlay.png");
+		
 	}
 	                       
 	InitAudioDevice();
@@ -474,7 +497,9 @@ int main(void) {
 		CurrentTime += DeltaTime;
 
 		if (IsKeyPressed(KEY_ONE)) { ProgState = LoginMenu; }
-		if (IsKeyPressed(KEY_TWO)) { ProgState = PrePlayMenu; }
+		if (IsKeyPressed(KEY_TWO)) { ProgState = TEMP_PrePlayMenu; }
+		if (IsKeyPressed(KEY_THREE)) { ProgState = TEMP_ViewDetail; }
+		if (IsKeyPressed(KEY_FOUR)) { ProgState = TEMP_ViewTop; }
 		
 		switch(ProgState) {
 		case Player: {
@@ -489,16 +514,36 @@ int main(void) {
 			local_persist animation_state LoginMenuState = { LoginMenuBackground, 0, 0};
 			AnimateForwards(LoginMenuState, DeltaTime, true);
 			BeginDrawing();
+			ClearBackground(RAYWHITE);
 			DrawTextureQuad(*GetCurrentFrame(LoginMenuState), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
 			EndDrawing();
 		} break;
 
-		case PrePlayMenu: {
-			local_persist animation_state PrePlayState = { PrePlayMenuStill, 0, 0};
+		case TEMP_PrePlayMenu: {
+			local_persist animation_state PrePlayState = { TEMP_PrePlayMenuBG, 0, 0};
 			BeginDrawing();
+			ClearBackground(RAYWHITE);
 			DrawTextureQuad(*GetCurrentFrame(PrePlayState), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
 			EndDrawing();
 		} break;
+
+		case TEMP_ViewTop: {
+			local_persist animation_state Background = { TEMP_ViewTopBG, 0, 0};
+			BeginDrawing();
+			ClearBackground(RAYWHITE);
+			DrawTextureQuad(*GetCurrentFrame(Background), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
+			EndDrawing();
+		} break;
+
+		case TEMP_ViewDetail: {
+			local_persist animation_state Background = { TEMP_ViewDetailBG, 0, 0};
+			BeginDrawing();
+			ClearBackground(RAYWHITE);
+			DrawTextureQuad(*GetCurrentFrame(Background), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
+			EndDrawing();
+		} break;
+
+		default: Assert(false); break;
 		}
 	}
 
