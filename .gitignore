@@ -52,8 +52,8 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-# Michael Roskuski's emacs project file
-project.el
+# temp files made by vim
+*.swp
 
 # Pre-processed graphics data
 bin/resources/processed/*
