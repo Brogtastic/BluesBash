@@ -54,3 +54,6 @@ dkms.conf
 
 # Michael Roskuski's emacs project file
 project.el
+
+# Pre-processed graphics data
+bin/resources/processed/*

@@ -4,6 +4,7 @@
 
 #define Assert(Cnd) if (!(Cnd)) { __debugbreak(); }
 #define ArrayCount(Array) (sizeof(Array)/sizeof(Array[0]))
+//@TODO(Roskuski): Make macro for memory allocation.
 
 // Used for static locals.
 #define local_persist static
@@ -291,7 +292,7 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 		BeginDrawing();
 		ClearBackground(RAYWHITE);
 		{
-			local_persist animation_state Background = { TEMP_PlayerBG, 0, 0};
+			local_persist animation_state Background = { "PlayerBG", 0, 0};
 			DrawTextureQuad(*GetCurrentFrame(Background), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
 		}
 
@@ -348,7 +349,7 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 		}
 
 		{
-			local_persist animation_state Help = { TEMP_PlayerHelp, 0, 0};
+			local_persist animation_state Help = { "PlayerHelp", 0, 0};
 			if (IsKeyDown(KEY_H)) {
 				Color Trans = WHITE;
 				Trans.a = 1.0 * 0xff;
@@ -365,11 +366,11 @@ void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime, Texture2D tit
 	// NOTE(Roskuski): This var is used in DoUIButtonAuto
 	void * const CurrentFunction = ProcessAndRenderTopMenu;
 
-	local_persist animation_state PlayButtonState = {PlayButton, 0, 0};
-	local_persist animation_state ListenButtonState = {ListenButton, 0, 0};
-	local_persist animation_state SettingsButtonState = {SettingsButton, 0, 0};
+	local_persist animation_state PlayButtonState = {"PlayButton", 0, 0};
+	local_persist animation_state ListenButtonState = {"ListenButton", 0, 0};
+	local_persist animation_state SettingsButtonState = {"SettingsButton", 0, 0};
 	
-	local_persist animation_state TopMenuLightState = {TopMenuLight, 0, 0};
+	local_persist animation_state TopMenuLightState = {"TopMenuLight", 0, 0};
 	local_persist bool LightIsAnimating = false;
 	local_persist double LightAnimationCooldown = 0;
 	
@@ -394,7 +395,8 @@ void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime, Texture2D tit
 	if (LightIsAnimating) {
 		if (AnimateForwards(TopMenuLightState, DeltaTime, false) == true) {
 			LightIsAnimating = false;
-			TopMenuLightState.CurrentFrame = 0;
+			TopMenuLightState.CurrentFrameMajor = 0;
+			TopMenuLightState.CurrentFrameMinor = 0;
 			TopMenuLightState.CurrentTime = 0;
 		}
 	}
@@ -453,9 +455,12 @@ int main(void) {
 	//--------------------------------------------------------------------------------------
 	InitWindow(ScreenWidth, ScreenHeight, "Blues Bash");
 	SetTargetFPS(60);
+
 	ProgState = TopMenu;
 
-	// @TODO(Roskuski): We'll likely want to have a more sophiscated way of talking about these resouces.
+	InitAnimationMap();
+
+	// @TODO(Roskuski): Fold this asset into the animation system.
 	//TITLE SCREEN BG
 	Image title = LoadImage("resources/titlescreen.png");
 	ImageResize(&title, 1280, 720);
@@ -469,21 +474,13 @@ int main(void) {
 	UnloadImage(title);
 
 	{
-		double fps15 = 1.0/15.0;
-		LoadAnimationFromFiles(PlayButton, fps15, 5, "resources/animations/play/play%d.png");
-		LoadAnimationFromFiles(ListenButton, fps15, 5, "resources/animations/listen/listen%d.png");
-		LoadAnimationFromFiles(SettingsButton, fps15, 5, "resources/animations/settings/settings%d.png");
-		LoadAnimationFromFiles(TopMenuLight, fps15, 13, "resources/animations/light/Light%d.png");
-		LoadAnimationFromFiles(LoginMenuBackground, fps15, 28, "resources/animations/login page/login%d.png");
-		
-		LoadAnimationFromFiles(TEMP_PrePlayMenuBG, 0, 1, "resources/preplayscreen2.png");
-		LoadAnimationFromFiles(TEMP_ViewTopBG, 0, 1, "resources/Jam Sesh Screen.png");
-		LoadAnimationFromFiles(TEMP_PlayerBG, 0, 1, "resources/gameplay screen.png");
-		LoadAnimationFromFiles(TEMP_ViewDetailBG, 0, 1, "resources/Viewing Screen.png");
-		LoadAnimationFromFiles(TEMP_PlayerHelp, 0, 1, "resources/Gameplay Instructions Overlay.png");
-		
+		LoadAnimationFromFile("resources/animations/Intro.animation"); 
+		LoadAnimationFromFile("resources/animations/PlayButton.animation");
+		LoadAnimationFromFile("resources/animations/SettingsButton.animation");
+		LoadAnimationFromFile("resources/animations/ListenButton.animation");
+		LoadAnimationFromFile("resources/animations/TopMenuLight.animation");
 	}
-	                       
+
 	InitAudioDevice();
 
 	// LoadAllNotes
@@ -500,7 +497,7 @@ int main(void) {
 		if (IsKeyPressed(KEY_TWO)) { ProgState = TEMP_PrePlayMenu; }
 		if (IsKeyPressed(KEY_THREE)) { ProgState = TEMP_ViewDetail; }
 		if (IsKeyPressed(KEY_FOUR)) { ProgState = TEMP_ViewTop; }
-		
+
 		switch(ProgState) {
 		case Player: {
 			ProcessAndRenderPlayer(DeltaTime, CurrentTime);
@@ -511,7 +508,7 @@ int main(void) {
 		} break;
 
 		case LoginMenu: {
-			local_persist animation_state LoginMenuState = { LoginMenuBackground, 0, 0};
+			local_persist animation_state LoginMenuState = { "LoginMenuBG", 0, 0};
 			AnimateForwards(LoginMenuState, DeltaTime, true);
 			BeginDrawing();
 			ClearBackground(RAYWHITE);
@@ -520,7 +517,7 @@ int main(void) {
 		} break;
 
 		case TEMP_PrePlayMenu: {
-			local_persist animation_state PrePlayState = { TEMP_PrePlayMenuBG, 0, 0};
+			local_persist animation_state PrePlayState = {"PrePlayMenuBG", 0, 0};
 			BeginDrawing();
 			ClearBackground(RAYWHITE);
 			DrawTextureQuad(*GetCurrentFrame(PrePlayState), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
@@ -528,7 +525,7 @@ int main(void) {
 		} break;
 
 		case TEMP_ViewTop: {
-			local_persist animation_state Background = { TEMP_ViewTopBG, 0, 0};
+			local_persist animation_state Background = {"ViewTopBG", 0, 0};
 			BeginDrawing();
 			ClearBackground(RAYWHITE);
 			DrawTextureQuad(*GetCurrentFrame(Background), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
@@ -536,7 +533,7 @@ int main(void) {
 		} break;
 
 		case TEMP_ViewDetail: {
-			local_persist animation_state Background = { TEMP_ViewDetailBG, 0, 0};
+			local_persist animation_state Background = {"ViewDetailBG", 0, 0};
 			BeginDrawing();
 			ClearBackground(RAYWHITE);
 			DrawTextureQuad(*GetCurrentFrame(Background), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
@@ -558,7 +555,6 @@ int main(void) {
 	
 	CloseWindow();              // Close window and OpenGL context
 	//--------------------------------------------------------------------------------------
-    
 
 	return 0;
 }

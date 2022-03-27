@@ -1,47 +1,49 @@
 #pragma once
+
+struct frame {
+	int FrameLength; // How many frames should we display this frame for
+	Texture2D Graphic; // The actual image
+};
+
 struct animation {
-	double FrameTime;
-	int FrameCount;
-	Texture2D *Frames;
+	double FrameTime; // Frames per second
+	int UniqueFrameCount; // How many unique frames are there
+	frame *Frames; // Array of frame data, Length is the same as UniqueFrameCount
 };
 
-
-// NOTE(Roskuski): Used as a index into AnimationList
-enum animation_enum {
-	PlayButton,
-	ListenButton,
-	SettingsButton,
-	TopMenuLight,
-
-	LoginMenuBackground,
-	
-	TEMP_PrePlayMenuBG,
-	TEMP_JamSessionBG,
-	TEMP_PlayerBG,
-	TEMP_ViewTopBG,
-	TEMP_ViewDetailBG,
-	TEMP_PlayerHelp,
-	
-	AnimationEnum_Count, // NOTE(Roskuski): Keep this at the end.
+struct animation_map_entry {
+	char *Key;
+	animation Value;
+	int NextIndex;
 };
 
-global_var animation AnimationList[AnimationEnum_Count];
+// Animation Hash Map Begins
+#define AnimationMap_BucketCount (30)
+#define AnimationMap_BackingCount (50)
+#define AnimationMap_NoEntry (-1)
+
+animation_map_entry AnimationMap_BackingData[AnimationMap_BackingCount];
+int AnimationMap_FreeListHead = AnimationMap_NoEntry;
+int AnimationMap_Buckets[AnimationMap_BucketCount];
+
+// Inits AnimationMap_FreeListHead, as well as putting all entries into the freelist.
+void InitAnimationMap();
+
+// Animation Hash Map Ends
 
 // Use animation_state to keep track of where you're currently at in a particular animation.
 struct animation_state {
-	animation_enum Index; // The animation that we are!
-	int CurrentFrame; // The CurrentFrame we're on
+	const char *Key;
+	// @TODO(Roskuski): I'd like to change these names from *Major/*Minor to something else
+	int CurrentFrameMajor; // Current Frame Index
+	int CurrentFrameMinor; // How many frames we've been on this frame.
 	double CurrentTime; // How Long the we have been on the CurrentFrame.
 };
 
-// Index: an identifier in the animation_enum enumeration. If you're adding a new animation, add a corrisponding entry in animaion_enum in BluesBash_Animaion.h
-// FrameTime: Time in seconds that a frame lasts for.
-// FrameCount: The total number of frames in this animation
-// PathFormatString: The Path to the animation files, with the "number" in the file name replaced with `%d`
-void LoadAnimationFromFiles(animation_enum Index, double FrameTime, int FrameCount, const char *PathFormatString);
+void LoadAnimationFromFile(const char *Path);
 
 // Returns a pointer to a Texture2D that repersents the current frame of the animation.
-Texture2D* GetCurrentFrame(animation_state State);
+Texture2D* GetCurrentFrame(animation_state &State);
 
 // State: the animation_state to do work on
 // DeltaTime: How much time the last frame took
