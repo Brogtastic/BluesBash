@@ -6,6 +6,7 @@ import "core:os"
 import "core:strconv"
 import "core:path/filepath"
 import "core:strings"
+import "core:mem"
 
 printf :: fmt.printf
 println :: fmt.println
@@ -53,14 +54,17 @@ main :: proc() {
 	ConsecutiveFrames : i32 = 1
 
 	OutputList := make([dynamic]output_info) 
-	// @TODO fix memory leak
 
 	for CurrentIndex : i32 = 1; CurrentIndex <= FrameCount; CurrentIndex += 1 { 
 		{
 			CurrentPath := fmt.tprintf(FileFormat, CurrentIndex)
 			CurrentFrame.Index = CurrentIndex
-			if CurrentFrame.Data != nil do delete(CurrentFrame.Data)
 			Success : bool
+			if (CurrentFrame.Data != nil) && (mem.raw_data(CurrentFrame.Data)!= mem.raw_data(PrevousFrame.Data)) {
+				delete(CurrentFrame.Data)
+				CurrentFrame.Data = nil
+			}
+
 			CurrentFrame.Data, Success = os.read_entire_file(CurrentPath)
 			if !Success {
 				CurrentFrame.Data, Success = os.read_entire_file(FileFormat)
@@ -73,18 +77,23 @@ main :: proc() {
 		if PrevousFrame.Index != -1 && PrevousFrame.Data != nil {
 			if CompareData(CurrentFrame.Data, PrevousFrame.Data) {
 				ConsecutiveFrames += 1
-				if CurrentIndex == FrameCount { // emit if we are the frame always
-					append(&OutputList, output_info{CurrentFrame.Index, ConsecutiveFrames})
-				}
 			}
 			else { 
 				append(&OutputList, output_info{PrevousFrame.Index, ConsecutiveFrames})
+				delete(PrevousFrame.Data)
+				PrevousFrame.Data = nil
 				PrevousFrame = CurrentFrame
 				ConsecutiveFrames = 1
 			}
 		}
 		else { // can't do work; PrevousFrame wasn't valid
 			PrevousFrame = CurrentFrame
+		}
+
+		if CurrentIndex == FrameCount { // Emit the current frame if we're the last frame of the animation.
+			append(&OutputList, output_info{CurrentFrame.Index, ConsecutiveFrames})
+			delete(CurrentFrame.Data)
+			CurrentFrame.Data = nil
 		}
 	}
 	OutputFilePath := fmt.tprintf("resources\\processed\\%s", OutputFileName);
@@ -122,7 +131,14 @@ main :: proc() {
 		os.write_ptr(OutputFile, &TotalUniqueFrames, size_of(TotalUniqueFrames))
 	}
 
-	for _,Index in OutputList {
+	if FrameCount == 1 { // Special case for single frame "animations"
+		TempLen := i32(len(FileFormat))
+		TempVal := i32(1)
+		os.write_ptr(OutputFile, &TempLen, size_of(TempLen))
+		os.write_string(OutputFile, FileFormat)
+		os.write_ptr(OutputFile, &TempVal, size_of(TempVal))
+	}
+	else do for _,Index in OutputList {
 		Temp := fmt.tprintf(FileFormat, OutputList[Index].Index)
 		TempLen := i32(len(Temp))
 		os.write_ptr(OutputFile, &TempLen, size_of(TempLen))

@@ -51,7 +51,10 @@ animation* AnimationMap_Get(const char *Key) {
 		}
 	}
 
-	if (Result == AnimationMap_NoEntry) return 0; 
+	if (Result == AnimationMap_NoEntry) { 
+		Assert(false); // This really shouldn't happen
+		return 0;
+	}
 	return &(AnimationMap_BackingData[Result].Value);
 }
 
@@ -62,7 +65,7 @@ void AnimationMap_Insert(char *Key, animation Value) {
 	int EntryIndex = AnimationMap_Buckets[BucketIndex];
 
 	int FreeIndex = AnimationMap_GetFromFreeList();
-	Assert(FreeIndex != AnimationMap_NoEntry); // NOTE(Roskuski) If this assert fires, then we ran out of AnimationEntries. Bump up AnimationMap_BackingCount to a higher number.
+	Assert(FreeIndex != AnimationMap_NoEntry); // NOTE(Roskuski): If this assert fires, then we ran out of AnimationEntries. Bump up AnimationMap_BackingCount to a higher number.
 
 	if (EntryIndex == AnimationMap_NoEntry) {
 		AnimationMap_Buckets[BucketIndex] = FreeIndex;
@@ -119,7 +122,8 @@ void LoadAnimationFromFile(const char *Path) {
 		fclose(AnimationFile);
 	}
 	else {
-		printf("[WARNING] LoadAnimationFromFile could not load animation file: \"%s\"!", Path);
+		printf("[WARNING] LoadAnimationFromFile could not load *.ppp file: \"%s\"!\n", Path);
+		Assert(false); // NOTE(Roskuski): Failed to load *.ppp file
 	}
 }
 

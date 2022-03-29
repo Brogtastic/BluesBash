@@ -31,7 +31,7 @@ echo Building Tools...
 
 set OdinC="libs/Odin/odin.exe"
 @echo on 
-%OdinC% build source\Tools\PicturePreProcessor.odin -out:bin\PicturePreProcessor.exe
+%OdinC% build source\Tools\PicturePreProcessor.odin -out:bin\PicturePreProcessor.exe -debug
 @echo off
 
 echo Cleaning bin\resources\processed...
@@ -42,14 +42,14 @@ echo Running Tools...
 
 pushd bin
 PicturePreProcessor.exe resources\animations\intro\Intro%%04d.png 266 1 24 Intro.ppp
-PicturePreProcessor.exe resources\animations\play\play%%d.png 5 1 15 PlayButton.ppp
-PicturePreProcessor.exe resources\animations\settings\settings%%d.png 5 1 60 SettingsButton.ppp
+PicturePreProcessor.exe resources\animations\play\play%%d.png 5 1 30 PlayButton.ppp
+PicturePreProcessor.exe resources\animations\settings\settings%%d.png 5 1 30 SettingsButton.ppp
 PicturePreProcessor.exe resources\animations\listen\listen%%d.png 5 1 30 ListenButton.ppp
-PicturePreProcessor.exe "resources\animations\login page\login%%d.png" 28 1 15 LoginButton.ppp
-PicturePreProcessor.exe resources\animations\light\Light%%d.png 13 1 15 TopMenuLight.ppp
+PicturePreProcessor.exe "resources\animations\login page\login%%d.png" 28 1 30 LoginButton.ppp
+PicturePreProcessor.exe resources\animations\light\Light%%d.png 13 1 30 TopMenuLight.ppp
 PicturePreProcessor.exe "resources\gameplay screen.png" 1 0 1 PlayerBG.ppp
 PicturePreProcessor.exe "resources\Gameplay Instructions overlay.png" 1 0 1 PlayerHelp.ppp
-PicturePreProcessor.exe "resources\animations\login page\login%%d.png" 28 1 15 LoginMenuBG.ppp
+PicturePreProcessor.exe "resources\animations\login page\login%%d.png" 28 1 30 LoginMenuBG.ppp
 popd
 
 echo Building game...

@@ -473,17 +473,21 @@ int main(void) {
 	titleScreen = LoadTextureFromImage(title);
 	UnloadImage(title);
 
+	// Load all animations
 	{
-		LoadAnimationFromFile("resources/animations/Intro.animation"); 
-		LoadAnimationFromFile("resources/animations/PlayButton.animation");
-		LoadAnimationFromFile("resources/animations/SettingsButton.animation");
-		LoadAnimationFromFile("resources/animations/ListenButton.animation");
-		LoadAnimationFromFile("resources/animations/TopMenuLight.animation");
+		LoadAnimationFromFile("resources/processed/Intro.ppp");
+		LoadAnimationFromFile("resources/processed/PlayButton.ppp");
+		LoadAnimationFromFile("resources/processed/SettingsButton.ppp");
+		LoadAnimationFromFile("resources/processed/ListenButton.ppp");
+		LoadAnimationFromFile("resources/processed/TopMenuLight.ppp");
+		LoadAnimationFromFile("resources/processed/PlayerBG.ppp");
+		LoadAnimationFromFile("resources/processed/PlayerHelp.ppp");
+		LoadAnimationFromFile("resources/processed/LoginMenuBG.ppp");
 	}
 
 	InitAudioDevice();
 
-	// LoadAllNotes
+	// Load all notes
 	for (int Index = 0; Index < NoteName_Count; Index++) {
 		NoteSoundList[Index] = LoadSound(NoteFileNames[Index]);
 	}
