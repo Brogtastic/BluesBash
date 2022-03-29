@@ -8,8 +8,16 @@ rem ensure output directories do exist.
 if not exist bin mkdir bin
 if not exist bin\obj mkdir bin\obj
 if not exist libs (
-	 echo The .\libs\ folder is missing, make sure to supply it with raylib header and library files and the Odin compiler.
-	 exit
+	echo The .\libs\ folder is missing. Please make it
+	exit
+)
+if not exist libs\raylib (
+	echo The .\libs\raylib folder is missing. Please grab a release of raylib and put it inside of the folder.
+	exit
+)
+if not exist libs\Odin (
+	echo The .\libs\Odin folder is missing. Please grab a release of Odin and put it inside of the folder.
+	exit
 )
 
 set IncludePaths=-Ilibs\raylib\include
