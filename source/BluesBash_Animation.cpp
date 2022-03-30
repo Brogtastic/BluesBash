@@ -104,7 +104,7 @@ void LoadAnimationFromFile(const char *Path) {
 		fread(&Animation.UniqueFrameCount, 4, 1, AnimationFile);
 		Animation.Frames = (frame*) malloc(sizeof(frame) * Animation.UniqueFrameCount);
 
-		for (int FrameIndex = 0; FrameIndex <= Animation.UniqueFrameCount; FrameIndex++) {
+		for (int FrameIndex = 0; FrameIndex < Animation.UniqueFrameCount; FrameIndex++) {
 			int PathLen = 0;
 			fread(&PathLen, 4, 1, AnimationFile);
 			char *Path = (char*) malloc(PathLen + 1);

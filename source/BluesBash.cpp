@@ -401,6 +401,10 @@ void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime, Texture2D tit
 		}
 	}
 	
+
+	// @TODO(Roskuski) @Nocommit this is what the API should look like.
+	//UIResult = DoUIButtonMapLookup("TopMenu_PlayButton"); 
+	// ^ becomes equlivant to the below, with values fetched from button def.
 	UIResult = DoUIButtonAutoId({211, 330 - 64, 167, 117}, {211, 330 - 64, 167, 117}, PlayButtonState);
 	
 	if (UIResult.PerformAction) {
