@@ -59,6 +59,7 @@ PicturePreProcessor.exe resources\animations\light\Light%%d.png 13 1 30 TopMenuL
 PicturePreProcessor.exe "resources\gameplay screen.png" 1 0 1 PlayerBG.ppp
 PicturePreProcessor.exe "resources\Gameplay Instructions overlay.png" 1 0 1 PlayerHelp.ppp
 PicturePreProcessor.exe "resources\animations\login page\login%%d.png" 28 1 30 LoginMenuBG.ppp
+PicturePreProcessor.exe "resources\titlescreen.png" 1 0 1 TopMenuBG.ppp
 popd
 
 echo Building game...
