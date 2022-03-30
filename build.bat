@@ -40,6 +40,7 @@ echo Building Tools...
 set OdinC="libs/Odin/odin.exe"
 @echo on 
 %OdinC% build source\Tools\PicturePreProcessor.odin -out:bin\PicturePreProcessor.exe -debug
+%OdinC% build source\Tools\UIMaker.odin -out:bin\UIMaker.exe -debug
 @echo off
 
 echo Cleaning bin\resources\processed...
