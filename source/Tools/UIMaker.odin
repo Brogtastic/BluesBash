@@ -11,6 +11,7 @@ import "core:mem"
 import "core:math/linalg"
 import "core:c"
 import "core:sys/win32"
+import "core:runtime"
 
 frame :: struct {
 	FrameLength : i32,
@@ -89,12 +90,76 @@ Header:
  - Buttons
 
 Button:
- - UIID : i32
- - Pos : v2
+ - KeyLen : i32
+ - Key : [KeyLen]u8
+ - Graphic KeyLen : i32
+ - Graphic Key : [Graphic KeyLen]u8
  - HitRect : ray.Rectangle
  - GraphicRect : ray.Rectangle
- - Graphic Key : []u8
 */
+
+SaveToFile :: proc(Path : cstring, FileNameOffset, FileExtentionOffset : u16) {
+	Path := string(Path)
+	Handle, HandleError := os.open(Path, os.O_WRONLY | os.O_CREATE)
+	if (HandleError == os.ERROR_NONE) {
+		Key := Path[FileNameOffset:FileExtentionOffset]
+		KeyLen := i32(len(Key))
+		os.write_ptr(Handle, &KeyLen, size_of(KeyLen))
+		os.write_string(Handle, Key)
+
+		ButtonCount := i32(len(ButtonList))
+		os.write_ptr(Handle, &ButtonCount, size_of(ButtonCount))
+
+		for Button in &ButtonList {
+			KeyLen = i32(len(Button.Key))
+			os.write_ptr(Handle, &KeyLen, size_of(KeyLen))
+			os.write(Handle, Button.Key[:])
+
+			KeyLen = i32(len(Button.GraphicKey))
+			os.write_ptr(Handle, &KeyLen, size_of(KeyLen))
+			os.write(Handle, Button.GraphicKey[:])
+
+			os.write_ptr(Handle, &Button.HitRect, size_of(Button.HitRect))
+			os.write_ptr(Handle, &Button.GraphicRect, size_of(Button.GraphicRect))
+		}
+		os.close(Handle)
+	}
+	else do fmt.printf("[SaveToFile]: There was an error opening \"%s\"(%d)\n", Path, HandleError)
+}
+
+OpenFromFile :: proc(Path : cstring) {
+	for Button in &ButtonList {
+		delete(Button.Key)
+		delete(Button.GraphicKey)
+	}
+	clear(&ButtonList)
+	
+	Path := string(Path)
+	Handle, HandleError := os.open(Path, os.O_RDONLY)
+	if (HandleError == os.ERROR_NONE) {
+		Len : i32
+		os.read_ptr(Handle, &Len, size_of(Len))
+		os.seek(Handle, i64(Len), win32.FILE_CURRENT)
+		ButtonCount : i32 
+		os.read_ptr(Handle, &ButtonCount, size_of(ButtonCount))
+		for Index in 0..<ButtonCount {
+			Button : button_def
+			os.read_ptr(Handle, &Len, size_of(Len))
+			Button.Key = make([dynamic]u8, Len)
+			os.read(Handle, Button.Key[:])
+
+			os.read_ptr(Handle, &Len, size_of(Len))
+			Button.GraphicKey = make([dynamic]u8, Len)
+			os.read(Handle, Button.GraphicKey[:])
+
+			os.read_ptr(Handle, &Button.HitRect, size_of(Button.HitRect))
+			os.read_ptr(Handle, &Button.GraphicRect, size_of(Button.GraphicRect))
+
+			append(&ButtonList, Button)
+		}
+	}
+	else do fmt.printf("[OpenFromFile]: There was anm error opening \"%s\"(%d)\n", Path, HandleError)
+}
 
 button_def :: struct {
 	Key : [dynamic]u8,
@@ -166,7 +231,7 @@ WindowWidth :: BluesBash_WindowWidth
 WindowHeight :: BluesBash_WindowHeight + 200
 // extra height is for settings area
 
-ButtonList :: [dynamic]button_def
+ButtonList : [dynamic]button_def
 
 UISelectInfo : struct {
 	Index : int,
@@ -208,7 +273,7 @@ main :: proc() {
 		}
 	}
 
-	ButtonList := make([dynamic]button_def)
+	ButtonList = make([dynamic]button_def)
 	IsDragging_Movement := false
 	IsDragging_Resize := false
 
@@ -419,9 +484,9 @@ main :: proc() {
 			}
 		}
 
-		// @TODO(Roskuski): CTRL + O => Open Existing File
-		// @TODO(Roskuski): CTRL + S => Save Existing File
-		if ray.IsKeyDown(.LEFT_CONTROL) && ray.IsKeyPressed(.S) {
+		// NOTE(Roskuski): CTRL + O => Open Existing File
+		if ray.IsKeyDown(.LEFT_CONTROL) && ray.IsKeyPressed(.O) {
+			CurrentDir := os.get_current_directory()
 			Param := win32.Open_File_Name_A{
 				struct_size = size_of(win32.Open_File_Name_A),
 				hwnd_owner = nil,
@@ -434,7 +499,41 @@ main :: proc() {
 				max_file = 256,
 				file_title = nil,
 				max_file_title = 0,
-				initial_dir = nil,
+				initial_dir = strings.clone_to_cstring(CurrentDir),
+				title = "What UI Maker file shall I open?",
+				flags = 0,
+				file_offset = 0,
+				file_extension = 0,
+				def_ext = "uim",
+				cust_data = 0,
+				hook = nil,
+				template_name = nil,
+				pv_reserved = nil,
+				dw_reserved = 0,
+				flags_ex = 0,
+			}
+			defer delete(Param.file)
+			defer delete(CurrentDir)
+			defer delete(Param.initial_dir)
+			win32.get_open_file_name_a(&Param)
+			OpenFromFile(Param.file)
+		}
+		// NOTE(Roskuski): CTRL + S => Save Existing File
+		if ray.IsKeyDown(.LEFT_CONTROL) && ray.IsKeyPressed(.S) {
+			CurrentDir := os.get_current_directory()
+			Param := win32.Open_File_Name_A{
+				struct_size = size_of(win32.Open_File_Name_A),
+				hwnd_owner = nil,
+				instance = nil,
+				filter = "UI Maker Files\x00*.uim\x00\x00",
+				custom_filter = nil,
+				max_cust_filter = 0,
+				filter_index = 1,
+				file = cstring(raw_data(make([]u8, 256))),
+				max_file = 256,
+				file_title = nil,
+				max_file_title = 0,
+				initial_dir = strings.clone_to_cstring(CurrentDir),
 				title = "Where shall I save the UI File?",
 				flags = 0,
 				file_offset = 0,
@@ -448,7 +547,10 @@ main :: proc() {
 				flags_ex = 0,
 			}
 			defer delete(Param.file)
+			defer delete(CurrentDir)
+			defer delete(Param.initial_dir)
 			win32.get_save_file_name_a(&Param)
+			SaveToFile(Param.file, Param.file_offset, Param.file_extension)
 		}
 
 		ray.BeginDrawing()
@@ -489,6 +591,7 @@ main :: proc() {
 					ClickHitInfo := false
 					Button := &ButtonList[UISelectInfo.Index]
 
+					// @TODO(Roskuski): I beam cursor when editing fields.
 					DoInfoTextArea({5, 5, 300, 20}, "Button Name:", MousePos, &ClickHitInfo)
 					if DoInfoTextArea({5, 25, 300, 20}, Button.Key[:], MousePos, &ClickHitInfo) {
 						if ray.IsKeyUp(.LEFT_CONTROL) && ray.IsKeyUp(.LEFT_ALT) do KeyboardTypeInput(&Button.Key)
