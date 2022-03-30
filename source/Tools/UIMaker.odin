@@ -447,6 +447,10 @@ main :: proc() {
 		}
 
 		// NOTE(Roskuski): ArrowKeys => Nudge element
+		// + Space => * factor of 10
+		// + Alt => target hit
+		// + crtl => target graphic
+		// + shift => target width/height
 		if UISelectInfo.Index != -1 {
 			if UISelectInfo.Type == .Button {
 				MoveDelta : linalg.Vector2f32 = {0, 0}
@@ -467,13 +471,27 @@ main :: proc() {
 					MoveDelta *= 10
 				}
 
-				if ray.IsKeyDown(.LEFT_ALT) {
+				if ray.IsKeyDown(.LEFT_ALT) && ray.IsKeyDown(.LEFT_SHIFT) {
+					ButtonList[UISelectInfo.Index].HitRect.width += MoveDelta.x
+					ButtonList[UISelectInfo.Index].HitRect.height += MoveDelta.y
+				}
+				else if ray.IsKeyDown(.LEFT_ALT) {
 					ButtonList[UISelectInfo.Index].HitRect.x += MoveDelta.x
 					ButtonList[UISelectInfo.Index].HitRect.y += MoveDelta.y
+				}
+				else if ray.IsKeyDown(.LEFT_CONTROL) && ray.IsKeyDown(.LEFT_SHIFT) {
+					ButtonList[UISelectInfo.Index].GraphicRect.width += MoveDelta.x
+					ButtonList[UISelectInfo.Index].GraphicRect.height += MoveDelta.y
 				}
 				else if ray.IsKeyDown(.LEFT_CONTROL) {
 					ButtonList[UISelectInfo.Index].GraphicRect.x += MoveDelta.x
 					ButtonList[UISelectInfo.Index].GraphicRect.y += MoveDelta.y
+				}
+				else if ray.IsKeyDown(.LEFT_SHIFT) {
+					ButtonList[UISelectInfo.Index].HitRect.width += MoveDelta.x
+					ButtonList[UISelectInfo.Index].HitRect.height += MoveDelta.y
+					ButtonList[UISelectInfo.Index].GraphicRect.width += MoveDelta.x
+					ButtonList[UISelectInfo.Index].GraphicRect.height += MoveDelta.y
 				}
 				else {
 					ButtonList[UISelectInfo.Index].HitRect.x += MoveDelta.x
