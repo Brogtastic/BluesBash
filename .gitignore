@@ -57,3 +57,4 @@ dkms.conf
 
 # Pre-processed graphics data
 bin/resources/processed/*
+*.ppp
