@@ -13,6 +13,20 @@ import "core:c"
 import "core:sys/win32"
 import "core:runtime"
 
+button_def :: struct {
+	Key : [dynamic]u8,
+	HitRect : ray.Rectangle,
+	HitRotation : f32,
+	GraphicKey : [dynamic]u8,
+	GraphicRect : ray.Rectangle,
+	GraphicRotation : f32, 
+}
+
+right_click_mode :: enum {
+	Resize,
+	Rotate,
+}
+
 frame :: struct {
 	FrameLength : i32,
 	Graphic : ray.Texture2D,
@@ -24,6 +38,28 @@ animation :: struct {
 	Frames : []frame,
 }
 
+UISelectInfo : struct {
+	Index : int,
+	Type : enum {
+		Button,
+		TextArea,
+	},
+}
+
+InfoSelectInfo : struct {
+	uiid : i32,
+}
+
+BluesBash_WindowWidth :: 1280
+BluesBash_WindowHeight :: 720
+
+WindowWidth :: BluesBash_WindowWidth
+WindowHeight :: BluesBash_WindowHeight + 200
+// extra height is for settings area
+
+AnimationMap : map[string]animation
+ButtonList : [dynamic]button_def
+
 StringHash :: proc(String : []u8) -> (Hash : i32) {
 	Hash = 0
 	for Byte in String {
@@ -31,8 +67,6 @@ StringHash :: proc(String : []u8) -> (Hash : i32) {
 	}
 	return Hash
 }
-
-AnimationMap : map[string]animation
 
 LoadPppFile :: proc(PppPath : string) {
 	PppHandle, PppError := os.open(PppPath, os.O_RDONLY)
@@ -161,13 +195,6 @@ OpenFromFile :: proc(Path : cstring) {
 	else do fmt.printf("[OpenFromFile]: There was anm error opening \"%s\"(%d)\n", Path, HandleError)
 }
 
-button_def :: struct {
-	Key : [dynamic]u8,
-	HitRect : ray.Rectangle,
-	GraphicKey : [dynamic]u8,
-	GraphicRect : ray.Rectangle,
-}
-
 // returns true if we are the active info element
 DoInfoTextArea_string :: proc(Rect : ray.Rectangle, String : string, MousePos : linalg.Vector2f32, ClickHitInfo : ^bool, CallLoc := #caller_location) -> (Result : bool) {
 	Result = false
@@ -199,6 +226,38 @@ DoInfoTextArea :: proc {
 	DoInfoTextArea_string,
 }
 
+DoInfoButton :: proc(Rect : ray.Rectangle, String : string, MousePos : linalg.Vector2f32, ClickHitInfo : ^bool, CallLoc := #caller_location) -> (Result : bool) {
+	Result = false
+	AccentColor := ray.WHITE
+
+	if ray.CheckCollisionPointRec(MousePos, Rect) {
+		if ray.IsMouseButtonPressed(.LEFT) {
+			InfoSelectInfo.uiid  = CallLoc.line
+			if ClickHitInfo^ != true do ClickHitInfo^ = true
+			Result = true
+		}
+	}
+
+	if (InfoSelectInfo.uiid == CallLoc.line) && ray.CheckCollisionPointRec(MousePos, Rect) && ray.IsMouseButtonDown(.LEFT) {
+		AccentColor = ray.GREEN
+	}
+
+	InsideRect := ray.Rectangle{Rect.x + 1, Rect.y + 1, Rect.width - 2, Rect.height - 2}
+	ray.DrawRectangleRec(Rect, ray.Color{0xdd, 0xdd, 0xdd, 0xff})
+	ray.DrawRectangleRec(InsideRect, ray.BLACK)
+	CString := strings.clone_to_cstring(String, context.temp_allocator)
+
+	ray.DrawText(CString, i32(InsideRect.x), i32(Rect.y), 20, AccentColor)
+
+	return
+}
+
+Swap :: proc(List : [dynamic]$T, IndexA, IndexB : int) {
+	Temp := List[IndexA]
+	List[IndexA] = List[IndexB]
+	List[IndexB] = Temp
+}
+
 KeyboardTypeInput :: proc(Target : ^[dynamic]u8, Allocator := context.allocator) {
 	CharList := map[ray.KeyboardKey]u8 { .A = 'a', .B = 'b', .C = 'c', .D = 'd', .E = 'e', .F = 'f', .G = 'g', .H = 'h', .I = 'i', .J = 'j', .K = 'k', .L = 'l', .M = 'm', .N = 'n', .O = 'o', .P = 'p', .Q = 'q', .R = 'r', .S = 's', .T = 't', .U = 'u', .V = 'v', .W = 'w', .X = 'x', .Y = 'y', .Z = 'z', }
 	CharListUpper := map[ray.KeyboardKey]u8 { .A = 'A', .B = 'B', .C = 'C', .D = 'D', .E = 'E', .F = 'F', .G = 'G', .H = 'H', .I = 'I', .J = 'J', .K = 'K', .L = 'L', .M = 'M', .N = 'N', .O = 'O', .P = 'P', .Q = 'Q', .R = 'R', .S = 'S', .T = 'T', .U = 'U', .V = 'V', .W = 'W', .X = 'X', .Y = 'Y', .Z = 'Z', }
@@ -224,25 +283,27 @@ KeyboardTypeInput :: proc(Target : ^[dynamic]u8, Allocator := context.allocator)
 	}
 }
 
-BluesBash_WindowWidth :: 1280
-BluesBash_WindowHeight :: 720
+CheckCollisionPointRotatedRec :: proc (Point : linalg.Vector2f32, Rect : ray.Rectangle, Rotation : f32) -> (Result : bool) {
+	Rot := Rotation * linalg.RAD_PER_DEG
+	RotationMatrix : linalg.Matrix2x2f32 = {
+		linalg.cos(Rot), -linalg.sin(Rot),
+		linalg.sin(Rot), linalg.cos(Rot),
+	}
+	RectPoints := [4]linalg.Vector2f32{
+		{0         , 0},
+		{Rect.width, 0},
+		{0         , Rect.height},
+		{Rect.width, Rect.height},
+	}
+	TransformedPoints : [4]linalg.Vector2f32
+	for Point in &RectPoints do Point -= {Rect.width/2, Rect.height/2}
+	for Point, Index in RectPoints do TransformedPoints[Index] = linalg.matrix_mul_vector(RotationMatrix, Point)
+	for Point in &TransformedPoints do Point += {Rect.x, Rect.y}
 
-WindowWidth :: BluesBash_WindowWidth
-WindowHeight :: BluesBash_WindowHeight + 200
-// extra height is for settings area
-
-ButtonList : [dynamic]button_def
-
-UISelectInfo : struct {
-	Index : int,
-	Type : enum {
-		Button,
-		TextArea,
-	},
-}
-
-InfoSelectInfo : struct {
-	uiid : i32,
+	Result = false
+	Result = ray.CheckCollisionPointTriangle(Point, TransformedPoints[0], TransformedPoints[1], TransformedPoints[2]) 
+	Result = Result || ray.CheckCollisionPointTriangle(Point, TransformedPoints[1], TransformedPoints[2], TransformedPoints[3])
+	return Result
 }
 
 main :: proc() {
@@ -276,6 +337,8 @@ main :: proc() {
 	ButtonList = make([dynamic]button_def)
 	IsDragging_Movement := false
 	IsDragging_Resize := false
+	IsDragging_Rotate := false
+	RightClickMode := right_click_mode.Resize
 
 	for !ray.WindowShouldClose() {
 		MousePos := ray.GetMousePosition()
@@ -306,14 +369,14 @@ main :: proc() {
 		if ray.IsMouseButtonPressed(.LEFT) && ray.CheckCollisionPointRec(MousePos, {0, 0, BluesBash_WindowWidth, BluesBash_WindowHeight}) {
 			DidHit := false
 			for Button, Index in ButtonList {
-				if ray.IsKeyDown(.LEFT_CONTROL) && ray.CheckCollisionPointRec(MousePos, Button.GraphicRect) {
+				if ray.IsKeyDown(.LEFT_CONTROL) && CheckCollisionPointRotatedRec(MousePos, Button.GraphicRect, Button.GraphicRotation) {
 					UISelectInfo.Index = Index
 					UISelectInfo.Type = .Button
 					InfoSelectInfo.uiid = -1
 					DidHit = true
 					IsDragging_Movement = true
 				}
-				else if ray.IsKeyUp(.LEFT_CONTROL) && ray.CheckCollisionPointRec(MousePos, Button.HitRect) {
+				else if ray.IsKeyUp(.LEFT_CONTROL) && CheckCollisionPointRotatedRec(MousePos, Button.HitRect, Button.HitRotation) {
 					UISelectInfo.Index = Index
 					UISelectInfo.Type = .Button
 					InfoSelectInfo.uiid = -1
@@ -354,19 +417,25 @@ main :: proc() {
 		if ray.IsMouseButtonPressed(.RIGHT) && ray.CheckCollisionPointRec(MousePos, {0, 0, BluesBash_WindowWidth, BluesBash_WindowHeight}) {
 			DidHit := false
 			for Button, Index in ButtonList {
-				if ray.IsKeyDown(.LEFT_CONTROL) && ray.CheckCollisionPointRec(MousePos, Button.GraphicRect) {
+				if ray.IsKeyDown(.LEFT_CONTROL) && CheckCollisionPointRotatedRec(MousePos, Button.GraphicRect, Button.GraphicRotation) {
 					UISelectInfo.Index = Index
 					UISelectInfo.Type = .Button
 					InfoSelectInfo.uiid = -1
 					DidHit = true
-					IsDragging_Resize = true
+					switch (RightClickMode) {
+						case .Resize: IsDragging_Resize = true
+						case .Rotate: IsDragging_Rotate = true
+					}
 				}
-				else if ray.IsKeyUp(.LEFT_CONTROL) && ray.CheckCollisionPointRec(MousePos, Button.HitRect) {
+				else if ray.IsKeyUp(.LEFT_CONTROL) && CheckCollisionPointRotatedRec(MousePos, Button.HitRect, Button.HitRotation) {
 					UISelectInfo.Index = Index
 					UISelectInfo.Type = .Button
 					InfoSelectInfo.uiid = -1
 					DidHit = true
-					IsDragging_Resize = true
+					switch (RightClickMode) {
+						case .Resize: IsDragging_Resize = true
+						case .Rotate: IsDragging_Rotate = true
+					}
 				}
 			}
 
@@ -419,6 +488,24 @@ main :: proc() {
 			}
 		}
 
+		if IsDragging_Rotate {
+			if ray.IsMouseButtonUp(.RIGHT) do IsDragging_Rotate = false
+			if UISelectInfo.Type == .Button {
+				Button := &ButtonList[UISelectInfo.Index]
+				RotateDelta : f32 = ray.GetMouseDelta().x
+				if ray.IsKeyDown(.LEFT_CONTROL) { // NOTE(Roskuski): Target Hit
+					Button.GraphicRotation += RotateDelta
+				}
+				else if ray.IsKeyDown(.LEFT_ALT) { // NOTE(Roskuski): Target Graohic
+					Button.HitRotation += RotateDelta
+				}
+				else { //NOTE(Roskuski): Target Both
+					Button.GraphicRotation += RotateDelta
+					Button.HitRotation += RotateDelta
+				}
+			}
+		}
+
 		// NOTE(Roskuski): Ctrl + A => resize Graphic under mouse to screen
 		if (UISelectInfo.Index != -1) && ray.IsKeyPressed(.A) && ray.IsKeyDown(.LEFT_CONTROL) {
 			ButtonList[UISelectInfo.Index].GraphicRect.x = 0
@@ -449,7 +536,7 @@ main :: proc() {
 		// NOTE(Roskuski): ArrowKeys => Nudge element
 		// + Space => * factor of 10
 		// + Alt => target hit
-		// + crtl => target graphic
+		// + crtl => target graphic with the current right click mode
 		// + shift => target width/height
 		if UISelectInfo.Index != -1 {
 			if UISelectInfo.Type == .Button {
@@ -471,33 +558,46 @@ main :: proc() {
 					MoveDelta *= 10
 				}
 
-				if ray.IsKeyDown(.LEFT_ALT) && ray.IsKeyDown(.LEFT_SHIFT) {
-					ButtonList[UISelectInfo.Index].HitRect.width += MoveDelta.x
-					ButtonList[UISelectInfo.Index].HitRect.height += MoveDelta.y
+				TargetHit := ray.IsKeyDown(.LEFT_ALT)
+				TargetGraphic := ray.IsKeyDown(.LEFT_CONTROL)
+				ModSize := ray.IsKeyDown(.LEFT_SHIFT)
+				if !TargetHit && !TargetGraphic {
+					TargetHit = true
+					TargetGraphic = true
 				}
-				else if ray.IsKeyDown(.LEFT_ALT) {
-					ButtonList[UISelectInfo.Index].HitRect.x += MoveDelta.x
-					ButtonList[UISelectInfo.Index].HitRect.y += MoveDelta.y
+
+				Button := &ButtonList[UISelectInfo.Index]
+
+				if TargetHit {
+					if RightClickMode == .Rotate {
+						Button.HitRotation += MoveDelta.x
+					}
+					else {
+						if ModSize {
+							Button.HitRect.width += MoveDelta.x
+							Button.HitRect.height += MoveDelta.y
+						}
+						else {
+							Button.HitRect.x += MoveDelta.x
+							Button.HitRect.y += MoveDelta.y
+						}
+					}
 				}
-				else if ray.IsKeyDown(.LEFT_CONTROL) && ray.IsKeyDown(.LEFT_SHIFT) {
-					ButtonList[UISelectInfo.Index].GraphicRect.width += MoveDelta.x
-					ButtonList[UISelectInfo.Index].GraphicRect.height += MoveDelta.y
-				}
-				else if ray.IsKeyDown(.LEFT_CONTROL) {
-					ButtonList[UISelectInfo.Index].GraphicRect.x += MoveDelta.x
-					ButtonList[UISelectInfo.Index].GraphicRect.y += MoveDelta.y
-				}
-				else if ray.IsKeyDown(.LEFT_SHIFT) {
-					ButtonList[UISelectInfo.Index].HitRect.width += MoveDelta.x
-					ButtonList[UISelectInfo.Index].HitRect.height += MoveDelta.y
-					ButtonList[UISelectInfo.Index].GraphicRect.width += MoveDelta.x
-					ButtonList[UISelectInfo.Index].GraphicRect.height += MoveDelta.y
-				}
-				else {
-					ButtonList[UISelectInfo.Index].HitRect.x += MoveDelta.x
-					ButtonList[UISelectInfo.Index].HitRect.y += MoveDelta.y
-					ButtonList[UISelectInfo.Index].GraphicRect.x += MoveDelta.x
-					ButtonList[UISelectInfo.Index].GraphicRect.y += MoveDelta.y
+
+				if TargetGraphic {
+					if RightClickMode == .Rotate {
+						Button.GraphicRotation += MoveDelta.x
+					}
+					else if RightClickMode == .Resize {
+						if ModSize {
+							Button.GraphicRect.width += MoveDelta.x
+							Button.GraphicRect.height += MoveDelta.y
+						}
+						else {
+							Button.GraphicRect.x += MoveDelta.x
+							Button.GraphicRect.y += MoveDelta.y
+						}
+					}
 				}
 			}
 		}
@@ -572,21 +672,20 @@ main :: proc() {
 		}
 
 		ray.BeginDrawing()
-
 		ray.BeginScissorMode(0, 0, BluesBash_WindowWidth, BluesBash_WindowHeight)
 		{ // Draw UI scene
 			ray.ClearBackground(ray.BLACK)
 			for ButtonDef in ButtonList {
 				Animation, Ok := AnimationMap[strings.clone_from_bytes(ButtonDef.GraphicKey[:], context.temp_allocator)]
 				if Ok {
-					ray.DrawTextureQuad(Animation.Frames[0].Graphic, {1.0, 1.0}, {0, 0}, ButtonDef.GraphicRect, ray.RAYWHITE)
+					ray.DrawTexturePro(Animation.Frames[0].Graphic, {0, 0, f32(Animation.Frames[0].Graphic.width), f32(Animation.Frames[0].Graphic.height)}, ButtonDef.GraphicRect, {ButtonDef.GraphicRect.width/2, ButtonDef.GraphicRect.height/2}, ButtonDef.GraphicRotation, ray.WHITE)
 				}
 				else { // Draw a purple placeholder box
-					ray.DrawRectangleRec(ButtonDef.GraphicRect, ray.PURPLE)
+					ray.DrawRectanglePro(ButtonDef.GraphicRect, {ButtonDef.GraphicRect.width/2, ButtonDef.GraphicRect.height/2}, ButtonDef.GraphicRotation, ray.PURPLE)
 				}
 				Color := ray.RED
 				Color.a = 0xff/2
-				ray.DrawRectangleRec(ButtonDef.HitRect, Color)
+				ray.DrawRectanglePro(ButtonDef.HitRect, {ButtonDef.HitRect.width/2, ButtonDef.HitRect.height/2}, ButtonDef.HitRotation, Color)
 			}
 		}
 		ray.EndScissorMode()
@@ -608,30 +707,54 @@ main :: proc() {
 				if UISelectInfo.Type == .Button {
 					ClickHitInfo := false
 					Button := &ButtonList[UISelectInfo.Index]
-
-					// @TODO(Roskuski): I beam cursor when editing fields.
 					DoInfoTextArea({5, 5, 300, 20}, "Button Name:", MousePos, &ClickHitInfo)
 					if DoInfoTextArea({5, 25, 300, 20}, Button.Key[:], MousePos, &ClickHitInfo) {
+						IBeamColor := ray.WHITE
+						IBeamColor.a = (0xff * 3) / 4
+						ray.DrawRectangleRec({5 + f32(ray.MeasureText(strings.clone_to_cstring(strings.clone_from_bytes(Button.Key[:], context.temp_allocator), context.temp_allocator), 20)) + 3, 25 + 1 , 2, 18}, IBeamColor)
 						if ray.IsKeyUp(.LEFT_CONTROL) && ray.IsKeyUp(.LEFT_ALT) do KeyboardTypeInput(&Button.Key)
 					}
 
 					DoInfoTextArea({5, 45, 300, 20}, "Graphic Name:", MousePos, &ClickHitInfo)
 					if DoInfoTextArea({5, 65, 300, 20}, Button.GraphicKey[:], MousePos, &ClickHitInfo) {
+						IBeamColor := ray.WHITE
+						IBeamColor.a = (0xff * 3) / 4
+						ray.DrawRectangleRec({5 + f32(ray.MeasureText(strings.clone_to_cstring(strings.clone_from_bytes(Button.GraphicKey[:], context.temp_allocator), context.temp_allocator), 20)) + 3, 65 + 1 , 2, 18}, IBeamColor)
 						if ray.IsKeyUp(.LEFT_CONTROL) && ray.IsKeyUp(.LEFT_ALT) do KeyboardTypeInput(&Button.GraphicKey)
 					}
+					DoInfoTextArea({5, 85, 200, 20}, fmt.tprintf("Draw Number: %d", UISelectInfo.Index), MousePos, &ClickHitInfo)
+					if DoInfoButton({5, 105, 30, 20}, "--", MousePos, &ClickHitInfo) { // Move element closer to 0 in the button list.
+						if UISelectInfo.Index != 0 {
+							Swap(ButtonList, UISelectInfo.Index, UISelectInfo.Index - 1)
+							UISelectInfo.Index -= 1
+						}
+					}
+					if DoInfoButton({40, 105, 30, 20}, "++", MousePos, &ClickHitInfo) { // Move element closer to 0 in the button list.
+						if UISelectInfo.Index != (len(ButtonList) - 1) {
+							Swap(ButtonList, UISelectInfo.Index, UISelectInfo.Index + 1)
+							UISelectInfo.Index += 1
+						}
+					}
 
-					// @TODO(Roskuski) Allow typing into these number values
+					if DoInfoButton({5, 125, 300, 20}, fmt.tprintf("Right Click Mode: %s", RightClickMode), MousePos, &ClickHitInfo) {
+						RightClickMode = right_click_mode(i32(RightClickMode) + 1)
+						if i32(RightClickMode) == len(right_click_mode) do RightClickMode = .Resize
+					}
+
+					// @TODO(Roskuski): Allow typing into these number values
 					DoInfoTextArea({310, 5, 300, 20}, "Hit Rect Params:", MousePos, &ClickHitInfo)
 					DoInfoTextArea({310, 25, 300, 20}, fmt.tprintf("x: %f", Button.HitRect.x), MousePos, &ClickHitInfo)
 					DoInfoTextArea({310, 45, 300, 20}, fmt.tprintf("y: %f", Button.HitRect.y), MousePos, &ClickHitInfo)
 					DoInfoTextArea({310, 65, 300, 20}, fmt.tprintf("width: %f", Button.HitRect.width), MousePos, &ClickHitInfo)
 					DoInfoTextArea({310, 85, 300, 20}, fmt.tprintf("height: %f", Button.HitRect.height), MousePos, &ClickHitInfo)
+					DoInfoTextArea({310, 105, 300, 20}, fmt.tprintf("rotation: %f deg", Button.HitRotation), MousePos, &ClickHitInfo)
 
 					DoInfoTextArea({615, 5, 300, 20}, "Graphic Rect Params:", MousePos, &ClickHitInfo)
 					DoInfoTextArea({615, 25, 300, 20}, fmt.tprintf("x: %f", Button.GraphicRect.x), MousePos, &ClickHitInfo)
 					DoInfoTextArea({615, 45, 300, 20}, fmt.tprintf("y: %f", Button.GraphicRect.y), MousePos, &ClickHitInfo)
 					DoInfoTextArea({615, 65, 300, 20}, fmt.tprintf("width: %f", Button.GraphicRect.width), MousePos, &ClickHitInfo)
 					DoInfoTextArea({615, 85, 300, 20}, fmt.tprintf("height: %f", Button.GraphicRect.height), MousePos, &ClickHitInfo)
+					DoInfoTextArea({615, 105, 300, 20}, fmt.tprintf("rotation: %f deg", Button.GraphicRotation), MousePos, &ClickHitInfo)
 
 					if ray.IsMouseButtonPressed(.LEFT) && ClickHitInfo == false {
 						InfoSelectInfo.uiid = -1
