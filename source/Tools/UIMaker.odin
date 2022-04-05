@@ -134,6 +134,7 @@ Button:
  - GraphicRotation : f32
 */
 
+// @TODO(Roskuski) validate that we do not have dublicate names
 SaveToFile :: proc(Path : cstring, FileNameOffset, FileExtentionOffset : u16) {
 	Path := string(Path)
 	Handle, HandleError := os.open(Path, os.O_WRONLY | os.O_CREATE)
@@ -349,7 +350,7 @@ main :: proc() {
 	for !ray.WindowShouldClose() {
 		MousePos := ray.GetMousePosition()
 
-		// NOTE(Roskuski): Place Button
+		// @ApplicationRef F1 => Place Button
 		if ray.IsKeyPressed(.F1) {
 			Button := button_def{
 				HitRect = {MousePos.x, MousePos.y, 50, 50}, 
@@ -371,7 +372,7 @@ main :: proc() {
 			append(&ButtonList, Button)
 		}
 
-		// NOTE(Roskuski): Left Click Press => Select element for info pane. Selection is based off of Hit Rect
+		// @ApplicationRef Left Click Press => Select element for info pane. Selection is based off of Hit Rect
 		if ray.IsMouseButtonPressed(.LEFT) && ray.CheckCollisionPointRec(MousePos, {0, 0, BluesBash_WindowWidth, BluesBash_WindowHeight}) {
 			DidHit := false
 			for Button, Index in ButtonList {
@@ -397,7 +398,7 @@ main :: proc() {
 			}
 		}
 
-		// NOTE(Roskuski): Left Click Hold => move element Graphic + Hit;
+		// @ApplicationRef Left Click Hold => move element Graphic + Hit;
 		if IsDragging_Movement {
 			if ray.IsMouseButtonUp(.LEFT) do IsDragging_Movement = false
 			if UISelectInfo.Type == .Button {
@@ -419,7 +420,7 @@ main :: proc() {
 			}
 		}
 
-		// NOTE(Roskuski): Right Click => Select element
+		// @ApplicationRef Right Click => Select element
 		if ray.IsMouseButtonPressed(.RIGHT) && ray.CheckCollisionPointRec(MousePos, {0, 0, BluesBash_WindowWidth, BluesBash_WindowHeight}) {
 			DidHit := false
 			for Button, Index in ButtonList {
@@ -451,40 +452,77 @@ main :: proc() {
 			}
 		}
 
-		// NOTE(Roskuski): Right Click Hold => resize Hit
+		// @ApplicationRef Right Click Hold + Right Click Mode "Resize" => Reize Element (More Follows...)
+		// @ApplicationRef  + shift => Proportional resize
+		// @ApplicationRef  + alt => Target just Hit Rect
+		// @ApplicationRef  + ctrl => Target just Graphic Rect
 		if IsDragging_Resize {
 			if ray.IsMouseButtonUp(.RIGHT) do IsDragging_Resize = false
 			if UISelectInfo.Type == .Button {
+				Button := &ButtonList[UISelectInfo.Index]
 				ResizeDelta := ray.GetMouseDelta()
 
-				if ray.IsKeyDown(.LEFT_SHIFT) {
-					ReferenceCoord := ResizeDelta.y
-					if (abs(ResizeDelta.x) > abs(ResizeDelta.y))  {
-						ReferenceCoord = ResizeDelta.x
-					}
-					if (ReferenceCoord > 0) {
-						ResizeDelta.x = max(ResizeDelta.x, ResizeDelta.y)
-						ResizeDelta.y = max(ResizeDelta.x, ResizeDelta.y)
+				Proportional := false
+				TargetHit := false
+				TargetGraphic := false
+				if ray.IsKeyDown(.LEFT_SHIFT) do Proportional = true
+				if ray.IsKeyDown(.LEFT_ALT) do TargetHit = true
+				if ray.IsKeyDown(.LEFT_CONTROL) do TargetGraphic = true
+				if !TargetHit && !TargetGraphic {
+					TargetHit = true
+					TargetGraphic = true
+				}
+
+				ProportionalDelta : linalg.Vector2f32
+				if Proportional {
+					// @ApplicationRef  if we're targeting both the Hit and Graphic, we will be proprotional with respect to the Graphic
+					RatioHit := false
+					if TargetHit && !TargetGraphic do RatioHit = true
+					Source : linalg.Vector2f32
+
+					if RatioHit do Source = {Button.HitRect.width, Button.HitRect.height}
+					else do Source = {Button.GraphicRect.width, Button.GraphicRect.height}
+
+					Ratio : f32
+					if (Source.x >= Source.y) {
+						Ratio = Source.x / Source.y
+						ProportionalDelta.x = ResizeDelta.x * Ratio
+						ProportionalDelta.y = ResizeDelta.x
 					}
 					else {
-						ResizeDelta.x = min(ResizeDelta.x, ResizeDelta.y)
-						ResizeDelta.y = min(ResizeDelta.x, ResizeDelta.y)
+						Ratio = Source.y / Source.x
+						ProportionalDelta.x = ResizeDelta.x
+						ProportionalDelta.y = ResizeDelta.x * Ratio
 					}
 				}
 
-				if ray.IsKeyDown(.LEFT_ALT) {
-					ButtonList[UISelectInfo.Index].HitRect.width += ResizeDelta.x
-					ButtonList[UISelectInfo.Index].HitRect.height += ResizeDelta.y
+				if TargetHit {
+					if Proportional {
+						Button.HitRect.x += ProportionalDelta.x/2
+						Button.HitRect.y += ProportionalDelta.y/2
+						Button.HitRect.width += ProportionalDelta.x
+						Button.HitRect.height += ProportionalDelta.y
+					}
+					else {
+						Button.HitRect.x += ResizeDelta.x/2
+						Button.HitRect.y += ResizeDelta.y/2
+						Button.HitRect.width += ResizeDelta.x
+						Button.HitRect.height += ResizeDelta.y
+					}
 				}
-				else if ray.IsKeyDown(.LEFT_CONTROL) {
-					ButtonList[UISelectInfo.Index].GraphicRect.width += ResizeDelta.x
-					ButtonList[UISelectInfo.Index].GraphicRect.height += ResizeDelta.y
-				}
-				else {
-					ButtonList[UISelectInfo.Index].HitRect.width += ResizeDelta.x
-					ButtonList[UISelectInfo.Index].HitRect.height += ResizeDelta.y
-					ButtonList[UISelectInfo.Index].GraphicRect.width += ResizeDelta.x
-					ButtonList[UISelectInfo.Index].GraphicRect.height += ResizeDelta.y
+				if TargetGraphic {
+					if Proportional {
+						Button.GraphicRect.x += ProportionalDelta.x/2
+						Button.GraphicRect.y += ProportionalDelta.y/2
+						Button.GraphicRect.width += ProportionalDelta.x
+						Button.GraphicRect.height += ProportionalDelta.y
+					}
+					else {
+						Button.GraphicRect.x += ResizeDelta.x/2
+						Button.GraphicRect.y += ResizeDelta.y/2
+						Button.GraphicRect.width += ResizeDelta.x
+						Button.GraphicRect.height += ResizeDelta.y
+					}
 				}
 
 				if ButtonList[UISelectInfo.Index].HitRect.width <= 0 do ButtonList[UISelectInfo.Index].HitRect.width = 1
@@ -494,33 +532,37 @@ main :: proc() {
 			}
 		}
 
+		// @ApplicationRef Right Click Hold + Right Click Mode "Rotate" => Rotate Element (More Follows...)
+		// @ApplicationRef  + shift => Proportional resize
+		// @ApplicationRef  + alt => Target just Hit Rect
+		// @ApplicationRef  + ctrl => Target just Graphic
 		if IsDragging_Rotate {
 			if ray.IsMouseButtonUp(.RIGHT) do IsDragging_Rotate = false
 			if UISelectInfo.Type == .Button {
 				Button := &ButtonList[UISelectInfo.Index]
 				RotateDelta : f32 = ray.GetMouseDelta().x
-				if ray.IsKeyDown(.LEFT_CONTROL) { // NOTE(Roskuski): Target Hit
+				if ray.IsKeyDown(.LEFT_CONTROL) {
 					Button.GraphicRotation += RotateDelta
 				}
-				else if ray.IsKeyDown(.LEFT_ALT) { // NOTE(Roskuski): Target Graohic
+				else if ray.IsKeyDown(.LEFT_ALT) {
 					Button.HitRotation += RotateDelta
 				}
-				else { //NOTE(Roskuski): Target Both
+				else {
 					Button.GraphicRotation += RotateDelta
 					Button.HitRotation += RotateDelta
 				}
 			}
 		}
 
-		// NOTE(Roskuski): Ctrl + A => resize Graphic under mouse to screen
+		// @ApplicationRef Ctrl + A => resize Graphic under mouse to screen
 		if (UISelectInfo.Index != -1) && ray.IsKeyPressed(.A) && ray.IsKeyDown(.LEFT_CONTROL) {
-			ButtonList[UISelectInfo.Index].GraphicRect.x = 0
-			ButtonList[UISelectInfo.Index].GraphicRect.y = 0
+			ButtonList[UISelectInfo.Index].GraphicRect.x = BluesBash_WindowWidth/2
+			ButtonList[UISelectInfo.Index].GraphicRect.y = BluesBash_WindowHeight/2
 			ButtonList[UISelectInfo.Index].GraphicRect.width = BluesBash_WindowWidth
 			ButtonList[UISelectInfo.Index].GraphicRect.height = BluesBash_WindowHeight
 		}
 
-		// NOTE(Roskuski): Ctrl + E => resize Graphic to size of souce graphic
+		// @ApplicationRef Ctrl + E => resize Graphic to size of souce graphic
 		if (UISelectInfo.Index != -1) && ray.IsKeyPressed(.E) && ray.IsKeyDown(.LEFT_CONTROL) {
 			Animation, Ok := AnimationMap[strings.clone_from_bytes(ButtonList[UISelectInfo.Index].GraphicKey[:], context.temp_allocator)]
 			if Ok {
@@ -529,7 +571,7 @@ main :: proc() {
 			}
 		}
 
-		// NOTE(Roskuski): Del => removes selected element
+		// @ApplicationRef Del => removes selected element
 		if (UISelectInfo.Index != -1) && ray.IsKeyPressed(.DELETE) {
 			if UISelectInfo.Type == .Button {
 				delete(ButtonList[UISelectInfo.Index].Key)
@@ -539,8 +581,8 @@ main :: proc() {
 			}
 		}
 
-		// NOTE(Roskuski): ArrowKeys => Nudge element
-		// + Space => * factor of 10
+		// @ApplicationRef ArrowKeys => Nudge element (More follows...)
+		// + Space => Nudge by a factor of 10
 		// + Alt => target hit
 		// + crtl => target graphic with the current right click mode
 		// + shift => target width/height
@@ -608,7 +650,7 @@ main :: proc() {
 			}
 		}
 
-		// NOTE(Roskuski): CTRL + O => Open Existing File
+		// @ApplicationRef Ctrl + O => Open Existing File
 		if ray.IsKeyDown(.LEFT_CONTROL) && ray.IsKeyPressed(.O) {
 			CurrentDir := os.get_current_directory()
 			Param := win32.Open_File_Name_A{
@@ -640,9 +682,11 @@ main :: proc() {
 			defer delete(CurrentDir)
 			defer delete(Param.initial_dir)
 			win32.get_open_file_name_a(&Param)
-			OpenFromFile(Param.file)
+			if (os.exists(strings.clone_from_cstring(Param.file))) do OpenFromFile(Param.file)
+			else do fmt.printf("Open File \"%s\" does not exist!\n", Param.file)
 		}
-		// NOTE(Roskuski): CTRL + S => Save Existing File
+
+		// @ApplicationRef Ctrl + S => Save Design as File
 		if ray.IsKeyDown(.LEFT_CONTROL) && ray.IsKeyPressed(.S) {
 			CurrentDir := os.get_current_directory()
 			Param := win32.Open_File_Name_A{
