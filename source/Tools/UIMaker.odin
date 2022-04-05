@@ -129,7 +129,9 @@ Button:
  - Graphic KeyLen : i32
  - Graphic Key : [Graphic KeyLen]u8
  - HitRect : ray.Rectangle
+ - HitRotation : f32
  - GraphicRect : ray.Rectangle
+ - GraphicRotation : f32
 */
 
 SaveToFile :: proc(Path : cstring, FileNameOffset, FileExtentionOffset : u16) {
@@ -154,7 +156,9 @@ SaveToFile :: proc(Path : cstring, FileNameOffset, FileExtentionOffset : u16) {
 			os.write(Handle, Button.GraphicKey[:])
 
 			os.write_ptr(Handle, &Button.HitRect, size_of(Button.HitRect))
+			os.write_ptr(Handle, &Button.HitRotation, size_of(Button.HitRotation))
 			os.write_ptr(Handle, &Button.GraphicRect, size_of(Button.GraphicRect))
+			os.write_ptr(Handle, &Button.GraphicRotation, size_of(Button.GraphicRotation))
 		}
 		os.close(Handle)
 	}
@@ -187,7 +191,9 @@ OpenFromFile :: proc(Path : cstring) {
 			os.read(Handle, Button.GraphicKey[:])
 
 			os.read_ptr(Handle, &Button.HitRect, size_of(Button.HitRect))
+			os.read_ptr(Handle, &Button.HitRotation, size_of(Button.HitRotation))
 			os.read_ptr(Handle, &Button.GraphicRect, size_of(Button.GraphicRect))
+			os.read_ptr(Handle, &Button.GraphicRotation, size_of(Button.GraphicRotation))
 
 			append(&ButtonList, Button)
 		}
