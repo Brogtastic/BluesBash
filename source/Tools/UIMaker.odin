@@ -473,31 +473,22 @@ main :: proc() {
 					TargetGraphic = true
 				}
 
-				ProportionalDelta : linalg.Vector2f32
-				if Proportional {
-					// @ApplicationRef  if we're targeting both the Hit and Graphic, we will be proprotional with respect to the Graphic
-					RatioHit := false
-					if TargetHit && !TargetGraphic do RatioHit = true
-					Source : linalg.Vector2f32
-
-					if RatioHit do Source = {Button.HitRect.width, Button.HitRect.height}
-					else do Source = {Button.GraphicRect.width, Button.GraphicRect.height}
-
-					Ratio : f32
-					if (Source.x >= Source.y) {
-						Ratio = Source.x / Source.y
-						ProportionalDelta.x = ResizeDelta.x * Ratio
-						ProportionalDelta.y = ResizeDelta.x
-					}
-					else {
-						Ratio = Source.y / Source.x
-						ProportionalDelta.x = ResizeDelta.x
-						ProportionalDelta.y = ResizeDelta.x * Ratio
-					}
-				}
-
 				if TargetHit {
 					if Proportional {
+						Ratio : f32
+						ProportionalDelta : linalg.Vector2f32
+						Source := linalg.Vector2f32{Button.HitRect.width, Button.HitRect.height}
+						if (Source.x >= Source.y) {
+							Ratio = Source.x / Source.y
+							ProportionalDelta.x = ResizeDelta.x * Ratio
+							ProportionalDelta.y = ResizeDelta.x
+						}
+						else {
+							Ratio = Source.y / Source.x
+							ProportionalDelta.x = ResizeDelta.x
+							ProportionalDelta.y = ResizeDelta.x * Ratio
+						}
+
 						Button.HitRect.x += ProportionalDelta.x/2
 						Button.HitRect.y += ProportionalDelta.y/2
 						Button.HitRect.width += ProportionalDelta.x
@@ -512,6 +503,20 @@ main :: proc() {
 				}
 				if TargetGraphic {
 					if Proportional {
+						Ratio : f32
+						ProportionalDelta : linalg.Vector2f32
+						Source := linalg.Vector2f32{Button.GraphicRect.width, Button.GraphicRect.height}
+						if (Source.x >= Source.y) {
+							Ratio = Source.x / Source.y
+							ProportionalDelta.x = ResizeDelta.x * Ratio
+							ProportionalDelta.y = ResizeDelta.x
+						}
+						else {
+							Ratio = Source.y / Source.x
+							ProportionalDelta.x = ResizeDelta.x
+							ProportionalDelta.y = ResizeDelta.x * Ratio
+						}
+
 						Button.GraphicRect.x += ProportionalDelta.x/2
 						Button.GraphicRect.y += ProportionalDelta.y/2
 						Button.GraphicRect.width += ProportionalDelta.x
