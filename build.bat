@@ -60,6 +60,10 @@ PicturePreProcessor.exe "resources\gameplay screen.png" 1 0 1 PlayerBG.ppp
 PicturePreProcessor.exe "resources\Gameplay Instructions overlay.png" 1 0 1 PlayerHelp.ppp
 PicturePreProcessor.exe "resources\animations\login page\login%%d.png" 28 1 30 LoginMenuBG.ppp
 PicturePreProcessor.exe "resources\titlescreen.png" 1 0 1 TopMenuBG.ppp
+PicturePreProcessor.exe "resources\sign up.png" 1 0 1 SignUpButton.ppp
+PicturePreProcessor.exe "resources\submit.png" 1 0 1 SubmitButton.ppp
+PicturePreProcessor.exe "resources\textbox.png" 1 0 1 Textbox.ppp
+PicturePreProcessor.exe resources\animations\signuppage\SignUpScreen%%04d.png 69 1 12 SignUpScreen.ppp
 popd
 
 echo Building game...
