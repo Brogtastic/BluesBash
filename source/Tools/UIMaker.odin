@@ -111,7 +111,7 @@ LoadPppFile :: proc(PppPath : string) {
 
 		io.read(PppReader, mem.ptr_to_bytes(&Animation.Frames[Index].FrameLength))
 	}
-	AnimationMap[strings.clone_from_bytes(Key, context.temp_allocator)] = Animation
+	AnimationMap[strings.clone_from_bytes(Key)] = Animation
 	fmt.printf("[LoadPppFile] Loading of \"%s\" was successful\n", PppPath)
 }
 
