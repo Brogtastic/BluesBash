@@ -21,15 +21,6 @@
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "Shell32.lib")
 
-/*
-  To Do:
-  Make notes fade out instead of stopping right away
-  Right and Left keys pressed make it so the two notes are not right next to each other
-  Trills
-  Drum track
-  Right now, one note cannot play more than once. We might have to move away from "Sound" to something that allows for the same note to be played twice at once. perhpas this is called "wave" in raylib?
-*/
-
 #include "BluesBash_Note.h"
 #include "BluesBash_Animation.h"
 #include "BluesBash_UI.h"
@@ -38,12 +29,8 @@
 enum prog_state {
 	Player,
 	TopMenu,
-	LoginMenu,
-	TEMP_PrePlayMenu,
-	TEMP_ViewTop,
-	TEMP_ViewDetail,
-	TEMP_JamSession,
-	
+	LoginPage,
+	SignUpPage,
 };
 
 enum sustained_key {
@@ -363,7 +350,6 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	}
 }
 
-// @TODO(Roskuski): Find a better way to talk about titleScreen here. I want to fold it into the same system we have for animations
 void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime) {
 	local_persist bool LightIsAnimating = false;
 	local_persist double LightAnimationCooldown = 0;
@@ -423,8 +409,7 @@ void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime) {
 
 	UIResult = DoUIButtonFromMap("TopMenu_Login");
 	if (UIResult.PerformAction) {
-		// @TODO(Roskuski): Implment State Transition
-		printf("LoginButtonAction\n");
+		ProgState = LoginPage;
 	}
 	if (UIResult.Hot) {
 		AnimateForwards(ButtonMap_Get("TopMenu_Login"), DeltaTime, false);
@@ -440,6 +425,35 @@ void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime) {
 		sprintf(Buffer, "Hot Index: %lld, Active Index: %lld\nMousePos: %d %d", UIContext.Hot.KeyPointer, UIContext.Active.KeyPointer, GetMouseX(), GetMouseY());
 		DrawText(Buffer, 10, 30, 20, WHITE);
 	} 
+
+	EndDrawing();
+}
+
+void ProcessAndRenderLoginMenu(double DeltaTime, double CurrentTime) {
+	BeginDrawing();
+	ClearBackground(RAYWHITE);
+
+	ui_result UIResult = {false, false};
+	DoUIButtonFromMap("LoginPage_Background");
+	AnimateForwards(ButtonMap_Get("LoginPage_Background"), DeltaTime, true);
+
+	UIResult = DoUIButtonFromMap("LoginPage_Login");
+
+	UIResult = DoUIButtonFromMap("LoginPage_Signup");
+	if (UIResult.PerformAction) {
+		ProgState = SignUpPage;
+	}
+	EndDrawing();
+}
+
+void ProcessAndRenderSigninMenu(double DeltaTime, double CurrentTime) {
+	BeginDrawing();
+	ClearBackground(RAYWHITE);
+
+	ui_result UIResult = {false, false};
+	DoUIButtonFromMap("SignUpPage_Background");
+
+	UIResult = DoUIButtonFromMap("SignUpPage_Submit");
 
 	EndDrawing();
 }
@@ -497,10 +511,7 @@ int main(void) {
 		local_persist double CurrentTime = 0;
 		CurrentTime += DeltaTime;
 
-		if (IsKeyPressed(KEY_ONE)) { ProgState = LoginMenu; }
-		if (IsKeyPressed(KEY_TWO)) { ProgState = TEMP_PrePlayMenu; }
-		if (IsKeyPressed(KEY_THREE)) { ProgState = TEMP_ViewDetail; }
-		if (IsKeyPressed(KEY_FOUR)) { ProgState = TEMP_ViewTop; }
+		if (IsKeyPressed(KEY_Q)) { ProgState = TopMenu; }
 
 		switch(ProgState) {
 		case Player: {
@@ -511,37 +522,12 @@ int main(void) {
 			ProcessAndRenderTopMenu(DeltaTime, CurrentTime);
 		} break;
 
-		case LoginMenu: {
-			local_persist animation_state LoginMenuState = { "LoginMenuBG", 0, 0};
-			AnimateForwards(LoginMenuState, DeltaTime, true);
-			BeginDrawing();
-			ClearBackground(RAYWHITE);
-			DrawTextureQuad(*GetCurrentFrame(LoginMenuState), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
-			EndDrawing();
+		case LoginPage: {
+			ProcessAndRenderLoginMenu(DeltaTime, CurrentTime);
 		} break;
 
-		case TEMP_PrePlayMenu: {
-			local_persist animation_state PrePlayState = {"PrePlayMenuBG", 0, 0};
-			BeginDrawing();
-			ClearBackground(RAYWHITE);
-			DrawTextureQuad(*GetCurrentFrame(PrePlayState), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
-			EndDrawing();
-		} break;
-
-		case TEMP_ViewTop: {
-			local_persist animation_state Background = {"ViewTopBG", 0, 0};
-			BeginDrawing();
-			ClearBackground(RAYWHITE);
-			DrawTextureQuad(*GetCurrentFrame(Background), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
-			EndDrawing();
-		} break;
-
-		case TEMP_ViewDetail: {
-			local_persist animation_state Background = {"ViewDetailBG", 0, 0};
-			BeginDrawing();
-			ClearBackground(RAYWHITE);
-			DrawTextureQuad(*GetCurrentFrame(Background), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
-			EndDrawing();
+		case SignUpPage: {
+			ProcessAndRenderSigninMenu(DeltaTime, CurrentTime);
 		} break;
 
 		default: Assert(false); break;
