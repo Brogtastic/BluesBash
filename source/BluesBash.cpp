@@ -33,6 +33,7 @@
 #include "BluesBash_Note.h"
 #include "BluesBash_Animation.h"
 #include "BluesBash_UI.h"
+#include "BluesBash_Map.h"
 
 enum prog_state {
 	Player,
@@ -83,6 +84,7 @@ global_var player_info PlayerInfo;
 #include "BluesBash_Note.cpp"
 #include "BluesBash_Animation.cpp"
 #include "BluesBash_UI.cpp"
+#include "BluesBash_Map.cpp"
 
 void WalkToNextPlacement(int Delta, int LowBound, int HighBound, bool DoAdjust) {
 	PlayerInfo.Placement += Delta;
@@ -362,27 +364,20 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 }
 
 // @TODO(Roskuski): Find a better way to talk about titleScreen here. I want to fold it into the same system we have for animations
-void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime, Texture2D titleScreen) {
-	// NOTE(Roskuski): This var is used in DoUIButtonAuto
-	void * const CurrentFunction = ProcessAndRenderTopMenu;
-
-	local_persist animation_state PlayButtonState = {"PlayButton", 0, 0};
-	local_persist animation_state ListenButtonState = {"ListenButton", 0, 0};
-	local_persist animation_state SettingsButtonState = {"SettingsButton", 0, 0};
-	
-	local_persist animation_state TopMenuLightState = {"TopMenuLight", 0, 0};
+void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime) {
 	local_persist bool LightIsAnimating = false;
 	local_persist double LightAnimationCooldown = 0;
 	
 	BeginDrawing();
 
 	ClearBackground(RAYWHITE);
-	DrawTexture(titleScreen, ScreenWidth/2 - titleScreen.width/2, ScreenHeight/2 - titleScreen.height/2, WHITE);
-	
-	// Do UI
-	ui_result UIResult = {false, false};
 
-	UIResult = DoUIButtonAutoId({141, 0, 561, ScreenHeight}, {150, 55, 112, 66}, TopMenuLightState);
+	// Do UI
+	ui_result UIResult = Nouiid;
+
+	UIResult = DoUIButtonFromMap("TopMenu_Background");
+
+	UIResult = DoUIButtonFromMap("TopMenu_Light");
 	if (UIResult.Hot && LightAnimationCooldown <= 0) {
 		LightIsAnimating = true;
 	}
@@ -393,61 +388,56 @@ void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime, Texture2D tit
 	LightAnimationCooldown -= DeltaTime;
 	
 	if (LightIsAnimating) {
-		if (AnimateForwards(TopMenuLightState, DeltaTime, false) == true) {
+		button_def *Button = ButtonMap_Get("TopMenu_Light");
+		if (AnimateForwards(Button->AniState, DeltaTime, false) == true) {
 			LightIsAnimating = false;
-			TopMenuLightState.CurrentFrameMajor = 0;
-			TopMenuLightState.CurrentFrameMinor = 0;
-			TopMenuLightState.CurrentTime = 0;
+			Button->AniState.CurrentFrameMajor = 0;
+			Button->AniState.CurrentFrameMinor = 0;
+			Button->AniState.CurrentTime = 0;
 		}
 	}
 	
 
-	// @TODO(Roskuski) @Nocommit this is what the API should look like.
-	//UIResult = DoUIButtonMapLookup("TopMenu_PlayButton"); 
-	// ^ becomes equlivant to the below, with values fetched from button def.
-	UIResult = DoUIButtonAutoId({211, 330 - 64, 167, 117}, {211, 330 - 64, 167, 117}, PlayButtonState);
-	
+	UIResult = DoUIButtonFromMap("TopMenu_Play");
 	if (UIResult.PerformAction) {
 		ProgState = Player;
 	}
 	if (UIResult.Hot) {
-		AnimateForwards(PlayButtonState, DeltaTime, false);
+		AnimateForwards(ButtonMap_Get("TopMenu_Play"), DeltaTime, false);
 	}
 	else {
-		AnimateBackwards(PlayButtonState, DeltaTime, false);
+		AnimateBackwards(ButtonMap_Get("TopMenu_Play"), DeltaTime, false);
 	}
 
-	UIResult = DoUIButtonAutoId({221, 450 - 64, 243, 134}, {221, 450 - 64, 243, 134}, ListenButtonState);
-
+	UIResult = DoUIButtonFromMap("TopMenu_Listen");
 	if (UIResult.PerformAction) {
 		// @TODO(Roskuski): Implment State Transition
 		printf("Listen Button Action\n");
 	}
 	if (UIResult.Hot) {
-		AnimateForwards(ListenButtonState, DeltaTime, false);
+		AnimateForwards(ButtonMap_Get("TopMenu_Listen"), DeltaTime, false);
 	}
 	else {
-		AnimateBackwards(ListenButtonState, DeltaTime, false);
+		AnimateBackwards(ButtonMap_Get("TopMenu_Listen"), DeltaTime, false);
 	}	
 
-	UIResult = DoUIButtonAutoId({221, 510, 331, 173}, {221, 510, 331, 173}, SettingsButtonState);
-
+	UIResult = DoUIButtonFromMap("TopMenu_Login");
 	if (UIResult.PerformAction) {
 		// @TODO(Roskuski): Implment State Transition
-		printf("Settings Button Action\n");
+		printf("LoginButtonAction\n");
 	}
 	if (UIResult.Hot) {
-		AnimateForwards(SettingsButtonState, DeltaTime, false);
+		AnimateForwards(ButtonMap_Get("TopMenu_Login"), DeltaTime, false);
 	}
 	else {
-		AnimateBackwards(SettingsButtonState, DeltaTime, false);
+		AnimateBackwards(ButtonMap_Get("TopMenu_Login"), DeltaTime, false);
 	}
 
 	// Debug Info
 	DrawFPS(10, 10);
 	{
 		char Buffer[256] = {};
-		sprintf(Buffer, "Hot Index: %d, Active Index: %d\nMousePos: %d %d", UIContext.Hot.Index, UIContext.Active.Index, GetMouseX(), GetMouseY());
+		sprintf(Buffer, "Hot Index: %lld, Active Index: %lld\nMousePos: %d %d", UIContext.Hot.KeyPointer, UIContext.Active.KeyPointer, GetMouseX(), GetMouseY());
 		DrawText(Buffer, 10, 30, 20, WHITE);
 	} 
 
@@ -462,31 +452,37 @@ int main(void) {
 
 	ProgState = TopMenu;
 
-	InitAnimationMap();
-
-	// @TODO(Roskuski): Fold this asset into the animation system.
-	//TITLE SCREEN BG
-	Image title = LoadImage("resources/titlescreen.png");
-	ImageResize(&title, 1280, 720);
-	Texture2D titleScreen = LoadTextureFromImage(title);
-	UnloadImage(title);
-
-	title = LoadImageFromTexture(titleScreen);
-	UnloadTexture(titleScreen);
-
-	titleScreen = LoadTextureFromImage(title);
-	UnloadImage(title);
+	AnimationMap_Init();
+	ButtonMap_Init();
 
 	// Load all animations
 	{
-		LoadAnimationFromFile("resources/processed/Intro.ppp");
-		LoadAnimationFromFile("resources/processed/PlayButton.ppp");
-		LoadAnimationFromFile("resources/processed/SettingsButton.ppp");
-		LoadAnimationFromFile("resources/processed/ListenButton.ppp");
-		LoadAnimationFromFile("resources/processed/TopMenuLight.ppp");
-		LoadAnimationFromFile("resources/processed/PlayerBG.ppp");
-		LoadAnimationFromFile("resources/processed/PlayerHelp.ppp");
-		LoadAnimationFromFile("resources/processed/LoginMenuBG.ppp");
+		// This macro works because of automatic constant string concatincation.
+		// honestly, a silly feature. `"aaa" "bbb"` ===> `"aaabbb"` is the rule.
+#define Base "resources/processed/"
+		LoadAnimationFromFile(Base "TopMenuBG.ppp");
+		LoadAnimationFromFile(Base "SignUpButton.ppp");
+		LoadAnimationFromFile(Base "SubmitButton.ppp");
+		LoadAnimationFromFile(Base "Textbox.ppp");
+		LoadAnimationFromFile(Base "SignUpScreen.ppp");
+		LoadAnimationFromFile(Base "Intro.ppp");
+		LoadAnimationFromFile(Base "PlayButton.ppp");
+		LoadAnimationFromFile(Base "SettingsButton.ppp");
+		LoadAnimationFromFile(Base "ListenButton.ppp");
+		LoadAnimationFromFile(Base "TopMenuLight.ppp");
+		LoadAnimationFromFile(Base "PlayerBG.ppp");
+		LoadAnimationFromFile(Base "PlayerHelp.ppp");
+		LoadAnimationFromFile(Base "LoginMenuBG.ppp");
+#undef Base
+	}
+
+	// Load all uim
+	{
+#define Base "resources/uim/"
+		LoadUim(Base "TopMenu.uim");
+		LoadUim(Base "LoginPage.uim");
+		LoadUim(Base "SignUpPage.uim");
+#undef Base
 	}
 
 	InitAudioDevice();
@@ -512,7 +508,7 @@ int main(void) {
 		} break;
 
 		case TopMenu: {
-			ProcessAndRenderTopMenu(DeltaTime, CurrentTime, titleScreen);
+			ProcessAndRenderTopMenu(DeltaTime, CurrentTime);
 		} break;
 
 		case LoginMenu: {
@@ -559,8 +555,6 @@ int main(void) {
 		UnloadSound(NoteSoundList[Index]);
 	}
     
-	UnloadTexture(titleScreen);       // Texture unloading
-	
 	CloseWindow();              // Close window and OpenGL context
 	//--------------------------------------------------------------------------------------
 

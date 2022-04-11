@@ -1,87 +1,5 @@
 #include "BluesBash_Animation.h"
-
-// Super basic string hashing
-int StringHash(const char* String) {
-	int Hash = 0;
-	for (int Index = 0; String[Index] != 0; Index++) {
-		Hash += String[Index];
-	}
-	return Hash;
-}
-
-void InitAnimationMap() {
-	for (int Index = 0; Index < AnimationMap_BucketCount; Index++) {
-		AnimationMap_Buckets[Index] = AnimationMap_NoEntry;
-	}
-
-	for (int Index = 0; Index < AnimationMap_BackingCount; Index++) {
-		AnimationMap_BackingData[Index].NextIndex = Index + 1;
-	}
-	AnimationMap_BackingData[AnimationMap_BackingCount - 1].NextIndex = AnimationMap_NoEntry;
-
-	AnimationMap_FreeListHead = 0;
-}
-
-int AnimationMap_GetFromFreeList() { 
-	int Result = AnimationMap_NoEntry;
-	if (AnimationMap_FreeListHead != AnimationMap_NoEntry) {
-		Result = AnimationMap_FreeListHead;
-		AnimationMap_FreeListHead = AnimationMap_BackingData[AnimationMap_FreeListHead].NextIndex;
-	}
-
-	AnimationMap_BackingData[Result].NextIndex = AnimationMap_NoEntry;
-
-	return Result;
-}
-
-animation* AnimationMap_Get(const char *Key) {
-	int Result = AnimationMap_NoEntry;
-
-	int Hash = StringHash(Key);
-	Result = AnimationMap_Buckets[Hash % AnimationMap_BucketCount];
-	if (Result != AnimationMap_NoEntry) {
-		animation_map_entry *Entry = &AnimationMap_BackingData[Result];
-		while (Entry->NextIndex != AnimationMap_NoEntry) {
-			if (strcmp(Key, Entry->Key) != 0) {
-				Entry = &AnimationMap_BackingData[Entry->NextIndex];
-			}
-			else {
-				break;
-			}
-		}
-	}
-
-	if (Result == AnimationMap_NoEntry) { 
-		Assert(false); // This really shouldn't happen
-		return 0;
-	}
-	return &(AnimationMap_BackingData[Result].Value);
-}
-
-// NOTE(Roskuski): Here, the data Key points to should remain valid until this entry is removed from the map.
-void AnimationMap_Insert(char *Key, animation Value) {
-	int Hash = StringHash(Key);
-	int BucketIndex = Hash % AnimationMap_BucketCount;
-	int EntryIndex = AnimationMap_Buckets[BucketIndex];
-
-	int FreeIndex = AnimationMap_GetFromFreeList();
-	Assert(FreeIndex != AnimationMap_NoEntry); // NOTE(Roskuski): If this assert fires, then we ran out of AnimationEntries. Bump up AnimationMap_BackingCount to a higher number.
-
-	if (EntryIndex == AnimationMap_NoEntry) {
-		AnimationMap_Buckets[BucketIndex] = FreeIndex;
-	}
-	else {
-		animation_map_entry *ParentEntry = &AnimationMap_BackingData[EntryIndex];
-		while (ParentEntry->NextIndex != AnimationMap_NoEntry) {
-			ParentEntry = &AnimationMap_BackingData[ParentEntry->NextIndex];
-		}
-		ParentEntry->NextIndex = FreeIndex;
-	}
-	animation_map_entry &Entry = AnimationMap_BackingData[FreeIndex];
-	Entry.Key = Key;
-	Entry.Value = Value;
-	Entry.NextIndex = AnimationMap_NoEntry;
-}
+#include "BluesBash_Map.h"
 
 // NOTE(Roskuski): animation.Frames and aniamtion.Frames[i].Graphic are both dynamically allocated
 // NOTE(Roskuski): this function assumes that everything is well if it can successfully open the file.
@@ -128,7 +46,12 @@ void LoadAnimationFromFile(const char *Path) {
 }
 
 inline Texture2D* GetCurrentFrame(animation_state& State) {
-	return &(AnimationMap_Get(State.Key)->Frames[State.CurrentFrameMajor].Graphic);
+	Texture2D *Result = 0;
+	animation *Value = AnimationMap_Get(State.Key);
+	if (Value) {
+		Result = &Value->Frames[State.CurrentFrameMajor].Graphic;
+	}
+	return Result;
 }
 
 bool AnimateForwards(animation_state &State, double DeltaTime, bool Loop) {
@@ -160,6 +83,10 @@ bool AnimateForwards(animation_state &State, double DeltaTime, bool Loop) {
 	return Result;
 }
 
+bool AnimateForwards(button_def *Button, double DeltaTime, bool Loop) {
+	return AnimateForwards(Button->AniState, DeltaTime, Loop);
+}
+
 bool AnimateBackwards(animation_state &State, double DeltaTime, bool Loop) {
 	animation * const Animation = AnimationMap_Get(State.Key);
 	bool Result = false;
@@ -189,4 +116,8 @@ bool AnimateBackwards(animation_state &State, double DeltaTime, bool Loop) {
 	}
 
 	return Result;
+}
+
+bool AnimateBackwards(button_def *Button, double DeltaTime, bool Loop) {
+	return AnimateBackwards(Button->AniState, DeltaTime, Loop);
 }
