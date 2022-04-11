@@ -116,7 +116,6 @@ LoadPppFile :: proc(PppPath : string) {
 }
 
 /* File format
-What we need to store:
 Header:
  - KeyLen : i32
  - Key : [KeyLen]u8
@@ -139,7 +138,7 @@ SaveToFile :: proc(Path : cstring, FileNameOffset, FileExtentionOffset : u16) {
 	Path := string(Path)
 	Handle, HandleError := os.open(Path, os.O_WRONLY | os.O_CREATE)
 	if (HandleError == os.ERROR_NONE) {
-		Key := Path[FileNameOffset:FileExtentionOffset]
+		Key := Path[FileNameOffset:FileExtentionOffset-1]
 		KeyLen := i32(len(Key))
 		os.write_ptr(Handle, &KeyLen, size_of(KeyLen))
 		os.write_string(Handle, Key)
