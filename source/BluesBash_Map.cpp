@@ -84,6 +84,8 @@ void* MAP_Get(const char *Key, int BucketCount, int *Buckets, size_t BackingObje
 			else {
 				if (Entry_NextIndex != MAP_NoEntry) {
 					Entry = ((char*)ManualArrayIndexMember(Backing, BackingObjectSize, Entry_NextIndex, 0));
+					Entry_NextIndex = *((int*)(Entry + BackingNextIndexOffset));
+					Entry_Key = ((char**)(Entry + BackingKeyOffset));
 				}
 				else {
 					Entry = 0;
