@@ -42,6 +42,7 @@ libs/*
 *.su
 *.idb
 *.pdb
+*.rdbg
 
 # Kernel Module Compile Results
 *.mod*
