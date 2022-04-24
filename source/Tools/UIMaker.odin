@@ -60,12 +60,6 @@ WindowHeight :: BluesBash_WindowHeight + 200
 AnimationMap : map[string]animation
 ButtonList : [dynamic]button_def
 
-StringHash :: proc(String : []u8) -> (Hash : i32) {
-	Hash = 0
-	for Byte in String {
-		Hash += i32(Byte)
-	}
-	return Hash
 }
 
 LoadPppFile :: proc(PppPath : string) {
