@@ -13,6 +13,12 @@ struct ui_context {
 
 global_var ui_context UIContext = {};
 
+enum uim_version {
+	Uim_Buttons = 0,
+
+	Uim_LatestPlusOne, // NOTE(Roskuski): Keep this at the end
+};
+
 // @TODO(Roskuski): Might have to make a different return type for different ui elements.
 struct ui_result {
 	bool PerformAction;

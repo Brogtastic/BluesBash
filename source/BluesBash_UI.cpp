@@ -3,43 +3,56 @@
 void LoadUim(const char *Path) {
 	FILE *File = fopen(Path, "rb");
 	if (File) {
-		int BaseKeyLength = 0;
-		fread(&BaseKeyLength, sizeof(BaseKeyLength), 1, File);
+		char MagicNumber[4];
+		fread(MagicNumber, ArrayCount(MagicNumber), 1, File);
+		if (MagicNumber[0] == 'U' &&
+		    MagicNumber[1] == 'I' &&
+		    MagicNumber[2] == 'M' &&
+		    MagicNumber[3] == 0) {
+			unsigned int FileVersion = 0;
+			fread(&FileVersion, sizeof(FileVersion), 1, File);
+			if (FileVersion == Uim_Buttons) {
+				int BaseKeyLength = 0;
+				fread(&BaseKeyLength, sizeof(BaseKeyLength), 1, File);
 
-		char *BaseKey = (char*)malloc(BaseKeyLength + 1);
-		fread(BaseKey, BaseKeyLength, 1, File);
-		BaseKey[BaseKeyLength] = 0;
+				char *BaseKey = (char*)malloc(BaseKeyLength + 1);
+				fread(BaseKey, BaseKeyLength, 1, File);
+				BaseKey[BaseKeyLength] = 0;
 
-		int ButtonNum = 0;
-		fread(&ButtonNum, sizeof(ButtonNum), 1, File);
-		for (int Index = 0; Index < ButtonNum; Index++) {
-			button_def Button = {};
+				int ButtonNum = 0;
+				fread(&ButtonNum, sizeof(ButtonNum), 1, File);
+				for (int Index = 0; Index < ButtonNum; Index++) {
+					button_def Button = {};
 
-			int ButtonKeyLength = 0; 
-			fread(&ButtonKeyLength, sizeof(ButtonKeyLength), 1, File);
-			Button.Entry.Key = (char*)malloc(ButtonKeyLength + BaseKeyLength + 2);
-			memcpy(Button.Entry.Key, BaseKey, BaseKeyLength);
-			Button.Entry.Key[BaseKeyLength] = '_'; 
-			fread(&Button.Entry.Key[BaseKeyLength + 1], ButtonKeyLength, 1, File);
-			Button.Entry.Key[ButtonKeyLength + BaseKeyLength + 1] = 0;
+					int ButtonKeyLength = 0; 
+					fread(&ButtonKeyLength, sizeof(ButtonKeyLength), 1, File);
+					Button.Entry.Key = (char*)malloc(ButtonKeyLength + BaseKeyLength + 2);
+					memcpy(Button.Entry.Key, BaseKey, BaseKeyLength);
+					Button.Entry.Key[BaseKeyLength] = '_'; 
+					fread(&Button.Entry.Key[BaseKeyLength + 1], ButtonKeyLength, 1, File);
+					Button.Entry.Key[ButtonKeyLength + BaseKeyLength + 1] = 0;
 
-			int GraphicKeyLength = 0;
-			fread(&GraphicKeyLength, sizeof(GraphicKeyLength), 1, File);
-			Button.AniState.Key = (char*)malloc(GraphicKeyLength);
-			Button.AniState.CurrentFrameMajor = 0;
-			Button.AniState.CurrentFrameMinor = 0;
-			Button.AniState.CurrentTime = 0;
-			fread(Button.AniState.Key, GraphicKeyLength, 1, File);
-			Button.AniState.Key[GraphicKeyLength] = 0;
+					int GraphicKeyLength = 0;
+					fread(&GraphicKeyLength, sizeof(GraphicKeyLength), 1, File);
+					Button.AniState.Key = (char*)malloc(GraphicKeyLength);
+					Button.AniState.CurrentFrameMajor = 0;
+					Button.AniState.CurrentFrameMinor = 0;
+					Button.AniState.CurrentTime = 0;
+					fread(Button.AniState.Key, GraphicKeyLength, 1, File);
+					Button.AniState.Key[GraphicKeyLength] = 0;
 
-			fread(&Button.HitRect, sizeof(Button.HitRect), 1, File);
-			fread(&Button.HitRotation, sizeof(Button.HitRotation), 1, File);
-			fread(&Button.GraphicRect, sizeof(Button.GraphicRect), 1, File);
-			fread(&Button.GraphicRotation, sizeof(Button.GraphicRotation), 1, File);
-			ButtonMap_Insert(Button.Entry.Key, Button);
+					fread(&Button.HitRect, sizeof(Button.HitRect), 1, File);
+					fread(&Button.HitRotation, sizeof(Button.HitRotation), 1, File);
+					fread(&Button.GraphicRect, sizeof(Button.GraphicRect), 1, File);
+					fread(&Button.GraphicRotation, sizeof(Button.GraphicRotation), 1, File);
+					ButtonMap_Insert(Button.Entry.Key, Button);
+				}
+
+				free(BaseKey);
+			}
+			else { printf("[LoadUim]: This file's version number did not match the reader's version number!\n"); }
 		}
-
-		free(BaseKey);
+		else { printf("[LoadUim]: This file's magic number did not match!\n"); }
 		fclose(File);
 	}
 	else {

@@ -60,8 +60,16 @@ WindowHeight :: BluesBash_WindowHeight + 200
 AnimationMap : map[string]animation
 ButtonList : [dynamic]button_def
 
+file_version :: enum u32 { // NOTE: Add a new entry every time the format of the binary file changes.
+	Buttons = 0, // First version, has button support
+
+	LatestPlusOne, // NOTE do not remove, always keep at end.
 }
 
+FILE_LATEST_VERSION :: file_version(u32(file_version.LatestPlusOne) - 1)
+FILE_MAGIC_NUMBER :: [4]u8{'U', 'I', 'M', 0}
+
+// @TODO(Roskuski): we only really need to load the first frame of the animations. so lets do just that.
 LoadPppFile :: proc(PppPath : string) {
 	PppHandle, PppError := os.open(PppPath, os.O_RDONLY)
 	if PppError != os.ERROR_NONE {
@@ -111,6 +119,8 @@ LoadPppFile :: proc(PppPath : string) {
 
 /* File format
 Header:
+ - Magic Number "UIM\0"
+ - Version Nuumber : u32
  - KeyLen : i32
  - Key : [KeyLen]u8
  - Number of buttons : i32
@@ -132,6 +142,10 @@ SaveToFile :: proc(Path : cstring, FileNameOffset, FileExtentionOffset : u16) {
 	Path := string(Path)
 	Handle, HandleError := os.open(Path, os.O_WRONLY | os.O_CREATE)
 	if (HandleError == os.ERROR_NONE) {
+		FileMagicNumber := FILE_MAGIC_NUMBER
+		FileVersionNumber := FILE_LATEST_VERSION
+		os.write(Handle, FileMagicNumber[:])
+		os.write_ptr(Handle, &FileVersionNumber, size_of(FileVersionNumber))
 		Key := Path[FileNameOffset:FileExtentionOffset-1]
 		KeyLen := i32(len(Key))
 		os.write_ptr(Handle, &KeyLen, size_of(KeyLen))
@@ -159,6 +173,32 @@ SaveToFile :: proc(Path : cstring, FileNameOffset, FileExtentionOffset : u16) {
 	else do fmt.printf("[SaveToFile]: There was an error opening \"%s\"(%d)\n", Path, HandleError)
 }
 
+OpenFromFile_Unversioned :: proc(Handle : os.Handle) {
+	Len : i32
+	os.read_ptr(Handle, &Len, size_of(Len))
+	os.seek(Handle, i64(Len), win32.FILE_CURRENT)
+	ButtonCount : i32 
+	os.read_ptr(Handle, &ButtonCount, size_of(ButtonCount))
+	for Index in 0..<ButtonCount {
+		Button : button_def
+		os.read_ptr(Handle, &Len, size_of(Len))
+		Button.Key = make([dynamic]u8, Len)
+		os.read(Handle, Button.Key[:])
+
+		os.read_ptr(Handle, &Len, size_of(Len))
+		Button.GraphicKey = make([dynamic]u8, Len)
+		os.read(Handle, Button.GraphicKey[:])
+
+		os.read_ptr(Handle, &Button.HitRect, size_of(Button.HitRect))
+		os.read_ptr(Handle, &Button.HitRotation, size_of(Button.HitRotation))
+		os.read_ptr(Handle, &Button.GraphicRect, size_of(Button.GraphicRect))
+		os.read_ptr(Handle, &Button.GraphicRotation, size_of(Button.GraphicRotation))
+
+		append(&ButtonList, Button)
+	}
+}
+OpenFromFile_Buttons :: OpenFromFile_Unversioned
+
 OpenFromFile :: proc(Path : cstring) {
 	for Button in &ButtonList {
 		delete(Button.Key)
@@ -168,31 +208,32 @@ OpenFromFile :: proc(Path : cstring) {
 	
 	Path := string(Path)
 	Handle, HandleError := os.open(Path, os.O_RDONLY)
-	if (HandleError == os.ERROR_NONE) {
-		Len : i32
-		os.read_ptr(Handle, &Len, size_of(Len))
-		os.seek(Handle, i64(Len), win32.FILE_CURRENT)
-		ButtonCount : i32 
-		os.read_ptr(Handle, &ButtonCount, size_of(ButtonCount))
-		for Index in 0..<ButtonCount {
-			Button : button_def
-			os.read_ptr(Handle, &Len, size_of(Len))
-			Button.Key = make([dynamic]u8, Len)
-			os.read(Handle, Button.Key[:])
-
-			os.read_ptr(Handle, &Len, size_of(Len))
-			Button.GraphicKey = make([dynamic]u8, Len)
-			os.read(Handle, Button.GraphicKey[:])
-
-			os.read_ptr(Handle, &Button.HitRect, size_of(Button.HitRect))
-			os.read_ptr(Handle, &Button.HitRotation, size_of(Button.HitRotation))
-			os.read_ptr(Handle, &Button.GraphicRect, size_of(Button.GraphicRect))
-			os.read_ptr(Handle, &Button.GraphicRotation, size_of(Button.GraphicRotation))
-
-			append(&ButtonList, Button)
+	if HandleError != os.ERROR_NONE do fmt.printf("[OpenFromFile]: There was an error opening \"%s\"(%d)\n", Path, HandleError)
+	
+	MagicNumber : [4]u8
+	NumRead, ReadError := os.read(Handle, MagicNumber[:])
+	if NumRead == 4 && ReadError == os.ERROR_NONE {
+		if MagicNumber == FILE_MAGIC_NUMBER {
+			FileVersion : file_version
+			NumRead, ReadError = os.read_ptr(Handle, cast(^u32)(&FileVersion), size_of(FileVersion))
+			if NumRead == size_of(FileVersion) && ReadError == os.ERROR_NONE {
+				#partial switch (FileVersion) {
+					case .Buttons: {
+						OpenFromFile_Buttons(Handle)
+					}
+					case: { // NOTE: handles all invalid version numbers.
+						fmt.printf("[OpenFromFile]: I opened a file from the future! Latest version is %d(file_version.%s), this file has version %d.\n", FILE_LATEST_VERSION, FILE_LATEST_VERSION, FileVersion)
+					}
+				}
+			}
+			else do fmt.printf("[OpenFromFile]: Failed to read file version!\n")
+		}
+		else {
+			os.seek(Handle, 0, win32.FILE_BEGIN)
+			OpenFromFile_Unversioned(Handle)
 		}
 	}
-	else do fmt.printf("[OpenFromFile]: There was anm error opening \"%s\"(%d)\n", Path, HandleError)
+	else do fmt.printf("[OpenFromFile]: Faield to read file magic number!\n")
 }
 
 // returns true if we are the active info element
