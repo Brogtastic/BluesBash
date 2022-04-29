@@ -51,9 +51,9 @@ echo Running Tools...
 
 pushd bin
 PicturePreProcessor.exe resources\animations\intro\Intro%%04d.png 266 1 24 Intro.ppp
-PicturePreProcessor.exe resources\animations\play\play%%d.png 5 1 15 PlayButton.ppp
-PicturePreProcessor.exe resources\animations\login\login%%d.png 5 1 15 SettingsButton.ppp
-PicturePreProcessor.exe resources\animations\listen\listen%%d.png 5 1 15 ListenButton.ppp
+PicturePreProcessor.exe resources\animations\play\play%%d.png 5 1 24 PlayButton.ppp
+PicturePreProcessor.exe resources\animations\login\login%%d.png 5 1 24 SettingsButton.ppp
+PicturePreProcessor.exe resources\animations\listen\listen%%d.png 5 1 24 ListenButton.ppp
 PicturePreProcessor.exe resources\animations\light\Light%%d.png 13 1 30 TopMenuLight.ppp
 PicturePreProcessor.exe "resources\gameplay screen.png" 1 0 1 PlayerBG.ppp
 PicturePreProcessor.exe "resources\Gameplay Instructions overlay.png" 1 0 1 PlayerHelp.ppp

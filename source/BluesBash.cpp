@@ -383,7 +383,7 @@ void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime) {
 		}
 	}
 	
-
+    button_def *PlayButton = ButtonMap_Get("TopMenu_Play");
 	UIResult = DoUIButtonFromMap("TopMenu_Play");
 	if (UIResult.PerformAction) {
 		ProgState = Player;
