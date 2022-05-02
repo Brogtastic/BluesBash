@@ -62,6 +62,7 @@ PicturePreProcessor.exe "resources\titlescreen.png" 1 0 1 TopMenuBG.ppp
 PicturePreProcessor.exe "resources\sign up.png" 1 0 1 SignUpButton.ppp
 PicturePreProcessor.exe "resources\submit.png" 1 0 1 SubmitButton.ppp
 PicturePreProcessor.exe "resources\textbox.png" 1 0 1 Textbox.ppp
+PicturePreProcessor.exe "resources\LoginScreenShading.png" 1 0 1 LoginScreenShading.ppp
 PicturePreProcessor.exe resources\animations\signuppage\SignUpScreen%%04d.png 69 1 12 SignUpScreen.ppp
 popd
 
