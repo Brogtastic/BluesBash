@@ -58,6 +58,27 @@ PicturePreProcessor.exe resources\animations\light\Light%%d.png 13 1 30 TopMenuL
 PicturePreProcessor.exe "resources\gameplay screen.png" 1 0 1 PlayerBG.ppp
 PicturePreProcessor.exe "resources\Gameplay Instructions overlay.png" 1 0 1 PlayerHelp.ppp
 PicturePreProcessor.exe "resources\animations\login page\login%%d.png" 28 1 30 LoginMenuBG.ppp
+PicturePreProcessor.exe "resources\animations\curtain\curtain%%d.png" 16 1 15 curtain.ppp
+PicturePreProcessor.exe "resources\animations\drumbot\drumbot%%d.png" 4 1 15 drumbot.ppp
+
+PicturePreProcessor.exe "resources\animations\Change Guys\Guitar\In\GuitarIn%%d.png" 3 1 15 GuitarIn.ppp
+PicturePreProcessor.exe "resources\animations\Change Guys\Guitar\Out\GuitarOut%%d.png" 3 1 15 GuitarOut.ppp
+PicturePreProcessor.exe "resources\animations\Change Guys\Piano\In\PianoIn%%d.png" 3 1 15 PianoIn.ppp
+PicturePreProcessor.exe "resources\animations\Change Guys\Piano\Out\PianoOut%%d.png" 3 1 15 PianoOut.ppp
+PicturePreProcessor.exe "resources\animations\Change Guys\Guitar\Out\GuitarOut%%d.png" 3 1 15 GuitarOut.ppp
+PicturePreProcessor.exe "resources\animations\Change Guys\Sax\In\SaxIn%%d.png" 3 1 15 SaxIn.ppp
+PicturePreProcessor.exe "resources\animations\Change Guys\Sax\Out\SaxOut%%d.png" 3 1 15 SaxOut.ppp
+
+PicturePreProcessor.exe "resources\animations\Player Animation\Guitar\Left\GuitarLeft%%d.png" 9 1 15 GuitarLeft.ppp
+PicturePreProcessor.exe "resources\animations\Player Animation\Guitar\Middle\GuitarMiddle%%d.png" 9 1 15 GuitarMiddle.ppp
+PicturePreProcessor.exe "resources\animations\Player Animation\Guitar\Right\GuitarRight%%d.png" 9 1 15 GuitarRight.ppp
+PicturePreProcessor.exe "resources\animations\Player Animation\Piano\Left\PianoLeft%%d.png" 9 1 15 PianoLeft.ppp
+PicturePreProcessor.exe "resources\animations\Player Animation\Piano\Middle\PianoMiddle%%d.png" 9 1 15 PianoMiddle.ppp
+PicturePreProcessor.exe "resources\animations\Player Animation\Piano\Right\PianoRight%%d.png" 9 1 15 PianoRight.ppp
+PicturePreProcessor.exe "resources\animations\Player Animation\Sax\Left\SaxophoneLeft%%d.png" 9 1 15 SaxLeft.ppp
+PicturePreProcessor.exe "resources\animations\Player Animation\Sax\Middle\SaxophoneMiddle%%d.png" 9 1 15 SaxMiddle.ppp
+PicturePreProcessor.exe "resources\animations\Player Animation\Sax\Right\SaxophoneRight%%d.png" 9 1 15 SaxRight.ppp
+
 PicturePreProcessor.exe "resources\titlescreen.png" 1 0 1 TopMenuBG.ppp
 PicturePreProcessor.exe "resources\sign up.png" 1 0 1 SignUpButton.ppp
 PicturePreProcessor.exe "resources\submit.png" 1 0 1 SubmitButton.ppp
