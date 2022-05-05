@@ -59,16 +59,23 @@ PicturePreProcessor.exe "resources\gameplay screen.png" 1 0 1 PlayerBG.ppp
 PicturePreProcessor.exe "resources\Stage.png" 1 0 1 StageBG.ppp
 PicturePreProcessor.exe "resources\InstrumentSelectBG.png" 1 0 1 InstrumentSelectBG.ppp
 PicturePreProcessor.exe "resources\Gameplay Instructions overlay.png" 1 0 1 PlayerHelp.ppp
+PicturePreProcessor.exe "resources\PostPlayScreen.png" 1 0 1 PostPlayScreen.ppp
 PicturePreProcessor.exe "resources\animations\login page\login%%d.png" 28 1 30 LoginMenuBG.ppp
 PicturePreProcessor.exe "resources\animations\curtain\curtain%%d.png" 16 1 15 curtain.ppp
 PicturePreProcessor.exe "resources\animations\drumbot\drumbot%%d.png" 4 1 15 drumbot.ppp
 PicturePreProcessor.exe "resources\animations\BackArrow\BackArrow%%d.png" 5 1 15 BackArrow.ppp
 PicturePreProcessor.exe "resources\animations\GoJam\GoJam%%d.png" 12 1 15 GoJam.ppp
+PicturePreProcessor.exe "resources\animations\YKW Gameplay Robot\YKWGameplayRobot%%d.png" 11 1 15 GamePlayRobot.ppp
+PicturePreProcessor.exe "resources\animations\UploadTrack\UploadTrack%%d.png" 4 1 15 UploadTrack.ppp
+PicturePreProcessor.exe "resources\animations\BackToMenu\BackToMenu%%d.png" 4 1 15 BackToMenu.ppp
+
 
 PicturePreProcessor.exe "resources\animations\Change Guys\Guitar\Guitar%%d.png" 4 1 15 Guitar.ppp
 PicturePreProcessor.exe "resources\animations\Change Guys\Piano\Piano%%d.png" 4 1 15 Piano.ppp
-PicturePreProcessor.exe "resources\animations\Change Guys\Guitar\Guitar%%d.png" 4 1 15 Guitar.ppp
 PicturePreProcessor.exe "resources\animations\Change Guys\Sax\Sax%%d.png" 4 1 15 Sax.ppp
+PicturePreProcessor.exe "resources\animations\RoboChange\GuitarBot\GuitarBot%%d.png" 4 1 15 GuitarBot.ppp
+PicturePreProcessor.exe "resources\animations\RoboChange\PianoBot\PianoBot%%d.png" 4 1 15 PianoBot.ppp
+PicturePreProcessor.exe "resources\animations\RoboChange\TromboneBot\TromboneBot%%d.png" 4 1 15 TromboneBot.ppp
 PicturePreProcessor.exe "resources\animations\ThreeBubbles\PlayerBubs\PlayerBubs%%d.png" 6 1 15 PlayerBubs.ppp
 PicturePreProcessor.exe "resources\animations\ThreeBubbles\RoboBubs\RoboBubs%%d.png" 6 1 15 RoboBubs.ppp
 PicturePreProcessor.exe "resources\animations\Indiv Bubbles\guitarbub\guitarbub%%d.png" 3 1 15 guitarbub.ppp
