@@ -15,6 +15,7 @@ global_var ui_context UIContext = {};
 
 enum uim_version {
 	Uim_Buttons = 0,
+	Uim_TextAreas,
 
 	Uim_LatestPlusOne, // NOTE(Roskuski): Keep this at the end
 };
@@ -35,6 +36,18 @@ struct button_def {
 	float GraphicRotation;
 };
 
+// @TODO(Roskuski): Moveable cursor on text areas?
+struct text_area_def {
+	map_entry Entry;
+	char *Buffer;
+	int BufferCurrentLength;
+	int BufferMaxSize;
+	int FontSize;
+	Rectangle HitRect;
+	Rectangle GraphicRect;
+	animation_state AniState;
+};
+
 // full button key: uim file name + button name => "TopMenu_PlayButton"
 
 // ButtonMap Start
@@ -42,10 +55,22 @@ struct button_def {
 #define ButtonMap_BackingCount (50)
 #define ButtonMap_NoEntry (-1)
 
-button_def ButtonMap_Backing[ButtonMap_BucketCount];
+button_def ButtonMap_Backing[ButtonMap_BackingCount];
 int ButtonMap_Buckets[ButtonMap_BucketCount];
 int ButtonMap_FreeListHead;
 // ButtonMap End
+
+// TextAreaMap Start
+#define TextAreaMap_BucketCount (30)
+#define TextAreaMap_BackingCount (50)
+#define TextAreaMap_NoEntry (-1)
+
+text_area_def TextAreaMap_Backing[TextAreaMap_BackingCount];
+int TextAreaMap_Buckets[TextAreaMap_BucketCount];
+int TextAreaMap_FreeListHead;
+// TextAreaMap End
+
+void LoadUim(const char* Path);
 
 // Tests if `Id` is the active id. Active means that we are currently interacting with this UI element.
 bool IsActive(ui_id Id);
@@ -55,3 +80,8 @@ bool IsHot(ui_id Id);
 
 ui_result DoUIButton(button_def *Button, ui_id Id);
 ui_result DoUIButtonFromMap(char *Key);
+
+ui_result DoUITextArea(text_area_def *TextArea, ui_id Id);
+ui_result DoUITextAreaFromMap(char *Key);
+bool DoTextInput(text_area_def *TextArea);
+bool DoTextInputFromMap(char *Key);

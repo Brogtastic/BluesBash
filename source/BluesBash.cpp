@@ -359,9 +359,10 @@ void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime) {
 	ClearBackground(RAYWHITE);
 
 	// Do UI
-	ui_result UIResult = Nouiid;
+	ui_result UIResult = {false, false};
 
 	UIResult = DoUIButtonFromMap("TopMenu_Background");
+
 
 	UIResult = DoUIButtonFromMap("TopMenu_Light");
 	if (UIResult.Hot && LightAnimationCooldown <= 0) {
@@ -437,12 +438,16 @@ void ProcessAndRenderLoginMenu(double DeltaTime, double CurrentTime) {
 	DoUIButtonFromMap("LoginPage_Background");
 	AnimateForwards(ButtonMap_Get("LoginPage_Background"), DeltaTime, true);
 
-	UIResult = DoUIButtonFromMap("LoginPage_Login");
-
-	UIResult = DoUIButtonFromMap("LoginPage_Signup");
+	UIResult = DoUITextAreaFromMap("LoginPage_EmailBox");
 	if (UIResult.PerformAction) {
-		ProgState = SignUpPage;
+		DoTextInputFromMap("LoginPage_EmailBox");
 	}
+
+	UIResult = DoUITextAreaFromMap("LoginPage_PasswordBox");
+	if (UIResult.PerformAction) {
+		DoTextInputFromMap("LoginPage_PasswordBox");
+	}
+
 	EndDrawing();
 }
 
@@ -468,6 +473,7 @@ int main(void) {
 
 	AnimationMap_Init();
 	ButtonMap_Init();
+	TextAreaMap_Init();
 
 	// Load all animations
 	{

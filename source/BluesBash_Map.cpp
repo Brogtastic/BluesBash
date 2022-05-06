@@ -77,7 +77,7 @@ void* MAP_Get(const char *Key, int BucketCount, int *Buckets, size_t BackingObje
 		int Entry_NextIndex = *((int*)(Entry + BackingNextIndexOffset));
 		char **Entry_Key = ((char**)(Entry + BackingKeyOffset));
 
-		while (Entry_NextIndex != MAP_NoEntry) {
+		do {
 			if (strcmp(Key, *Entry_Key) == 0) {
 				break; // Found it!
 			}
@@ -92,7 +92,7 @@ void* MAP_Get(const char *Key, int BucketCount, int *Buckets, size_t BackingObje
 					break; // Key is not in map
 				}
 			}
-		}
+		} while (Entry_NextIndex != MAP_NoEntry);
 	}
 
 	return Entry;

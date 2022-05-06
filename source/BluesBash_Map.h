@@ -48,6 +48,8 @@ void MAP_Init(const int BucketCount, int *Buckets, int BackingCount, size_t Back
 	MAP_Init(AnimationMap_BucketCount, AnimationMap_Buckets, AnimationMap_BackingCount, sizeof(animation), OffsetOf(Entry.NextIndex, animation), (char*)(&AnimationMap_BackingData[0]), &AnimationMap_FreeListHead)
 #define ButtonMap_Init() \
 	MAP_Init(ButtonMap_BucketCount, ButtonMap_Buckets, ButtonMap_BackingCount, sizeof(button_def), OffsetOf(Entry.NextIndex, button_def), (char*)(&ButtonMap_Backing[0]), &ButtonMap_FreeListHead)
+#define TextAreaMap_Init() \
+	MAP_Init(TextAreaMap_BucketCount, TextAreaMap_Buckets, TextAreaMap_BackingCount, sizeof(text_area_def), OffsetOf(Entry.NextIndex, text_area_def), (char*)(&TextAreaMap_Backing[0]), &TextAreaMap_FreeListHead)
 
 // Mainly for internal use. Pops a entry off the free list.
 int MAP_GetFromFreeList(int *FreeListHead, size_t BackingObjectSize, uintptr_t BackingNextIndexOffset, char *Backing);
@@ -60,6 +62,8 @@ void MAP_Insert(char *Key, void *Value, size_t ValueSize, uintptr_t ValueOffset,
 	MAP_Insert((KEY), &(VALUE), sizeof(animation) - sizeof(map_entry), OffsetOf(FrameTime, animation), &AnimationMap_FreeListHead, AnimationMap_BucketCount, AnimationMap_Buckets, sizeof(animation), OffsetOf(Entry.Key, animation), OffsetOf(Entry.NextIndex, animation), (char*)(&AnimationMap_BackingData[0]))
 #define ButtonMap_Insert(KEY, VALUE) \
 	MAP_Insert((KEY), &(VALUE), sizeof(button_def) - sizeof(map_entry), OffsetOf(HitRect, button_def), &ButtonMap_FreeListHead, ButtonMap_BucketCount, ButtonMap_Buckets, sizeof(button_def), OffsetOf(Entry.Key, button_def), OffsetOf(Entry.NextIndex, button_def), (char*)(&ButtonMap_Backing[0]))
+#define TextAreaMap_Insert(KEY, VALUE) \
+	MAP_Insert((KEY), &(VALUE), sizeof(text_area_def) - sizeof(map_entry), OffsetOf(Buffer, text_area_def), &TextAreaMap_FreeListHead, TextAreaMap_BucketCount, TextAreaMap_Buckets, sizeof(text_area_def), OffsetOf(Entry.Key, text_area_def), OffsetOf(Entry.NextIndex, text_area_def), (char*)(&TextAreaMap_Backing[0]))
 
 // Gets the Value at Key.
 void* MAP_Get(const char *Key, int BucketCount, int *Buckets, size_t BackingObjectSize, uintptr_t BackingKeyOffset, uintptr_t BackingNextIndexOffset, char *Backing);
@@ -67,3 +71,5 @@ void* MAP_Get(const char *Key, int BucketCount, int *Buckets, size_t BackingObje
 	((animation*)MAP_Get((KEY), AnimationMap_BucketCount, AnimationMap_Buckets, sizeof(animation), OffsetOf(Entry.Key, animation), OffsetOf(Entry.NextIndex, animation), (char*)(&AnimationMap_BackingData[0])))
 #define ButtonMap_Get(KEY) \
 	((button_def*)MAP_Get((KEY), ButtonMap_BucketCount, ButtonMap_Buckets, sizeof(button_def), OffsetOf(Entry.Key, button_def), OffsetOf(Entry.NextIndex, button_def), (char*)(&ButtonMap_Backing[0])))
+#define TextAreaMap_Get(KEY) \
+	((text_area_def*)MAP_Get((KEY), TextAreaMap_BucketCount, TextAreaMap_Buckets, sizeof(text_area_def), OffsetOf(Entry.Key, text_area_def), OffsetOf(Entry.NextIndex, text_area_def), (char*)(&TextAreaMap_Backing[0])))
