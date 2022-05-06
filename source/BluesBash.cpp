@@ -25,12 +25,14 @@
 #include "BluesBash_Animation.h"
 #include "BluesBash_UI.h"
 #include "BluesBash_Map.h"
+#include "win32_BluesBash.h"
 
 enum prog_state {
 	Player,
 	TopMenu,
 	LoginPage,
 	SignUpPage,
+	InstrumentSelect,
 };
 
 enum sustained_key {
@@ -463,6 +465,39 @@ void ProcessAndRenderSigninMenu(double DeltaTime, double CurrentTime) {
 	EndDrawing();
 }
 
+
+void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
+	BeginDrawing();
+
+	ui_result UIResult = {false, false};
+	UIResult = DoUIButtonFromMap("InstrumentSelectPage_Background");
+
+	UIResult = DoUIButtonFromMap("InstrumentSelectPage_BubBox");
+	if (UIResult.Hot) {
+		button_def *PlayerButton = ButtonMap_Get("InstrumentSelectPage_Player");
+
+		UIResult = DoUIButtonFromMap("InstrumentSelectPage_PianoBub");
+		if (UIResult.PerformAction) {
+		}
+		UIResult = DoUIButtonFromMap("InstrumentSelectPage_SaxBub");
+		if (UIResult.PerformAction) {
+			free(PlayerButton->AniState.Key);
+			PlayerButton->AniState.Key = (char*)malloc(strlen("Sax") + 1);
+			memcpy(PlayerButton->AniState.Key, "Sax", strlen("Sax") + 1);
+			animation *NewAni = AnimationMap_Get("Sax");
+			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+		}
+		UIResult = DoUIButtonFromMap("InstrumentSelectPage_GuiartBub");
+		if (UIResult.PerformAction) {}
+	}
+
+	UIResult = DoUIButtonFromMap("InstrumentSelectPage_Player");
+	AnimateBackwards(ButtonMap_Get("InstrumentSelectPage_Player"), DeltaTime, false);
+
+	EndDrawing();
+}
+
 int main(void) {
 	// Initialization
 	//--------------------------------------------------------------------------------------
@@ -475,26 +510,7 @@ int main(void) {
 	ButtonMap_Init();
 	TextAreaMap_Init();
 
-	// Load all animations
-	{
-		// This macro works because of automatic constant string concatincation.
-		// honestly, a silly feature. `"aaa" "bbb"` ===> `"aaabbb"` is the rule.
-#define Base "resources/processed/"
-		LoadAnimationFromFile(Base "TopMenuBG.ppp");
-		LoadAnimationFromFile(Base "SignUpButton.ppp");
-		LoadAnimationFromFile(Base "SubmitButton.ppp");
-		LoadAnimationFromFile(Base "Textbox.ppp");
-		LoadAnimationFromFile(Base "SignUpScreen.ppp");
-		LoadAnimationFromFile(Base "Intro.ppp");
-		LoadAnimationFromFile(Base "PlayButton.ppp");
-		LoadAnimationFromFile(Base "SettingsButton.ppp");
-		LoadAnimationFromFile(Base "ListenButton.ppp");
-		LoadAnimationFromFile(Base "TopMenuLight.ppp");
-		LoadAnimationFromFile(Base "PlayerBG.ppp");
-		LoadAnimationFromFile(Base "PlayerHelp.ppp");
-		LoadAnimationFromFile(Base "LoginMenuBG.ppp");
-#undef Base
-	}
+	LoadAllPppFiles();
 
 	// Load all uim
 	{
@@ -502,6 +518,7 @@ int main(void) {
 		LoadUim(Base "TopMenu.uim");
 		LoadUim(Base "LoginPage.uim");
 		LoadUim(Base "SignUpPage.uim");
+		LoadUim(Base "InstrumentSelectPage.uim");
 #undef Base
 	}
 
@@ -517,7 +534,7 @@ int main(void) {
 		local_persist double CurrentTime = 0;
 		CurrentTime += DeltaTime;
 
-		if (IsKeyPressed(KEY_Q)) { ProgState = TopMenu; }
+		if (IsKeyPressed(KEY_Q)) { ProgState = InstrumentSelect; }
 
 		switch(ProgState) {
 		case Player: {
@@ -534,6 +551,10 @@ int main(void) {
 
 		case SignUpPage: {
 			ProcessAndRenderSigninMenu(DeltaTime, CurrentTime);
+		} break;
+
+		case InstrumentSelect: {
+			ProcessAndRenderInstrumentSelect(DeltaTime, CurrentTime);
 		} break;
 
 		default: Assert(false); break;

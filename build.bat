@@ -22,7 +22,7 @@ if not exist libs\Odin (
 
 set IncludePaths=-Ilibs\raylib\include
 set LibraryPaths=/LIBPATH:libs\raylib\lib\
-set TranslationUnits=source\BluesBash.cpp
+set TranslationUnits=source\BluesBash.cpp source\win32_BluesBash.cpp
 
 set CFlags=-nologo -Fobin\obj\
 set LFlags=-link /OUT:bin\BluesBash.exe /nologo
