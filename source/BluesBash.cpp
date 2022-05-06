@@ -511,16 +511,7 @@ int main(void) {
 	TextAreaMap_Init();
 
 	LoadAllPppFiles();
-
-	// Load all uim
-	{
-#define Base "resources/uim/"
-		LoadUim(Base "TopMenu.uim");
-		LoadUim(Base "LoginPage.uim");
-		LoadUim(Base "SignUpPage.uim");
-		LoadUim(Base "InstrumentSelectPage.uim");
-#undef Base
-	}
+	LoadAllUimFiles();
 
 	InitAudioDevice();
 
