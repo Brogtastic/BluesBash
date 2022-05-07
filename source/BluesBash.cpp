@@ -47,6 +47,7 @@ struct player_info {
 	double TimeUntilNextChord;
 	int CurrentChord;
 	
+    note_instrument Instrument;
 	note_name Keyboard[19];
 	note_name SustainedNotes[4];
 
@@ -85,17 +86,17 @@ void WalkToNextPlacement(int Delta, int LowBound, int HighBound, bool DoAdjust) 
 	else if (Delta > 0) { Unit = 1; }
 		
 	while (DoAdjust) {
-		if (IsNotePlaying(PlayerInfo.Keyboard[PlayerInfo.Placement])) {
+		if (IsNotePlaying(PlayerInfo.Keyboard[PlayerInfo.Placement],PlayerInfo.Instrument)) {
 			PlayerInfo.Placement += Unit;
 			if (PlayerInfo.Placement < LowBound) { PlayerInfo.Placement = LowBound; }
 			if (PlayerInfo.Placement > HighBound) { PlayerInfo.Placement = HighBound; }
 		}
-		else if ((PlayerInfo.Placement != HighBound) && (IsNotePlaying(PlayerInfo.Keyboard[PlayerInfo.Placement+1]))) {
+		else if ((PlayerInfo.Placement != HighBound) && (IsNotePlaying(PlayerInfo.Keyboard[PlayerInfo.Placement+1],PlayerInfo.Instrument))) {
 			PlayerInfo.Placement += Unit;
 			if (PlayerInfo.Placement < LowBound) { PlayerInfo.Placement = LowBound; }
 			if (PlayerInfo.Placement > HighBound) { PlayerInfo.Placement = HighBound; }
 		}
-		else if ((PlayerInfo.Placement != LowBound) && (IsNotePlaying(PlayerInfo.Keyboard[PlayerInfo.Placement-1]))) {
+		else if ((PlayerInfo.Placement != LowBound) && (IsNotePlaying(PlayerInfo.Keyboard[PlayerInfo.Placement-1],PlayerInfo.Instrument))) {
 			PlayerInfo.Placement += Unit;
 			if (PlayerInfo.Placement < LowBound) { PlayerInfo.Placement = LowBound; }
 			if (PlayerInfo.Placement > HighBound) { PlayerInfo.Placement = HighBound; }
@@ -121,6 +122,8 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	const double ChordLength = WHOLE_NOTE(SecondsPerBeat);
 	const chord_names ChordSequence[] = {Cmaj7, Fmaj7, Cmaj7, Gmaj7, Fmaj7, Cmaj7};
 	const double ChordRatio[] = {2, 2, 2, 1, 1, 2};
+    
+    PlayerInfo.Instrument = Brog_Saxophone;
 	
 	// @TODO(Roskuski): @RemoveMe move to a different initilatizion system for state init.
 	local_persist bool IsInitilized = false;
@@ -154,7 +157,7 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 		if (PlayerInfo.LastKeyPressed == KEY_UP) { DoAdjust = false; }
 			
 		WalkToNextPlacement(1, 0, ArrayCount(PlayerInfo.Keyboard)-1, DoAdjust);
-		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement], SustainedVolume);
+		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement],PlayerInfo.Instrument, SustainedVolume);
 		PlayerInfo.SustainedNotes[sustained_key::Right] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		PlayerInfo.LastKeyPressed = KEY_RIGHT;
 		
@@ -166,7 +169,7 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 		if (PlayerInfo.LastKeyPressed == KEY_UP) { DoAdjust = false; }
 			
 		WalkToNextPlacement(-1, 0, ArrayCount(PlayerInfo.Keyboard)-1, DoAdjust);
-		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement], SustainedVolume);
+		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement],PlayerInfo.Instrument, SustainedVolume);
 		PlayerInfo.SustainedNotes[sustained_key::Left] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		PlayerInfo.LastKeyPressed = KEY_LEFT;
 
@@ -175,7 +178,7 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 
 	if (IsKeyPressed(KEY_DOWN)){
 		WalkToNextPlacement(0, 0, ArrayCount(PlayerInfo.Keyboard)-1, true);
-		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement], SustainedVolume);
+		PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement],PlayerInfo.Instrument, SustainedVolume);
 		PlayerInfo.SustainedNotes[sustained_key::Down] = PlayerInfo.Keyboard[PlayerInfo.Placement];
 		// @TODO(Roskuski): should we keep track of this key in PlayerInfo.LastKeyPressed?
 
@@ -183,6 +186,29 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	}
 		
 	if(IsKeyPressed(KEY_UP)){
+		if (PlayerInfo.LastKeyPressed == KEY_UP) {
+			PlayerInfo.LastKeyPressed = PlayerInfo.LastChoice;
+		}
+		PlayerInfo.LastChoice = PlayerInfo.LastKeyPressed;
+			
+		if (PlayerInfo.LastKeyPressed == KEY_LEFT){
+			WalkToNextPlacement(1, 0, ArrayCount(PlayerInfo.Keyboard)-1, false);
+			PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement],PlayerInfo.Instrument, SustainedVolume);
+			PlayerInfo.SustainedNotes[sustained_key::Up] = PlayerInfo.Keyboard[PlayerInfo.Placement];
+		}
+		else if (PlayerInfo.LastKeyPressed == KEY_RIGHT){
+			WalkToNextPlacement(-1, 0, ArrayCount(PlayerInfo.Keyboard)-1, false);
+			PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement],PlayerInfo.Instrument, SustainedVolume);
+			PlayerInfo.SustainedNotes[sustained_key::Up] = PlayerInfo.Keyboard[PlayerInfo.Placement];
+		}
+		PlayerInfo.LastChoice = PlayerInfo.LastKeyPressed;
+		PlayerInfo.LastKeyPressed = KEY_UP;
+
+		OffsetYEaseRatio = 0;
+	}
+    
+    /*
+    if(IsKeyPressed(KEY_F)){
 		if (PlayerInfo.LastKeyPressed == KEY_UP) {
 			PlayerInfo.LastKeyPressed = PlayerInfo.LastChoice;
 		}
@@ -203,12 +229,13 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 
 		OffsetYEaseRatio = 0;
 	}
+    */
 
 	// Stop Sustained notes that we are no longer holding.
 	for (int SustainedKey = 0; SustainedKey < SustainedKey_Count; SustainedKey++) {
 		const KeyboardKey SusToRay[SustainedKey_Count] = {KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT};
 		if (IsKeyReleased(SusToRay[SustainedKey])) {
-			StopNoteSustained(PlayerInfo.SustainedNotes[SustainedKey]);
+			StopNoteSustained(PlayerInfo.SustainedNotes[SustainedKey],PlayerInfo.Instrument);
 			PlayerInfo.SustainedNotes[SustainedKey] = NoteName_Count;
 		}
 	}
@@ -220,7 +247,7 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 		if (PlayerInfo.TimeUntilNextChord <= 0) {
 			// Stop the current chord (on start up we can stop notes that are not playing)
 			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
-				StopNote(Note);
+				StopNote(Note,PlayerInfo.Instrument);
 			}
 
 			PlayerInfo.CurrentChord += 1;
@@ -231,46 +258,46 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 
 			// Play the next chord
 			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
-				PlayNote(Note, CurrentTime, ChordLength * ChordRatio[PlayerInfo.CurrentChord], 0, 0.25);
+				PlayNote(Note, PlayerInfo.Instrument, CurrentTime, ChordLength * ChordRatio[PlayerInfo.CurrentChord], 0, 0.25);
 			}
 		}
 	}
 		
 	for (int Index = 0; Index < NoteName_Count; Index++) {
 		// NOTE(Roskuski): I'm not sure if we want to move all note processing to here or not. Right now PlayingSustained plays and stops their notes elsewhere.
-		switch(NoteStateList[Index].State) {
+		switch(NoteStateList[PlayerInfo.Instrument][Index].State) {
 
 		case QueuedForPlaying: {
-			if (NoteStateList[Index].StartTime <= CurrentTime &&
-			    NoteStateList[Index].EndTime > CurrentTime) {
-				NoteStateList[Index].State = Playing;
-				SetSoundVolume(NoteSoundList[Index], NoteStateList[Index].Volume);
-				PlaySound(NoteSoundList[Index]);
+			if (NoteStateList[PlayerInfo.Instrument][Index].StartTime <= CurrentTime &&
+			    NoteStateList[PlayerInfo.Instrument][Index].EndTime > CurrentTime) {
+				NoteStateList[PlayerInfo.Instrument][Index].State = Playing;
+				SetSoundVolume(NoteSoundList[PlayerInfo.Instrument][Index], NoteStateList[PlayerInfo.Instrument][Index].Volume);
+				PlaySound(NoteSoundList[PlayerInfo.Instrument][Index]);
 			}
 		} break;
 				
 		case Playing: {
-			if (NoteStateList[Index].EndTime <= CurrentTime) {
-				NoteStateList[Index].State = Stopping;
+			if (NoteStateList[PlayerInfo.Instrument][Index].EndTime <= CurrentTime) {
+				NoteStateList[PlayerInfo.Instrument][Index].State = Stopping;
 			}
 		} break;
 
 		case Stopping: {
-			if (NoteStateList[Index].FadeRatio <= 0) {
-				StopSound(NoteSoundList[Index]);
-				NoteStateList[Index].State = NotPlaying;
+			if (NoteStateList[PlayerInfo.Instrument][Index].FadeRatio <= 0) {
+				StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
+				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
 			}
 
 			const double FadeTime = SIXTEENTH_NOTE(SecondsPerBeat);
-			NoteStateList[Index].FadeRatio = ((NoteStateList[Index].FadeRatio * FadeTime) - DeltaTime)/FadeTime;
+			NoteStateList[PlayerInfo.Instrument][Index].FadeRatio = ((NoteStateList[PlayerInfo.Instrument][Index].FadeRatio * FadeTime) - DeltaTime)/FadeTime;
 
-			if (NoteStateList[Index].FadeRatio < 0) { NoteStateList[Index].FadeRatio = 0; }
-			float NewVolume = LinearInterp(0, NoteStateList[Index].Volume, NoteStateList[Index].FadeRatio);
+			if (NoteStateList[PlayerInfo.Instrument][Index].FadeRatio < 0) { NoteStateList[PlayerInfo.Instrument][Index].FadeRatio = 0; }
+			float NewVolume = LinearInterp(0, NoteStateList[PlayerInfo.Instrument][Index].Volume, NoteStateList[PlayerInfo.Instrument][Index].FadeRatio);
 				
-			SetSoundVolume(NoteSoundList[Index], NewVolume);
+			SetSoundVolume(NoteSoundList[PlayerInfo.Instrument][Index], NewVolume);
 			if (Index == C2) {
 				char Buffer[50];
-				sprintf(Buffer, "Ratio: %lf, NewVolume: %lf", NoteStateList[Index].FadeRatio, NewVolume);
+				sprintf(Buffer, "Ratio: %lf, NewVolume: %lf", NoteStateList[PlayerInfo.Instrument][Index].FadeRatio, NewVolume);
 				DrawText(Buffer, 10, 150, 20, BLACK);
 			}
 		} break;
@@ -297,7 +324,7 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 		int KeyboardRollAdvance = 48 + 2;
 		Rectangle Rect = {(float)KeyboardRollStartX, (float)ScreenHeight - 48, 48, 48};
 		for (int Index = 0; Index < ArrayCount(PlayerInfo.Keyboard); Index++) {
-			note_state NoteState = NoteStateList[PlayerInfo.Keyboard[Index]];
+			note_state NoteState = NoteStateList[PlayerInfo.Instrument][PlayerInfo.Keyboard[Index]];
 
 			Color RectColor = BLACK;
 			Color TextColor = BLACK;
@@ -516,9 +543,14 @@ int main(void) {
 	InitAudioDevice();
 
 	// Load all notes
-	for (int Index = 0; Index < NoteName_Count; Index++) {
-		NoteSoundList[Index] = LoadSound(NoteFileNames[Index]);
-	}
+    for (int InstrumentIndex = 0; InstrumentIndex < NoteInstrumentCount; InstrumentIndex++) {        
+        for (int Index = 0; Index < NoteName_Count; Index++) {
+            NoteSoundList[InstrumentIndex][Index] = LoadSound(NoteFileNames[InstrumentIndex][Index]);
+        }
+    }
+    GuitarFinale = LoadSound("resources/Guitar Finale.mp3");
+    PianoFinale = LoadSound("resources/Piano Finale.mp3");
+    SaxFinale = LoadSound("resources/Sax Finale.mp3");
 	  
 	while(!WindowShouldClose()) {
 		double DeltaTime = GetFrameTime();
@@ -556,7 +588,7 @@ int main(void) {
 	//--------------------------------------------------------------------------------------
 	CloseAudioDevice();         // Close audio device (music streaming is automatically stopped)
 	for (int Index = 0; Index < NoteName_Count; Index++) {
-		UnloadSound(NoteSoundList[Index]);
+		UnloadSound(NoteSoundList[Brog_Piano][Index]);
 	}
     
 	CloseWindow();              // Close window and OpenGL context

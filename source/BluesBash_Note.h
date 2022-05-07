@@ -64,20 +64,41 @@ enum note_name {
 #undef X	
 };
 
+enum note_instrument {
+    Brog_Piano = 0,
+    Brog_Guitar,
+    Brog_Saxophone,
+    
+    NoteInstrumentCount, // NOTE(Roskuski) Don't move!
+};
+
 const char *NoteNameStrings[] = {
 #define XX(Name, Value) X(Name)
 #define X(Name) #Name,
-	NOTES
+    NOTES
 #undef XX
 #undef X
 };
 
-const char *NoteFileNames[] = {
+const char *NoteFileNames[NoteInstrumentCount][NoteName_Count] = {
 #define XX(Name, Value) X(Name)
 #define X(Name) "resources/allNotes/Brog_Piano/"#Name".mp3",
-	NOTES
+{NOTES},
 #undef XX
 #undef X
+
+#define XX(Name, Value) X(Name)
+#define X(Name) "resources/allNotes/Brog_Guitar/"#Name".mp3",
+{NOTES},
+#undef XX
+#undef X
+
+#define XX(Name, Value) X(Name)
+#define X(Name) "resources/allNotes/Brog_Saxophone/"#Name".mp3",
+{NOTES},
+#undef XX
+#undef X
+
 };
 #undef NOTES
 
@@ -112,27 +133,32 @@ struct note_state {
 };
 
 
-global_var note_state NoteStateList[NoteName_Count];
-global_var Sound NoteSoundList[NoteName_Count];
+global_var note_state NoteStateList[NoteInstrumentCount][NoteName_Count];
+global_var Sound NoteSoundList[NoteInstrumentCount][NoteName_Count];
+
+global_var Sound GuitarFinale;
+global_var Sound PianoFinale;
+global_var Sound SaxFinale;
+
 
 // Returns true if the note that's passed in is currently playing
-bool IsNotePlaying(note_name Note);
+bool IsNotePlaying(note_name Note, note_instrument Instrument);
 
 // Plays the note that's passed in until StopNoteSustained is called with the same note
 // Volume: the loudness of the note we're playing from 1.0 to 0
-void PlayNoteSustained(note_name Note, float Volume);
+void PlayNoteSustained(note_name Note, note_instrument Instrument, float Volume);
 
 // Stops the note that's passed in if it was played by PlayNoteSustained
-void StopNoteSustained(note_name Note);
+void StopNoteSustained(note_name Note, note_instrument Instrument);
 
 // Note: Note to play
 // CurrentTime: the CurrentTime
 // Length: How long to play the note
 // Delay: How long we should wait until we start playing
 // Volume: The Loudness of the note we're playing. From 1.0 to 0
-void PlayNote(note_name Note, double CurrentTime, double Length, double Delay, float Volume);
+void PlayNote(note_name Note, note_instrument Instrument, double CurrentTime, double Length, double Delay, float Volume);
 
 // Stops the note that's passed in. Make sure you pass what the current time is as well.
-void StopNote(note_name Note);
+void StopNote(note_name Note, note_instrument Instrument);
 
 
