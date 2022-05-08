@@ -35,6 +35,7 @@ enum prog_state {
 	InstrumentSelect,
     FilterScreen,
     ListenScreen,
+    PostPlayScreen,
 };
 
 enum sustained_key {
@@ -209,7 +210,6 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 		OffsetYEaseRatio = 0;
 	}
     
-    /*
     if(IsKeyPressed(KEY_F)){
 		if (PlayerInfo.Instrument == Brog_Piano) {
             for (int Index = 0; Index < NoteName_Count; Index++) {
@@ -217,6 +217,7 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
             }
 			PlaySound(PianoFinale);
+            ProgState = PostPlayScreen;
 		}
 			
 		if (PlayerInfo.Instrument == Brog_Guitar){
@@ -225,6 +226,7 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
             }
 			PlaySound(GuitarFinale);
+            ProgState = PostPlayScreen;
 		}
 		else if (PlayerInfo.Instrument == Brog_Saxophone){
             for (int Index = 0; Index < NoteName_Count; Index++) {
@@ -232,9 +234,10 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
             }
 			PlaySound(SaxFinale);
+            ProgState = PostPlayScreen;
+            
 		}
 	}
-    */
 
 	// Stop Sustained notes that we are no longer holding.
 	for (int SustainedKey = 0; SustainedKey < SustainedKey_Count; SustainedKey++) {
@@ -486,6 +489,85 @@ void ProcessAndRenderLoginMenu(double DeltaTime, double CurrentTime) {
 	if (UIResult.PerformAction) {
 		DoTextInputFromMap("LoginPage_PasswordBox");
 	}
+    
+    button_def *BackArrow = ButtonMap_Get("LoginPage_BackArrow");
+	UIResult = DoUIButtonFromMap("LoginPage_BackArrow");
+	if (UIResult.PerformAction) {
+		ProgState = TopMenu;
+	}
+	if (UIResult.Hot) {
+		AnimateForwards(ButtonMap_Get("LoginPage_BackArrow"), DeltaTime, false);
+	}
+	else {
+		AnimateBackwards(ButtonMap_Get("LoginPage_BackArrow"), DeltaTime, false);
+	}
+
+	EndDrawing();
+}
+
+void ProcessAndRenderPostPlayScreen(double DeltaTime, double CurrentTime) {
+	BeginDrawing();
+	ClearBackground(RAYWHITE);
+
+	ui_result UIResult = {false, false};
+	DoUIButtonFromMap("PostPlayScreen_Background");
+	AnimateForwards(ButtonMap_Get("PostPlayScreen_Background"), DeltaTime, true);
+
+	UIResult = DoUITextAreaFromMap("PostPlayScreen_TitleTextbox");
+	if (UIResult.PerformAction) {
+		DoTextInputFromMap("PostPlayScreen_TitleTextbox");
+	}
+
+	UIResult = DoUIButtonFromMap("PostPlayScreen_BackToMenu");
+	if (UIResult.PerformAction) {
+		ProgState = TopMenu;
+	}
+	if (UIResult.Hot) {
+		AnimateForwards(ButtonMap_Get("PostPlayScreen_BackToMenu"), DeltaTime, false);
+	}
+	else {
+		AnimateBackwards(ButtonMap_Get("PostPlayScreen_BackToMenu"), DeltaTime, false);
+	}
+    
+    UIResult = DoUIButtonFromMap("PostPlayScreen_UploadTrack");
+	if (UIResult.PerformAction) {
+		ProgState = ListenScreen;
+	}
+	if (UIResult.Hot) {
+		AnimateForwards(ButtonMap_Get("PostPlayScreen_UploadTrack"), DeltaTime, false);
+	}
+	else {
+		AnimateBackwards(ButtonMap_Get("PostPlayScreen_UploadTrack"), DeltaTime, false);
+	}
+
+	EndDrawing();
+}
+
+void ProcessAndRenderFilterScreen(double DeltaTime, double CurrentTime) {
+	BeginDrawing();
+	ClearBackground(RAYWHITE);
+
+	ui_result UIResult = {false, false};
+	DoUIButtonFromMap("FilterScreen_Background");
+
+	UIResult = DoUITextAreaFromMap("FilterScreen_UserBox");
+	if (UIResult.PerformAction) {
+		DoTextInputFromMap("FilterScreen_UserBox");
+	}
+    
+    
+    button_def *BackArrow = ButtonMap_Get("FilterScreen_BackArrow");
+	UIResult = DoUIButtonFromMap("FilterScreen_BackArrow");
+	if (UIResult.PerformAction) {
+		ProgState = ListenScreen;
+	}
+	if (UIResult.Hot) {
+		AnimateForwards(ButtonMap_Get("FilterScreen_BackArrow"), DeltaTime, false);
+	}
+	else {
+		AnimateBackwards(ButtonMap_Get("FilterScreen_BackArrow"), DeltaTime, false);
+	}
+    
 
 	EndDrawing();
 }
@@ -578,34 +660,6 @@ void ProcessAndRenderListenScreen(double DeltaTime, double CurrentTime) {
 	EndDrawing();
 }
 
-void ProcessAndRenderFilterScreen(double DeltaTime, double CurrentTime) {
-	BeginDrawing();
-
-	ClearBackground(RAYWHITE);
-
-	// Do UI
-	ui_result UIResult = {false, false};
-
-	UIResult = DoUIButtonFromMap("FilterScreen_Background");
-
-	
-    button_def *PlayButton = ButtonMap_Get("FilterScreen_BackArrow");
-	UIResult = DoUIButtonFromMap("FilterScreen_BackArrow");
-	if (UIResult.PerformAction) {
-		ProgState = ListenScreen;
-        //MAKE SURE THIS PROGSTATE WORKS
-	}
-	if (UIResult.Hot) {
-		AnimateForwards(ButtonMap_Get("FilterScreen_BackArrow"), DeltaTime, false);
-	}
-	else {
-		AnimateBackwards(ButtonMap_Get("FilterScreen_BackArrow"), DeltaTime, false);
-	}
-
-
-	EndDrawing();
-}
-
 //END NEW SHIT
 
 
@@ -670,6 +724,10 @@ int main(void) {
 		} break;
         
         case FilterScreen: {
+			ProcessAndRenderFilterScreen(DeltaTime, CurrentTime);
+		} break;
+        
+        case PostPlayScreen: {
 			ProcessAndRenderFilterScreen(DeltaTime, CurrentTime);
 		} break;
 
