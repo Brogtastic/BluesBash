@@ -126,7 +126,6 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	const chord_names ChordSequence[] = {Cmaj7, Fmaj7, Cmaj7, Gmaj7, Fmaj7, Cmaj7};
 	const double ChordRatio[] = {2, 2, 2, 1, 1, 2};
     
-    //PlayerInfo.Instrument = Brog_Saxophone;
 	
 	// @TODO(Roskuski): @RemoveMe move to a different initilatizion system for state init.
 	local_persist bool IsInitilized = false;
@@ -631,8 +630,54 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
             PlayerInfo.Instrument = Brog_Guitar;
         }
-        
 	}
+    
+    //ROBOT BUBBLE STUFFFF
+    UIResult = DoUIButtonFromMap("InstrumentSelectPage_Robot");
+    UIResult = DoUIButtonFromMap("InstrumentSelectPage_RoboBubBox");
+	if (UIResult.Hot) {
+		button_def *RoboButton = ButtonMap_Get("InstrumentSelectPage_Robot");
+		if (AnimateForwards(ButtonMap_Get("InstrumentSelectPage_RoboBubBox"), DeltaTime, false) || true) {
+			UIResult = DoUIButtonFromMap("InstrumentSelectPage_RPianoBub");
+			if (UIResult.PerformAction) {
+				AnimateForwards(ButtonMap_Get("InstrumentSelectPage_Robot"), DeltaTime, false);
+				free(RoboButton->AniState.Key);
+				RoboButton->AniState.Key = (char*)malloc(strlen("PianoBot") + 1);
+				memcpy(RoboButton->AniState.Key, "PianoBot", strlen("PianoBot") + 1);
+				animation *NewAni = AnimationMap_Get("PianoBot");
+				RoboButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+				RoboButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+				PlayerInfo.Instrument = Brog_Piano;
+			}
+			UIResult = DoUIButtonFromMap("InstrumentSelectPage_RTromBub");
+			if (UIResult.PerformAction) {
+				AnimateForwards(ButtonMap_Get("InstrumentSelectPage_Robot"), DeltaTime, false);
+				free(RoboButton->AniState.Key);
+				RoboButton->AniState.Key = (char*)malloc(strlen("TromboneBot") + 1);
+				memcpy(RoboButton->AniState.Key, "TromboneBot", strlen("TromboneBot") + 1);
+				animation *NewAni = AnimationMap_Get("TromboneBot");
+				RoboButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+				RoboButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+				PlayerInfo.Instrument = Brog_Saxophone;
+			}
+			UIResult = DoUIButtonFromMap("InstrumentSelectPage_RGuitarBub");
+			if (UIResult.PerformAction) {
+				AnimateForwards(ButtonMap_Get("InstrumentSelectPage_Robot"), DeltaTime, false);
+				free(RoboButton->AniState.Key);
+				RoboButton->AniState.Key = (char*)malloc(strlen("GuitarBot") + 1);
+				memcpy(RoboButton->AniState.Key, "GuitarBot", strlen("GuitarBot") + 1);
+				animation *NewAni = AnimationMap_Get("GuitarBot");
+				RoboButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+				RoboButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+				PlayerInfo.Instrument = Brog_Guitar;
+			}
+		}
+	}
+    else {
+		AnimateBackwards(ButtonMap_Get("InstrumentSelectPage_RoboBubBox"), DeltaTime, false);
+	}
+    
+   
     
     button_def *GoJam = ButtonMap_Get("InstrumentSelectPage_GoJam");
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_GoJam");
@@ -646,6 +691,18 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 		AnimateBackwards(ButtonMap_Get("InstrumentSelectPage_GoJam"), DeltaTime, false);
 	}
     
+    button_def *BackArrow = ButtonMap_Get("InstrumentSelectPage_BackArrow");
+	UIResult = DoUIButtonFromMap("InstrumentSelectPage_BackArrow");
+	if (UIResult.PerformAction) {
+		ProgState = TopMenu;
+	}
+	if (UIResult.Hot) {
+		AnimateForwards(ButtonMap_Get("InstrumentSelectPage_BackArrow"), DeltaTime, false);
+	}
+	else {
+		AnimateBackwards(ButtonMap_Get("InstrumentSelectPage_BackArrow"), DeltaTime, false);
+	}
+    
     
     button_def *BotBotBot = ButtonMap_Get("InstrumentSelectPage_BotBotBot");
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_BotBotBot");
@@ -655,7 +712,7 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_Player");
 	AnimateBackwards(ButtonMap_Get("InstrumentSelectPage_Player"), DeltaTime, false);
-
+	AnimateBackwards(ButtonMap_Get("InstrumentSelectPage_Robot"), DeltaTime, false);
 	EndDrawing();
 }
 
@@ -678,7 +735,6 @@ void ProcessAndRenderListenScreen(double DeltaTime, double CurrentTime) {
 	UIResult = DoUIButtonFromMap("ListenScreen_BackArrow");
 	if (UIResult.PerformAction) {
 		ProgState = TopMenu;
-        //MAKE SURE THIS PROGSTATE WORKS
 	}
 	if (UIResult.Hot) {
 		AnimateForwards(ButtonMap_Get("ListenScreen_BackArrow"), DeltaTime, false);
@@ -690,7 +746,6 @@ void ProcessAndRenderListenScreen(double DeltaTime, double CurrentTime) {
 	UIResult = DoUIButtonFromMap("ListenScreen_Filter");
 	if (UIResult.PerformAction) {
 		ProgState = FilterScreen;
-        //MAKE SURE THIS PROGSTATE WORKS
 	}
 	if (UIResult.Hot) {
 		AnimateForwards(ButtonMap_Get("ListenScreen_Filter"), DeltaTime, false);
@@ -737,8 +792,6 @@ int main(void) {
 		double DeltaTime = GetFrameTime();
 		local_persist double CurrentTime = 0;
 		CurrentTime += DeltaTime;
-
-		if (IsKeyPressed(KEY_Q)) { ProgState = InstrumentSelect; }
 
 		switch(ProgState) {
 		case Player: {
