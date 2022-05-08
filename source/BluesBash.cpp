@@ -217,7 +217,8 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
             }
 			PlaySound(PianoFinale);
-            ProgState = PostPlayScreen;
+            
+            
 		}
 			
 		if (PlayerInfo.Instrument == Brog_Guitar){
@@ -226,7 +227,8 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
             }
 			PlaySound(GuitarFinale);
-            ProgState = PostPlayScreen;
+            
+            
 		}
 		else if (PlayerInfo.Instrument == Brog_Saxophone){
             for (int Index = 0; Index < NoteName_Count; Index++) {
@@ -234,9 +236,10 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
             }
 			PlaySound(SaxFinale);
-            ProgState = PostPlayScreen;
+            
             
 		}
+        ProgState = PostPlayScreen;
 	}
 
 	// Stop Sustained notes that we are no longer holding.
@@ -429,7 +432,7 @@ void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime) {
     button_def *PlayButton = ButtonMap_Get("TopMenu_Play");
 	UIResult = DoUIButtonFromMap("TopMenu_Play");
 	if (UIResult.PerformAction) {
-		ProgState = Player;
+		ProgState = InstrumentSelect;
 	}
 	if (UIResult.Hot) {
 		AnimateForwards(ButtonMap_Get("TopMenu_Play"), DeltaTime, false);
@@ -440,8 +443,7 @@ void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime) {
 
 	UIResult = DoUIButtonFromMap("TopMenu_Listen");
 	if (UIResult.PerformAction) {
-		// @TODO(Roskuski): Implment State Transition
-		printf("Listen Button Action\n");
+		ProgState = ListenScreen;
 	}
 	if (UIResult.Hot) {
 		AnimateForwards(ButtonMap_Get("TopMenu_Listen"), DeltaTime, false);
@@ -610,6 +612,18 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 		UIResult = DoUIButtonFromMap("InstrumentSelectPage_GuiartBub");
 		if (UIResult.PerformAction) {}
 	}
+    
+    button_def *GoJam = ButtonMap_Get("InstrumentSelectPage_GoJam");
+	UIResult = DoUIButtonFromMap("InstrumentSelectPage_GoJam");
+	if (UIResult.PerformAction) {
+		ProgState = Player;
+	}
+	if (UIResult.Hot) {
+		AnimateForwards(ButtonMap_Get("InstrumentSelectPage_GoJam"), DeltaTime, true);
+	}
+	else {
+		AnimateBackwards(ButtonMap_Get("InstrumentSelectPage_GoJam"), DeltaTime, false);
+	}
 
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_Player");
 	AnimateBackwards(ButtonMap_Get("InstrumentSelectPage_Player"), DeltaTime, false);
@@ -651,10 +665,10 @@ void ProcessAndRenderListenScreen(double DeltaTime, double CurrentTime) {
         //MAKE SURE THIS PROGSTATE WORKS
 	}
 	if (UIResult.Hot) {
-		AnimateForwards(ButtonMap_Get("ListenScreen_Filter"), DeltaTime, true);
+		AnimateForwards(ButtonMap_Get("ListenScreen_Filter"), DeltaTime, false);
 	}
 	else {
-		AnimateBackwards(ButtonMap_Get("TopMenu_Listen"), DeltaTime, false);
+		AnimateBackwards(ButtonMap_Get("ListenScreen_Filter"), DeltaTime, false);
 	}	
 
 	EndDrawing();
@@ -728,7 +742,7 @@ int main(void) {
 		} break;
         
         case PostPlayScreen: {
-			ProcessAndRenderFilterScreen(DeltaTime, CurrentTime);
+			ProcessAndRenderPostPlayScreen(DeltaTime, CurrentTime);
 		} break;
 
 		default: Assert(false); break;

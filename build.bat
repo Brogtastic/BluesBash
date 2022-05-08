@@ -68,7 +68,7 @@ PicturePreProcessor.exe "resources\animations\login page\login%%d.png" 28 1 30 L
 PicturePreProcessor.exe "resources\animations\curtain\curtain%%d.png" 16 1 15 curtain.ppp
 PicturePreProcessor.exe "resources\animations\drumbot\drumbot%%d.png" 4 1 15 drumbot.ppp
 PicturePreProcessor.exe "resources\animations\BackArrow\BackArrow%%d.png" 5 1 24 BackArrow.ppp
-PicturePreProcessor.exe "resources\animations\GoJam\GoJam%%d.png" 12 1 15 GoJam.ppp
+PicturePreProcessor.exe "resources\animations\GoJam\GoJam%%d.png" 12 1 30 GoJam.ppp
 PicturePreProcessor.exe "resources\animations\YKW Gameplay Robot\YKWGameplayRobot%%d.png" 11 1 15 GamePlayRobot.ppp
 PicturePreProcessor.exe "resources\animations\UploadTrack\UploadTrack%%d.png" 4 1 15 UploadTrack.ppp
 PicturePreProcessor.exe "resources\animations\BackToMenu\BackToMenu%%d.png" 4 1 15 BackToMenu.ppp
