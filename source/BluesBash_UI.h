@@ -52,7 +52,7 @@ struct text_area_def {
 
 // ButtonMap Start
 #define ButtonMap_BucketCount (30)
-#define ButtonMap_BackingCount (50)
+#define ButtonMap_BackingCount (100)
 #define ButtonMap_NoEntry (-1)
 
 button_def ButtonMap_Backing[ButtonMap_BackingCount];
