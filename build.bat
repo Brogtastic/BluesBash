@@ -66,7 +66,7 @@ PicturePreProcessor.exe "resources\animations\filter button\filterbutton%%d.png"
 PicturePreProcessor.exe "resources\animations\TrackSpots\State%%d.png" 2 1 24 TrackSpot.ppp
 PicturePreProcessor.exe "resources\animations\login page\login%%d.png" 28 1 30 LoginMenuBG.ppp
 PicturePreProcessor.exe "resources\animations\curtain\curtain%%d.png" 16 1 15 curtain.ppp
-PicturePreProcessor.exe "resources\animations\drumbot\drumbot%%d.png" 4 1 15 drumbot.ppp
+PicturePreProcessor.exe "resources\animations\drumbot\drumbot%%d.png" 4 1 24 drumbot.ppp
 PicturePreProcessor.exe "resources\animations\BackArrow\BackArrow%%d.png" 5 1 24 BackArrow.ppp
 PicturePreProcessor.exe "resources\animations\GoJam\GoJam%%d.png" 12 1 30 GoJam.ppp
 PicturePreProcessor.exe "resources\animations\YKW Gameplay Robot\YKWGameplayRobot%%d.png" 11 1 15 GamePlayRobot.ppp
@@ -74,9 +74,9 @@ PicturePreProcessor.exe "resources\animations\UploadTrack\UploadTrack%%d.png" 4 
 PicturePreProcessor.exe "resources\animations\BackToMenu\BackToMenu%%d.png" 4 1 15 BackToMenu.ppp
 
 
-PicturePreProcessor.exe "resources\animations\Change Guys\Guitar\Guitar%%d.png" 4 1 15 Guitar.ppp
-PicturePreProcessor.exe "resources\animations\Change Guys\Piano\Piano%%d.png" 4 1 15 Piano.ppp
-PicturePreProcessor.exe "resources\animations\Change Guys\Sax\Sax%%d.png" 4 1 15 Sax.ppp
+PicturePreProcessor.exe "resources\animations\Change Guys\Guitar\Guitar%%d.png" 3 1 24 Guitar.ppp
+PicturePreProcessor.exe "resources\animations\Change Guys\Piano\Piano%%d.png" 3 1 24 Piano.ppp
+PicturePreProcessor.exe "resources\animations\Change Guys\Sax\Sax%%d.png" 3 1 24 Sax.ppp
 PicturePreProcessor.exe "resources\animations\RoboChange\GuitarBot\GuitarBot%%d.png" 4 1 15 GuitarBot.ppp
 PicturePreProcessor.exe "resources\animations\RoboChange\PianoBot\PianoBot%%d.png" 4 1 15 PianoBot.ppp
 PicturePreProcessor.exe "resources\animations\RoboChange\TromboneBot\TromboneBot%%d.png" 4 1 15 TromboneBot.ppp
