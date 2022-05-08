@@ -33,6 +33,8 @@ enum prog_state {
 	LoginPage,
 	SignUpPage,
 	InstrumentSelect,
+    FilterScreen,
+    ListenScreen,
 };
 
 enum sustained_key {
@@ -209,25 +211,28 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
     
     /*
     if(IsKeyPressed(KEY_F)){
-		if (PlayerInfo.LastKeyPressed == KEY_UP) {
-			PlayerInfo.LastKeyPressed = PlayerInfo.LastChoice;
+		if (PlayerInfo.Instrument == Brog_Piano) {
+            for (int Index = 0; Index < NoteName_Count; Index++) {
+                StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
+				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
+            }
+			PlaySound(PianoFinale);
 		}
-		PlayerInfo.LastChoice = PlayerInfo.LastKeyPressed;
 			
-		if (PlayerInfo.LastKeyPressed == KEY_LEFT){
-			WalkToNextPlacement(1, 0, ArrayCount(PlayerInfo.Keyboard)-1, false);
-			PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement], SustainedVolume);
-			PlayerInfo.SustainedNotes[sustained_key::Up] = PlayerInfo.Keyboard[PlayerInfo.Placement];
+		if (PlayerInfo.Instrument == Brog_Guitar){
+            for (int Index = 0; Index < NoteName_Count; Index++) {
+                StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
+				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
+            }
+			PlaySound(GuitarFinale);
 		}
-		else if (PlayerInfo.LastKeyPressed == KEY_RIGHT){
-			WalkToNextPlacement(-1, 0, ArrayCount(PlayerInfo.Keyboard)-1, false);
-			PlayNoteSustained(PlayerInfo.Keyboard[PlayerInfo.Placement], SustainedVolume);
-			PlayerInfo.SustainedNotes[sustained_key::Up] = PlayerInfo.Keyboard[PlayerInfo.Placement];
+		else if (PlayerInfo.Instrument == Brog_Saxophone){
+            for (int Index = 0; Index < NoteName_Count; Index++) {
+                StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
+				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
+            }
+			PlaySound(SaxFinale);
 		}
-		PlayerInfo.LastChoice = PlayerInfo.LastKeyPressed;
-		PlayerInfo.LastKeyPressed = KEY_UP;
-
-		OffsetYEaseRatio = 0;
 	}
     */
 
@@ -241,6 +246,9 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	}
 
 	// Do Chords
+    //!!!!!!!!!!!!!!!!!!!!!!!!
+    //-------------------------------------------------------------------------
+    //WHILE F KEY NOT PRESSED
 	{
 		PlayerInfo.TimeUntilNextChord -= DeltaTime;
 			
@@ -309,10 +317,12 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	{
 		BeginDrawing();
 		ClearBackground(RAYWHITE);
-		{
-			local_persist animation_state Background = { "PlayerBG", 0, 0};
-			DrawTextureQuad(*GetCurrentFrame(Background), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, WHITE);
-		}
+        
+        ui_result UIResult = {false, false};
+        UIResult = DoUIButtonFromMap("GameplayScreen_Background");
+        
+        
+        AnimateForwards(ButtonMap_Get("GameplayScreen_DrumBot"), DeltaTime, true);
 
 		// @TODO progress bar
 		DrawRectangleRec({ScreenWidth/2 - 200 - 2, ScreenHeight*(13.0/16.0) - 1, 400 + 2, 32 + 2}, BLACK);
@@ -525,6 +535,81 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 	EndDrawing();
 }
 
+
+//BEGIN NEW SHIT
+//---------------------------------------------------------
+//BROG LOVES CODING
+void ProcessAndRenderListenScreen(double DeltaTime, double CurrentTime) {
+	BeginDrawing();
+
+	ClearBackground(RAYWHITE);
+
+	// Do UI
+	ui_result UIResult = {false, false};
+
+	UIResult = DoUIButtonFromMap("ListenScreen_Background");
+
+	
+    button_def *PlayButton = ButtonMap_Get("ListenScreen_BackArrow");
+	UIResult = DoUIButtonFromMap("ListenScreen_BackArrow");
+	if (UIResult.PerformAction) {
+		ProgState = TopMenu;
+        //MAKE SURE THIS PROGSTATE WORKS
+	}
+	if (UIResult.Hot) {
+		AnimateForwards(ButtonMap_Get("ListenScreen_BackArrow"), DeltaTime, false);
+	}
+	else {
+		AnimateBackwards(ButtonMap_Get("ListenScreen_BackArrow"), DeltaTime, false);
+	}
+
+	UIResult = DoUIButtonFromMap("ListenScreen_Filter");
+	if (UIResult.PerformAction) {
+		ProgState = FilterScreen;
+        //MAKE SURE THIS PROGSTATE WORKS
+	}
+	if (UIResult.Hot) {
+		AnimateForwards(ButtonMap_Get("ListenScreen_Filter"), DeltaTime, true);
+	}
+	else {
+		AnimateBackwards(ButtonMap_Get("TopMenu_Listen"), DeltaTime, false);
+	}	
+
+	EndDrawing();
+}
+
+void ProcessAndRenderFilterScreen(double DeltaTime, double CurrentTime) {
+	BeginDrawing();
+
+	ClearBackground(RAYWHITE);
+
+	// Do UI
+	ui_result UIResult = {false, false};
+
+	UIResult = DoUIButtonFromMap("FilterScreen_Background");
+
+	
+    button_def *PlayButton = ButtonMap_Get("FilterScreen_BackArrow");
+	UIResult = DoUIButtonFromMap("FilterScreen_BackArrow");
+	if (UIResult.PerformAction) {
+		ProgState = ListenScreen;
+        //MAKE SURE THIS PROGSTATE WORKS
+	}
+	if (UIResult.Hot) {
+		AnimateForwards(ButtonMap_Get("FilterScreen_BackArrow"), DeltaTime, false);
+	}
+	else {
+		AnimateBackwards(ButtonMap_Get("FilterScreen_BackArrow"), DeltaTime, false);
+	}
+
+
+	EndDrawing();
+}
+
+//END NEW SHIT
+
+
+
 int main(void) {
 	// Initialization
 	//--------------------------------------------------------------------------------------
@@ -578,6 +663,14 @@ int main(void) {
 
 		case InstrumentSelect: {
 			ProcessAndRenderInstrumentSelect(DeltaTime, CurrentTime);
+		} break;
+        
+        case ListenScreen: {
+			ProcessAndRenderListenScreen(DeltaTime, CurrentTime);
+		} break;
+        
+        case FilterScreen: {
+			ProcessAndRenderFilterScreen(DeltaTime, CurrentTime);
 		} break;
 
 		default: Assert(false); break;
