@@ -61,6 +61,9 @@ PicturePreProcessor.exe "resources\InstrumentSelectBG.png" 1 0 1 InstrumentSelec
 PicturePreProcessor.exe "resources\Gameplay Instructions overlay.png" 1 0 1 PlayerHelp.ppp
 PicturePreProcessor.exe "resources\FilterScreenBG.png" 1 0 1 FilterScreenBG.ppp
 PicturePreProcessor.exe "resources\PostPlayScreen.png" 1 0 1 PostPlayScreen.ppp
+PicturePreProcessor.exe "resources\Listen Screen.png" 1 0 1 ListenScreen.ppp
+PicturePreProcessor.exe "resources\animations\filter button\filterbutton%%d.png" 5 1 24 FilterButton.ppp
+PicturePreProcessor.exe "resources\animations\TrackSpots\State%%d.png" 2 1 24 TrackSpot.ppp
 PicturePreProcessor.exe "resources\animations\login page\login%%d.png" 28 1 30 LoginMenuBG.ppp
 PicturePreProcessor.exe "resources\animations\curtain\curtain%%d.png" 16 1 15 curtain.ppp
 PicturePreProcessor.exe "resources\animations\drumbot\drumbot%%d.png" 4 1 15 drumbot.ppp
