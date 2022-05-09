@@ -129,6 +129,7 @@ PicturePreProcessor.exe "resources\animations\submit\submit%%d.png" 2 0 15 Submi
 PicturePreProcessor.exe "resources\animations\loginbutton\login%%d.png" 2 0 15 LoginButton.ppp
 PicturePreProcessor.exe "resources\textbox.png" 1 0 1 Textbox.ppp
 PicturePreProcessor.exe "resources\LoginScreenShading.png" 1 0 1 LoginScreenShading.ppp
+PicturePreProcessor.exe "resources\finale prompt.png" 1 0 1 finale.ppp
 PicturePreProcessor.exe resources\animations\signuppage\SignUpScreen%%04d.png 69 1 12 SignUpScreen.ppp
 popd
 

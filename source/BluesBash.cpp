@@ -332,6 +332,7 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 		ui_result UIResult = {false, false};
 		UIResult = DoUIButtonFromMap("GameplayScreen_Background");
 		UIResult = DoUIButtonFromMap("GameplayScreen_Instructions");
+		UIResult = DoUIButtonFromMap("GameplayScreen_Finale");
 
 		UIResult = DoUIButtonFromMap("GameplayScreen_DrumBot");
 		AnimateForwards(ButtonMap_Get("GameplayScreen_DrumBot"), DeltaTime, true);
@@ -1012,7 +1013,10 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 		PlaySound(LoopingDrumTrack);
 	}
 	if(UIResult.Hot){
-			AnimateForwards(ButtonMap_Get("InstrumentSelectPage_BotBotBot"), DeltaTime, true);
+		AnimateForwards(ButtonMap_Get("InstrumentSelectPage_BotBotBot"), DeltaTime, true);
+	}
+	else{
+		StopSound(LoopingDrumTrack);
 	}
 
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_Player");
