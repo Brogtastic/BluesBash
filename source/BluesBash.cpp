@@ -332,6 +332,7 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 		ui_result UIResult = {false, false};
 		UIResult = DoUIButtonFromMap("GameplayScreen_Background");
 		UIResult = DoUIButtonFromMap("GameplayScreen_Instructions");
+		UIResult = DoUIButtonFromMap("GameplayScreen_Finale");
 
 		button_def *BackArrow = ButtonMap_Get("GameplayScreen_BackArrow");
 		UIResult = DoUIButtonFromMap("GameplayScreen_BackArrow");
@@ -1015,8 +1016,14 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
     
     button_def *BotBotBot = ButtonMap_Get("InstrumentSelectPage_BotBotBot");
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_BotBotBot");
+	if (UIResult.PerformAction) {
+		PlaySound(LoopingDrumTrack);
+	}
 	if (UIResult.Hot) {
 		AnimateForwards(ButtonMap_Get("InstrumentSelectPage_BotBotBot"), DeltaTime, true);
+	}
+	else{
+		StopSound(LoopingDrumTrack);
 	}
 
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_Player");
