@@ -146,6 +146,11 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 
 		PlayerInfo.TimeUntilNextChord = 0;
 		PlayerInfo.CurrentChord = ArrayCount(ChordSequence) - 1;
+		for (int InstrumentIndex = 0; InstrumentIndex < NoteInstrumentCount; InstrumentIndex++) {
+			for (int Index = 0; Index < NoteName_Count; Index++) {
+				NoteStateList[InstrumentIndex][Index].State = NotPlaying;
+			}
+		}
 
 		for (int Index = 0; Index < ArrayCount(PlayerInfo.Keyboard); Index++) {
 			const note_name KeyboardRef[19] = {C2, Eb2, F2, Fs2, G2, Bb2, C3, Eb3, F3, Fs3, G3, Bb3, C4, Eb4, F4, Fs4, G4, Bb4, C5};
@@ -220,28 +225,23 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
     
 	if(IsKeyPressed(KEY_F)){
 		if (PlayerInfo.Instrument == Brog_Piano) {
-			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
-				StopNote(Note,PlayerInfo.Instrument);
-			}
 			PlaySound(PianoFinale);
 		}
-
 		if (PlayerInfo.Instrument == Brog_Guitar){
-			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
-				StopNote(Note,PlayerInfo.Instrument);
-			}
 			PlaySound(GuitarFinale);
 		}
 		else if (PlayerInfo.Instrument == Brog_Saxophone){
-			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
-				StopNote(Note,PlayerInfo.Instrument);
-			}
 			PlaySound(SaxFinale);
 		}
+		for (int InstrumentIndex = 0; InstrumentIndex < NoteInstrumentCount; InstrumentIndex++) {
+			for (int Index = 0; Index < NoteName_Count; Index++) {
+				StopSound(NoteSoundList[InstrumentIndex][Index]);
+			}
+		}
+		StopSound(LoopingDrumTrack);
 		ProgState = PostPlayScreen;
+		IsInitilized = false;
 	}
-	
-	
 
 	// Stop Sustained notes that we are no longer holding.
 	for (int SustainedKey = 0; SustainedKey < SustainedKey_Count; SustainedKey++) {
@@ -332,6 +332,25 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 		ui_result UIResult = {false, false};
 		UIResult = DoUIButtonFromMap("GameplayScreen_Background");
 		UIResult = DoUIButtonFromMap("GameplayScreen_Instructions");
+
+		button_def *BackArrow = ButtonMap_Get("GameplayScreen_BackArrow");
+		UIResult = DoUIButtonFromMap("GameplayScreen_BackArrow");
+		if (UIResult.PerformAction) {
+			for (int InstrumentIndex = 0; InstrumentIndex < NoteInstrumentCount; InstrumentIndex++) {
+				for (int Index = 0; Index < NoteName_Count; Index++) {
+					StopSound(NoteSoundList[InstrumentIndex][Index]);
+				}
+			}
+			StopSound(LoopingDrumTrack);
+			ProgState = InstrumentSelect;
+			IsInitilized = false;
+		}
+		if (UIResult.Hot) {
+			AnimateForwards(ButtonMap_Get("GameplayScreen_BackArrow"), DeltaTime, false);
+		}
+		else {
+			AnimateBackwards(ButtonMap_Get("GameplayScreen_BackArrow"), DeltaTime, false);
+		}
 
 		UIResult = DoUIButtonFromMap("GameplayScreen_DrumBot");
 		AnimateForwards(ButtonMap_Get("GameplayScreen_DrumBot"), DeltaTime, true);
@@ -498,17 +517,6 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 		UIResult = DoUIButtonFromMap("GameplayScreen_TromboneBot");
 	}
 	
-	button_def *BackArrow = ButtonMap_Get("GameplayScreen_BackArrow");
-	UIResult = DoUIButtonFromMap("GameplayScreen_BackArrow");
-	if (UIResult.PerformAction) {
-		ProgState = InstrumentSelect;
-	}
-	if (UIResult.Hot) {
-		AnimateForwards(ButtonMap_Get("GameplayScreen_BackArrow"), DeltaTime, false);
-	}
-	else {
-		AnimateBackwards(ButtonMap_Get("GameplayScreen_BackArrow"), DeltaTime, false);
-	}
 	
 	//ANIMATION FOR GAMEPLAY ENDS HERE!!!------------------------------------------------------------
 	{
@@ -1098,6 +1106,8 @@ int main(void) {
 
 	ProgState = Intro;
 	PlayerInfo.UserId = NOT_LOGGED_IN;
+	PlayerInfo.Instrument = Brog_Piano;
+	PlayerInfo.RoboInstrument = Brog_Guitar;
 
 	AnimationMap_Init();
 	ButtonMap_Init();
