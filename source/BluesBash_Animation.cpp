@@ -122,9 +122,7 @@ bool AnimateBackwards(animation_state &State, double DeltaTime, bool Loop) {
 	}
 
 	// @TODO(Roskuski): This edit is untested. In Theory this function may have ocilated between True and False while stopped at the first frame of an animation. This check is added to ensure that we always return true while we are stopped at the first frame.
-	if (!Loop && !Result &&
-		  (State.CurrentFrameMajor == 0) &&
-		  (State.CurrentFrameMinor == 0) {
+	if (!Loop && !Result && (State.CurrentFrameMajor == 0) && (State.CurrentFrameMinor == 0)) {
 		Result = true;
 	}
 

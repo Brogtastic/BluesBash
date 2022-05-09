@@ -62,6 +62,7 @@ PicturePreProcessor.exe "resources\Gameplay Instructions overlay.png" 1 0 1 Play
 PicturePreProcessor.exe "resources\FilterScreenBG.png" 1 0 1 FilterScreenBG.ppp
 PicturePreProcessor.exe "resources\PostPlayScreen.png" 1 0 1 PostPlayScreen.ppp
 PicturePreProcessor.exe "resources\ListenScreen.png" 1 0 1 ListenScreen.ppp
+PicturePreProcessor.exe "resources\nothing.png" 1 0 1 nothing.ppp
 PicturePreProcessor.exe "resources\animations\filter button\filterbutton%%d.png" 5 1 24 FilterButton.ppp
 PicturePreProcessor.exe "resources\animations\TrackSpots\State%%d.png" 2 1 24 TrackSpot.ppp
 PicturePreProcessor.exe "resources\animations\login page\login%%d.png" 28 1 30 LoginMenuBG.ppp
