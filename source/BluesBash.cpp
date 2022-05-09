@@ -262,7 +262,7 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 		if (PlayerInfo.TimeUntilNextChord <= 0) {
 			// Stop the current chord (on start up we can stop notes that are not playing)
 			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
-				StopNote(Note,PlayerInfo.Instrument);
+				StopNote(Note, PlayerInfo.RoboInstrument);
 				PlaySound(LoopingDrumTrack);
 				PlaySound(LoopingDrumTrack);
 			}
@@ -275,50 +275,52 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 
 			// Play the next chord
 			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
-				PlayNote(Note, PlayerInfo.Instrument, CurrentTime, ChordLength * ChordRatio[PlayerInfo.CurrentChord], 0, 0.25);
+				PlayNote(Note, PlayerInfo.RoboInstrument, CurrentTime, ChordLength * ChordRatio[PlayerInfo.CurrentChord], 0, 0.25);
 			}
 		}
 	}
-		
-	for (int Index = 0; Index < NoteName_Count; Index++) {
-		// NOTE(Roskuski): I'm not sure if we want to move all note processing to here or not. Right now PlayingSustained plays and stops their notes elsewhere.
-		switch(NoteStateList[PlayerInfo.Instrument][Index].State) {
+	
+	for (int InstrumentIndex = 0; InstrumentIndex < NoteInstrumentCount; InstrumentIndex++) {
+		for (int Index = 0; Index < NoteName_Count; Index++) {
+			// NOTE(Roskuski): I'm not sure if we want to move all note processing to here or not. Right now PlayingSustained plays and stops their notes elsewhere.
+			switch(NoteStateList[InstrumentIndex][Index].State) {
 
-		case QueuedForPlaying: {
-			if (NoteStateList[PlayerInfo.Instrument][Index].StartTime <= CurrentTime &&
-			    NoteStateList[PlayerInfo.Instrument][Index].EndTime > CurrentTime) {
-				NoteStateList[PlayerInfo.Instrument][Index].State = Playing;
-				SetSoundVolume(NoteSoundList[PlayerInfo.Instrument][Index], NoteStateList[PlayerInfo.Instrument][Index].Volume);
-				PlaySound(NoteSoundList[PlayerInfo.Instrument][Index]);
+			case QueuedForPlaying: {
+				if (NoteStateList[InstrumentIndex][Index].StartTime <= CurrentTime &&
+						NoteStateList[InstrumentIndex][Index].EndTime > CurrentTime) {
+					NoteStateList[InstrumentIndex][Index].State = Playing;
+					SetSoundVolume(NoteSoundList[InstrumentIndex][Index], NoteStateList[InstrumentIndex][Index].Volume);
+					PlaySound(NoteSoundList[InstrumentIndex][Index]);
+				}
+			} break;
+					
+			case Playing: {
+				if (NoteStateList[InstrumentIndex][Index].EndTime <= CurrentTime) {
+					NoteStateList[InstrumentIndex][Index].State = Stopping;
+				}
+			} break;
+
+			case Stopping: {
+				if (NoteStateList[InstrumentIndex][Index].FadeRatio <= 0) {
+					StopSound(NoteSoundList[InstrumentIndex][Index]);
+					NoteStateList[InstrumentIndex][Index].State = NotPlaying;
+				}
+
+				const double FadeTime = SIXTEENTH_NOTE(SecondsPerBeat);
+				NoteStateList[InstrumentIndex][Index].FadeRatio = ((NoteStateList[InstrumentIndex][Index].FadeRatio * FadeTime) - DeltaTime)/FadeTime;
+
+				if (NoteStateList[InstrumentIndex][Index].FadeRatio < 0) { NoteStateList[InstrumentIndex][Index].FadeRatio = 0; }
+				float NewVolume = LinearInterp(0, NoteStateList[InstrumentIndex][Index].Volume, NoteStateList[InstrumentIndex][Index].FadeRatio);
+					
+				SetSoundVolume(NoteSoundList[InstrumentIndex][Index], NewVolume);
+				if (Index == C2) {
+					char Buffer[50];
+					sprintf(Buffer, "Ratio: %lf, NewVolume: %lf", NoteStateList[InstrumentIndex][Index].FadeRatio, NewVolume);
+					DrawText(Buffer, 10, 150, 20, BLACK);
+				}
+			} break;
+
 			}
-		} break;
-				
-		case Playing: {
-			if (NoteStateList[PlayerInfo.Instrument][Index].EndTime <= CurrentTime) {
-				NoteStateList[PlayerInfo.Instrument][Index].State = Stopping;
-			}
-		} break;
-
-		case Stopping: {
-			if (NoteStateList[PlayerInfo.Instrument][Index].FadeRatio <= 0) {
-				StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
-				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
-			}
-
-			const double FadeTime = SIXTEENTH_NOTE(SecondsPerBeat);
-			NoteStateList[PlayerInfo.Instrument][Index].FadeRatio = ((NoteStateList[PlayerInfo.Instrument][Index].FadeRatio * FadeTime) - DeltaTime)/FadeTime;
-
-			if (NoteStateList[PlayerInfo.Instrument][Index].FadeRatio < 0) { NoteStateList[PlayerInfo.Instrument][Index].FadeRatio = 0; }
-			float NewVolume = LinearInterp(0, NoteStateList[PlayerInfo.Instrument][Index].Volume, NoteStateList[PlayerInfo.Instrument][Index].FadeRatio);
-				
-			SetSoundVolume(NoteSoundList[PlayerInfo.Instrument][Index], NewVolume);
-			if (Index == C2) {
-				char Buffer[50];
-				sprintf(Buffer, "Ratio: %lf, NewVolume: %lf", NoteStateList[PlayerInfo.Instrument][Index].FadeRatio, NewVolume);
-				DrawText(Buffer, 10, 150, 20, BLACK);
-			}
-		} break;
-
 		}
 	}
 
@@ -404,29 +406,26 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 			PlayerButton->AniState.Key = (char*)malloc(strlen("PianoLeft") + 1);
 			memcpy(PlayerButton->AniState.Key, "PianoLeft", strlen("PianoLeft") + 1);
 			animation *NewAni = AnimationMap_Get("PianoLeft");
-			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
-			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
+			PlayerButton->AniState.CurrentFrameMajor = 0;
+			PlayerButton->AniState.CurrentFrameMinor = 0;
 		}
 		if (IsKeyPressed(KEY_RIGHT)) {
 			free(PlayerButton->AniState.Key);
 			PlayerButton->AniState.Key = (char*)malloc(strlen("PianoRight") + 1);
 			memcpy(PlayerButton->AniState.Key, "PianoRight", strlen("PianoRight") + 1);
 			animation *NewAni = AnimationMap_Get("PianoRight");
-			PlayerButton->AniState.CurrentFrameMajor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-			PlayerButton->AniState.CurrentFrameMinor = NewAni->UniqueFrameCount - 1;
-			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
+			PlayerButton->AniState.CurrentFrameMajor = 0;
+			PlayerButton->AniState.CurrentFrameMinor = 0;
 		}
 		if (IsKeyPressed(KEY_UP)) {
 			free(PlayerButton->AniState.Key);
 			PlayerButton->AniState.Key = (char*)malloc(strlen("PianoMiddle") + 1);
 			memcpy(PlayerButton->AniState.Key, "PianoMiddle", strlen("PianoMiddle") + 1);
 			animation *NewAni = AnimationMap_Get("PianoMiddle");
-			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
-			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
+			PlayerButton->AniState.CurrentFrameMajor = 0;
+			PlayerButton->AniState.CurrentFrameMinor = 0;
 		}
-		
+		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
 	}
 	
 	if (PlayerInfo.Instrument == Brog_Guitar) {
@@ -437,28 +436,26 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 			PlayerButton->AniState.Key = (char*)malloc(strlen("GuitarLeft") + 1);
 			memcpy(PlayerButton->AniState.Key, "GuitarLeft", strlen("GuitarLeft") + 1);
 			animation *NewAni = AnimationMap_Get("GuitarLeft");
-			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
-			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerGuitar"), DeltaTime, false);
+			PlayerButton->AniState.CurrentFrameMajor = 0;
+			PlayerButton->AniState.CurrentFrameMinor = 0;
 		}
 		if (IsKeyPressed(KEY_RIGHT)) {
 			free(PlayerButton->AniState.Key);
 			PlayerButton->AniState.Key = (char*)malloc(strlen("GuitarRight") + 1);
 			memcpy(PlayerButton->AniState.Key, "GuitarRight", strlen("GuitarRight") + 1);
 			animation *NewAni = AnimationMap_Get("GuitarRight");
-			PlayerButton->AniState.CurrentFrameMajor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-			PlayerButton->AniState.CurrentFrameMinor = NewAni->UniqueFrameCount - 1;
-			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerGuitar"), DeltaTime, false);
+			PlayerButton->AniState.CurrentFrameMajor = 0;
+			PlayerButton->AniState.CurrentFrameMinor = 0;
 		}
 		if (IsKeyPressed(KEY_UP)) {
 			free(PlayerButton->AniState.Key);
 			PlayerButton->AniState.Key = (char*)malloc(strlen("GuitarMiddle") + 1);
 			memcpy(PlayerButton->AniState.Key, "GuitarMiddle", strlen("GuitarMiddle") + 1);
 			animation *NewAni = AnimationMap_Get("GuitarMiddle");
-			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
-			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerGuitar"), DeltaTime, false);
+			PlayerButton->AniState.CurrentFrameMajor = 0;
+			PlayerButton->AniState.CurrentFrameMinor = 0;
 		}
+		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerGuitar"), DeltaTime, false);
 	}
 	if (PlayerInfo.Instrument == Brog_Saxophone) {
 		UIResult = DoUIButtonFromMap("GameplayScreen_PlayerSax");
@@ -468,29 +465,26 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 			PlayerButton->AniState.Key = (char*)malloc(strlen("SaxLeft") + 1);
 			memcpy(PlayerButton->AniState.Key, "SaxLeft", strlen("SaxLeft") + 1);
 			animation *NewAni = AnimationMap_Get("SaxLeft");
-			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
-			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerSax"), DeltaTime, false);
+			PlayerButton->AniState.CurrentFrameMajor = 0;
+			PlayerButton->AniState.CurrentFrameMinor = 0;
 		}
 		if (IsKeyPressed(KEY_RIGHT)) {
 			free(PlayerButton->AniState.Key);
 			PlayerButton->AniState.Key = (char*)malloc(strlen("SaxRight") + 1);
 			memcpy(PlayerButton->AniState.Key, "SaxRight", strlen("SaxRight") + 1);
 			animation *NewAni = AnimationMap_Get("SaxRight");
-			PlayerButton->AniState.CurrentFrameMajor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-			PlayerButton->AniState.CurrentFrameMinor = NewAni->UniqueFrameCount - 1;
-			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerSax"), DeltaTime, false);
+			PlayerButton->AniState.CurrentFrameMajor = 0;
+			PlayerButton->AniState.CurrentFrameMinor = 0;
 		}
 		if (IsKeyPressed(KEY_UP)) {
 			free(PlayerButton->AniState.Key);
 			PlayerButton->AniState.Key = (char*)malloc(strlen("SaxMiddle") + 1);
 			memcpy(PlayerButton->AniState.Key, "SaxMiddle", strlen("SaxMiddle") + 1);
 			animation *NewAni = AnimationMap_Get("SaxMiddle");
-			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
-			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerSax"), DeltaTime, false);
+			PlayerButton->AniState.CurrentFrameMajor = 0;
+			PlayerButton->AniState.CurrentFrameMinor = 0;
 		}
-		
+		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerSax"), DeltaTime, false);
 	}
 	
 	//ROBOT SHIT
@@ -517,8 +511,16 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 	}
 	
 	//ANIMATION FOR GAMEPLAY ENDS HERE!!!------------------------------------------------------------
-		
-		EndDrawing();
+	{
+		local_persist animation_state Help = { "PlayerHelp", 0, 0};
+		if (IsKeyDown(KEY_H)) {
+			Color Trans = WHITE;
+			Trans.a = 1.0 * 0xff;
+			DrawTextureQuad(*GetCurrentFrame(Help), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, Trans);
+		}
+	}
+	
+	EndDrawing();
 	}
 }
 
@@ -593,10 +595,10 @@ void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime) {
 	{
 		text_area_def *UserName = TextAreaMap_Get("TopMenu_DisplayUser");
 		if (PlayerInfo.UserId == NOT_LOGGED_IN) {
-			UserName->Buffer = "Not Logged In";
+			UserName->Buffer = "Not Logged In"; // @TODO(Roskuski): This leaks memeory
 		}
 		else {
-			UserName->Buffer = PlayerInfo.Nickname;
+			UserName->Buffer = PlayerInfo.Nickname; 
 		}
 		DoUITextAreaFromMap("TopMenu_DisplayUser");
 	}
