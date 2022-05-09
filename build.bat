@@ -22,6 +22,10 @@ if not exist libs\Odin (
 	echo The .\libs\Odin folder is missing. Please grab a release of Odin and put it inside of the folder.
 	exit
 )
+if not exist libs\sqlite (
+	echo The .\libs\sqlite folder is missing. Please grab a release of sqlite and  put it inside of the folder.
+	exit
+)
 
 set Game_IncludePaths=-Ilibs\raylib\include
 set Game_LibraryPaths=/LIBPATH:libs\raylib\lib\
@@ -29,11 +33,12 @@ set Game_TranslationUnits=source\BluesBash.cpp source\win32_BluesBash.cpp
 set Game_CFlags=-nologo -Fobin\obj\
 set Game_LFlags=-link /OUT:bin\BluesBash.exe /nologo
 
-set Server_IncludePaths=
+set Server_IncludePaths=-Ilibs\sqlite\include
 set Server_LibraryPaths=
-set Server_TranslationUnits=source\Server\Server.cpp
+set Server_TranslationUnits=source\Server\Server.cpp libs\sqlite\include\sqlite3.c
 set Server_CFlags=-nologo -Fobin\obj\
-set Server_LFlags=-link /OUT:bin\BluesBash_Server.exe /nologo
+set Server_LFlags=-link /OUT:bin\BluesBash_Server.exe /nologo 
+
 
 if "%1"=="debug" (
 	 set Game_CFlags=%Game_CFlags% -Zi -Od -MD

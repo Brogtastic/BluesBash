@@ -58,7 +58,14 @@ struct player_info {
 	note_name SustainedNotes[4];
 
 	double NoteEaseRatio[19];
+
+	int UserId;
+
+	net_server_register_fail_reason RegisterFailReason;
+	net_server_logon_fail_reason LogonFailReason;
 };
+
+#define NOT_LOGGED_IN (-1)
 
 // Constants and globals should be defined here.
 const int ScreenWidth = 1280;
@@ -213,7 +220,6 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 		OffsetYEaseRatio = 0;
 	}
     
-	
 	if(IsKeyPressed(KEY_F)){
 		if (PlayerInfo.Instrument == Brog_Piano) {
 			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
@@ -221,6 +227,7 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 			}
 			PlaySound(PianoFinale);
 		}
+
 		if (PlayerInfo.Instrument == Brog_Guitar){
 			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
 				StopNote(Note,PlayerInfo.Instrument);
@@ -486,11 +493,11 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 	}
 	
 	//ROBOT SHIT
-	if(PlayerInfo.RoboInstrument == Brog_Guitar){
-		UIResult = DoUIButtonFromMap("GameplayScreen_GuitarBot");
-	}
 	if(PlayerInfo.RoboInstrument == Brog_Piano){
 		UIResult = DoUIButtonFromMap("GameplayScreen_PianoBot");
+	}
+	if(PlayerInfo.RoboInstrument == Brog_Guitar){
+		UIResult = DoUIButtonFromMap("GameplayScreen_GuitarBot");
 	}
 	if(PlayerInfo.RoboInstrument == Brog_Saxophone){
 		UIResult = DoUIButtonFromMap("GameplayScreen_TromboneBot");
@@ -507,7 +514,6 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 	else {
 		AnimateBackwards(ButtonMap_Get("GameplayScreen_BackArrow"), DeltaTime, false);
 	}
-	
 	
 	//ANIMATION FOR GAMEPLAY ENDS HERE!!!------------------------------------------------------------
 		
@@ -618,6 +624,7 @@ void ProcessAndRenderLoginMenu(double DeltaTime, double CurrentTime) {
 
 	UIResult = DoUIButtonFromMap("LoginPage_SubmitButton");
 	if (UIResult.PerformAction) {
+		// @TODO(Roskuski): This is placeholder.
 		text_area_def *EmailBox = TextAreaMap_Get("LoginPage_EmailBox");
 		text_area_def *PasswordBox = TextAreaMap_Get("LoginPage_PasswordBox");
 		net_client_nugget Send = {};
@@ -714,46 +721,91 @@ void ProcessAndRenderSignUpMenu(double DeltaTime, double CurrentTime) {
 	BeginDrawing();
 	ClearBackground(RAYWHITE);
 
+
 	ui_result UIResult = {false, false};
 	DoUIButtonFromMap("SignUpPage_Background");
 
-	UIResult = DoUIButtonFromMap("SignUpPage_Submit");
-	
-	UIResult = DoUITextAreaFromMap("SignUpPage_Email");
-	if (UIResult.PerformAction) {
-		DoTextInputFromMap("SignUpPage_Email");
-	}
-	
-	UIResult = DoUITextAreaFromMap("SignUpPage_Password");
-	if (UIResult.PerformAction) {
-		DoTextInputFromMap("SignUpPage_Password");
-	}
-	
-	UIResult = DoUITextAreaFromMap("SignUpPage_Username");
-	if (UIResult.PerformAction) {
-		DoTextInputFromMap("SignUpPage_Username");
-	}
-	
-	UIResult = DoUITextAreaFromMap("SignUpPage_SecurityQuestion");
-	if (UIResult.PerformAction) {
-		DoTextInputFromMap("SignUpPage_SecurityQuestion");
-	}
-	
-	UIResult = DoUITextAreaFromMap("SignUpPage_SecurityAnswer");
-	if (UIResult.PerformAction) {
-		DoTextInputFromMap("SignUpPage_SecurityAnswer");
-	}
-	
-	button_def *BackArrow = ButtonMap_Get("SignUpPage_BackArrow");
 	UIResult = DoUIButtonFromMap("SignUpPage_BackArrow");
 	if (UIResult.PerformAction) {
-		ProgState = LoginPage;
+		ProgState = TopMenu;
 	}
 	if (UIResult.Hot) {
 		AnimateForwards(ButtonMap_Get("SignUpPage_BackArrow"), DeltaTime, false);
 	}
 	else {
 		AnimateBackwards(ButtonMap_Get("SignUpPage_BackArrow"), DeltaTime, false);
+	}
+
+	/*
+	const char *DianosticStrings[] = {
+		"", // No Fail
+		"Generic Error, Yell At Programmer.",
+		"Email must be provided.",
+		"Password must be provided.",
+		"Username must be provided.",
+		"Security Question must be provided.",
+		"Security Answer must be provided.",
+		"Email is already registered.",
+		"Username is already registered.",
+	};
+
+	const char *ShownString = DianosticStrings[PlayerInfo.RegisterFailReason];
+	memcpy(TextAreaMap_Get("SignUpPage_DianosticMessage")->Buffer,  ShownString, strlen(ShownString));
+	if (PlayerInfo.RegisterFailReason != Net_Server_RegisterFail_NoFail) {
+		UIResult = DoUITextAreaFromMap("SignUpPage_DianosticMessage");
+	}
+	*/
+
+	UIResult = DoUITextAreaFromMap("SignUpPage_Email");
+	if (UIResult.PerformAction) {
+		DoTextInputFromMap("SignUpPage_Email");
+	}
+
+	UIResult = DoUITextAreaFromMap("SignUpPage_Password");
+	if (UIResult.PerformAction) {
+		DoTextInputFromMap("SignUpPage_Password");
+	}
+
+	UIResult = DoUITextAreaFromMap("SignUpPage_Username");
+	if (UIResult.PerformAction) {
+		DoTextInputFromMap("SignUpPage_Username");
+	}
+
+	UIResult = DoUITextAreaFromMap("SignUpPage_SecurityQuestion");
+	if (UIResult.PerformAction) {
+		DoTextInputFromMap("SignUpPage_SecurityQuestion");
+	}
+
+	UIResult = DoUITextAreaFromMap("SignUpPage_SecurityAnswer");
+	if (UIResult.PerformAction) {
+		DoTextInputFromMap("SignUpPage_SecurityAnswer");
+	}
+
+	UIResult = DoUIButtonFromMap("SignUpPage_Submit");
+	if (UIResult.PerformAction) {
+		text_area_def *EmailBox = TextAreaMap_Get("SignUpPage_Email");
+		text_area_def *PasswordBox = TextAreaMap_Get("SignUpPage_Password");
+		text_area_def *UsernameBox = TextAreaMap_Get("SignUpPage_Username");
+		text_area_def *SecurityQuestionBox = TextAreaMap_Get("SignUpPage_SecurityQuestion");
+		text_area_def *SecurityAnswerBox = TextAreaMap_Get("SignUpPage_SecurityAnswer");
+		net_client_nugget Send = {};
+		Send.Command = Net_Client_Register;
+		memcpy(Send.Data.Register.Email, EmailBox->Buffer, EMAIL_LEN);
+		memcpy(Send.Data.Register.Password, PasswordBox->Buffer, PASSWORD_LEN);
+		memcpy(Send.Data.Register.Nickname, UsernameBox->Buffer, NICKNAME_LEN);
+		memcpy(Send.Data.Register.SecQuestion, SecurityQuestionBox->Buffer, SEC_QUESTION_LEN);
+		memcpy(Send.Data.Register.SecAnswer, SecurityAnswerBox->Buffer, SEC_ANSWER_LEN);
+		net_server_nugget *Responce = ClientRequest(&Send);
+		// @TODO(Roskuski): This is placeholder.
+		if (Responce->Command == Net_Server_RegisterOk) {
+			printf("Register Ok, UserId: %d\n", Responce->Data.RegisterOk.UserId);
+			PlayerInfo.UserId = Responce->Data.RegisterOk.UserId;
+		}
+		else if (Responce->Command == Net_Server_RegisterFail) {
+			printf("Register Fail, Reason: %d\n", Responce->Data.RegisterFail.Reason);
+			PlayerInfo.RegisterFailReason = Responce->Data.RegisterFail.Reason;
+		}
+		free(Responce);
 	}
 
 	EndDrawing();
@@ -965,6 +1017,7 @@ int main(void) {
 	SetTargetFPS(60);
 
 	ProgState = Intro;
+	PlayerInfo.UserId = NOT_LOGGED_IN;
 
 	AnimationMap_Init();
 	ButtonMap_Init();
@@ -1000,6 +1053,9 @@ int main(void) {
 			IsLoadingTimeFrame = false;
 		}
 		CurrentTime += DeltaTime;
+
+		if (ProgState != SignUpPage) { PlayerInfo.RegisterFailReason = Net_Server_RegisterFail_NoFail; }
+		if (ProgState != LoginPage) { PlayerInfo.LogonFailReason = Net_Server_LogonFail_NoFail; }
 
 		switch(ProgState) {
 		case GameplayScreen: {
