@@ -236,6 +236,22 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 		}
 		ProgState = PostPlayScreen;
 	}
+	
+	
+	//ANIMATION FOR GAMEPLAY STARTS HERE!!!------------------------------------------------------------
+	UIResult = DoUIButtonFromMap("Player_Player");
+	if (IsKeyPressed(KEY_RIGHT)) {
+        free(PlayerButton->AniState.Key);
+        PlayerButton->AniState.Key = (char*)malloc(strlen("Right") + 1);
+        memcpy(PlayerButton->AniState.Key, "Right", strlen("Right") + 1);
+        animation *NewAni = AnimationMap_Get("Right");
+        PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+        PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+		AnimateForwards(ButtonMap_Get("Player_Player"), DeltaTime, false);
+	}
+	//ANIMATION FOR GAMEPLAY ENDS HERE!!!------------------------------------------------------------
+	
+	
 
 	// Stop Sustained notes that we are no longer holding.
 	for (int SustainedKey = 0; SustainedKey < SustainedKey_Count; SustainedKey++) {
