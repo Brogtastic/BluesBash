@@ -239,6 +239,7 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	
 	
 	//ANIMATION FOR GAMEPLAY STARTS HERE!!!------------------------------------------------------------
+	/*
 	UIResult = DoUIButtonFromMap("Player_Player");
 	if (IsKeyPressed(KEY_RIGHT)) {
         free(PlayerButton->AniState.Key);
@@ -249,6 +250,7 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
         PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
 		AnimateForwards(ButtonMap_Get("Player_Player"), DeltaTime, false);
 	}
+	*/
 	//ANIMATION FOR GAMEPLAY ENDS HERE!!!------------------------------------------------------------
 	
 	
