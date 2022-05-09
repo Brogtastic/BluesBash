@@ -84,14 +84,8 @@ struct net_server_logon_ok_def {
 	int UserId; // NOTE(Roskuski): This is the same id from SQL
 };
 
-enum net_server_logon_fail_reason {
-	Net_Server_LogonFail_NoFail = 0,
-	Net_Server_LogonFail_UnregisteredEmail,
-	Net_Server_LogonFail_BadPassword,
-};
-
 struct net_server_logon_fail_def {
-	net_server_logon_fail_reason Reason;
+	// Empty
 };
 
 struct net_server_security_question_def {
