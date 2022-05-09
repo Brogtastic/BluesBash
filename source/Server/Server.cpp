@@ -67,6 +67,7 @@ char QueryBuffer[2000] = {}; // @TODO(Roskuski): This is probably wastful
 
 const char *RegisterQuery = "INSERT INTO Users (Email, Password, Nickname, SecQuestion, SecAnswer) VALUES (\'%s\', \'%s\', \'%s\', \'%s\', \'%s\');";
 const char *PostRegisterQuery = "SELECT Id FROM Users WHERE Email = \'%s\';";
+const char *LogonQuery = "SELECT Id, Nickname FROM Users WHERE Email = \'%s\' AND Password = \'%s\';";
 
 
 SOCKET ListenSocket;
@@ -95,6 +96,41 @@ char* Sanitize(char *String) {
 	}
 
 	return Result; 
+}
+
+void ClientLogon(net_client_nugget ClientNugget, SOCKET ClientSock) {
+	net_server_nugget Reply = {};
+	net_client_logon_def *Data = &ClientNugget.Data.Logon;
+
+	char *SEmail = Sanitize(Data->Email);
+	char *SPassword = Sanitize(Data->Password);
+
+	snprintf(QueryBuffer, 2000, LogonQuery, SEmail, SPassword);
+	sqlite3_stmt *Statement;
+	int PrepareResult = sqlite3_prepare_v2(Database, QueryBuffer, -1, &Statement, 0);
+	if (PrepareResult != SQLITE_OK) {
+		printf("prepare ClientLogonQuery: %d %s\n", PrepareResult, sqlite3_errmsg(Database));
+	}
+	else {
+		int StepResult = sqlite3_step(Statement);
+		if (StepResult == SQLITE_DONE) {
+			// We found nothing
+			Reply.Command = Net_Server_LogonFail;
+		}
+		else if (StepResult == SQLITE_ROW) {
+			// We found something
+			Reply.Command = Net_Server_LogonOk;
+			Reply.Data.LogonOk.UserId = sqlite3_column_int(Statement, 0);
+			const unsigned char *TableNickname = sqlite3_column_text(Statement, 1);
+			memcpy(Reply.Data.LogonOk.Nickname, TableNickname, NICKNAME_LEN);
+			for (StepResult = sqlite3_step(Statement); StepResult != SQLITE_DONE; StepResult = sqlite3_step(Statement)) {}
+		}
+	}
+
+	send(ClientSock, (char*)&Reply, sizeof(Reply), 0);
+	free(SEmail);
+	free(SPassword);
+	return;
 }
 
 void ClientRegister(net_client_nugget ClientNugget, SOCKET ClientSock) {
@@ -137,21 +173,21 @@ void ClientRegister(net_client_nugget ClientNugget, SOCKET ClientSock) {
 			sqlite3_free(ErrorMessage);
 			Reply.Command = Net_Server_RegisterFail;
 			Reply.Data.RegisterFail.Reason = Net_Server_RegisterFail_Generic;
+			sqlite3_free(ErrorMessage);
 		}
 		else {
 			snprintf(QueryBuffer, 2000, PostRegisterQuery, SEmail);
 			sqlite3_stmt *Statement;
 			int PrepareResult = sqlite3_prepare_v2(Database, QueryBuffer, -1, &Statement, 0);
 			if ((PrepareResult  != SQLITE_OK) && ErrorMessage) {
-				printf("Net_Client_Register, PostRegisterQuery Prep: %d %s\n", PrepareResult, ErrorMessage);
-				sqlite3_free(ErrorMessage);
+				printf("Net_Client_Register, PostRegisterQuery Prep: %d %s\n", PrepareResult, sqlite3_errmsg(Database));
 				Reply.Command = Net_Server_RegisterFail;
 				Reply.Data.RegisterFail.Reason = Net_Server_RegisterFail_Generic;
 			}
 			else {
 				int StepResult = sqlite3_step(Statement);
 				if (StepResult != SQLITE_ROW) {
-					printf("Net_Client_Register, PostRegisterQuery Step Code: %d %s\n", StepResult, ErrorMessage);
+					printf("Net_Client_Register, PostRegisterQuery Step Code: %d %s\n", StepResult, sqlite3_errmsg(Database));
 					Reply.Command = Net_Server_RegisterFail;
 					Reply.Data.RegisterFail.Reason = Net_Server_RegisterFail_Generic;
 				}
@@ -188,8 +224,7 @@ void HandleConnection(SOCKET ClientSock) {
 
 	switch (ClientNugget.Command) {
 		case Net_Client_Logon: {
-			net_server_nugget Reply = {};
-			send(ClientSock, (char*)(&Reply), sizeof(Reply), 0);
+			ClientLogon(ClientNugget, ClientSock);
 		} break;
 		case Net_Client_Register: {
 			ClientRegister(ClientNugget, ClientSock);

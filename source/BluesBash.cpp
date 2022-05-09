@@ -51,8 +51,8 @@ struct player_info {
 
 	double TimeUntilNextChord;
 	int CurrentChord;
-	
-    note_instrument Instrument;
+
+	note_instrument Instrument;
 	note_instrument RoboInstrument;
 	note_name Keyboard[19];
 	note_name SustainedNotes[4];
@@ -60,9 +60,7 @@ struct player_info {
 	double NoteEaseRatio[19];
 
 	int UserId;
-
-	net_server_register_fail_reason RegisterFailReason;
-	net_server_logon_fail_reason LogonFailReason;
+	char Nickname[40];
 };
 
 #define NOT_LOGGED_IN (-1)
@@ -596,9 +594,24 @@ void ProcessAndRenderLoginMenu(double DeltaTime, double CurrentTime) {
 	BeginDrawing();
 	ClearBackground(RAYWHITE);
 
+	local_persist char *ErrorMessage = 0;
+	local_persist int ErrorMessageSize = 0;
+
 	ui_result UIResult = {false, false};
 	DoUIButtonFromMap("LoginPage_Background");
 	AnimateForwards(ButtonMap_Get("LoginPage_Background"), DeltaTime, true);
+
+	if (ErrorMessage != 0) {
+		DoUIButtonFromMap("LoginPage_HoldOn");
+		text_area_def *TextArea = TextAreaMap_Get("LoginPage_HoldOnMessage");
+		TextArea->Buffer = ErrorMessage; // @TODO(Roskuski)This leaks memeory the first time
+		TextArea->FontSize = ErrorMessageSize;
+		DoUITextAreaFromMap("LoginPage_HoldOnMessage");
+		UIResult = DoUIButtonFromMap("LoginPage_HoldOnOk");
+		if (UIResult.PerformAction) {
+			ErrorMessage = 0;
+		}
+	}
 
 	UIResult = DoUITextAreaFromMap("LoginPage_EmailBox");
 	if (UIResult.PerformAction) {
@@ -610,7 +623,7 @@ void ProcessAndRenderLoginMenu(double DeltaTime, double CurrentTime) {
 		DoTextInputFromMap("LoginPage_PasswordBox");
 	}
     
-    button_def *BackArrow = ButtonMap_Get("LoginPage_BackArrow");
+	button_def *BackArrow = ButtonMap_Get("LoginPage_BackArrow");
 	UIResult = DoUIButtonFromMap("LoginPage_BackArrow");
 	if (UIResult.PerformAction) {
 		ProgState = TopMenu;
@@ -627,13 +640,31 @@ void ProcessAndRenderLoginMenu(double DeltaTime, double CurrentTime) {
 		// @TODO(Roskuski): This is placeholder.
 		text_area_def *EmailBox = TextAreaMap_Get("LoginPage_EmailBox");
 		text_area_def *PasswordBox = TextAreaMap_Get("LoginPage_PasswordBox");
-		net_client_nugget Send = {};
-		Send.Command = Net_Client_Logon;
-		memcpy(Send.Data.Logon.Email, EmailBox->Buffer, EMAIL_LEN);
-		memcpy(Send.Data.Logon.Password, PasswordBox->Buffer, PASSWORD_LEN);
-		net_server_nugget *Responce = ClientRequest(&Send);
-		printf("NickName: \"%s\", UserId: %d\n", Responce->Data.LogonOk.Nickname, Responce->Data.LogonOk.UserId);
-		free(Responce);
+		if (strlen(EmailBox->Buffer) == 0) {
+			ErrorMessage = "Please provide an Email.";
+			ErrorMessageSize = 35;
+		}
+		else if (strlen(PasswordBox->Buffer) == 0) {
+			ErrorMessage = "Please provide a password.";
+			ErrorMessageSize = 30;
+		}
+		else {
+			net_client_nugget Send = {};
+			Send.Command = Net_Client_Logon;
+			memcpy(Send.Data.Logon.Email, EmailBox->Buffer, EMAIL_LEN);
+			memcpy(Send.Data.Logon.Password, PasswordBox->Buffer, PASSWORD_LEN);
+			net_server_nugget *Responce = ClientRequest(&Send);
+			if (Responce->Command == Net_Server_LogonOk) {
+				memcpy(PlayerInfo.Nickname, Responce->Data.LogonOk.Nickname, NICKNAME_LEN);
+				PlayerInfo.UserId = Responce->Data.LogonOk.UserId;
+				ErrorMessage = 0;
+			}
+			else {
+				ErrorMessage = "Ensure that your Email and Password are correct.";
+				ErrorMessageSize = 19;
+			}
+			free(Responce);
+		}
 	}
 
 	UIResult = DoUIButtonFromMap("LoginPage_SignUpButton");
@@ -803,7 +834,6 @@ void ProcessAndRenderSignUpMenu(double DeltaTime, double CurrentTime) {
 		}
 		else if (Responce->Command == Net_Server_RegisterFail) {
 			printf("Register Fail, Reason: %d\n", Responce->Data.RegisterFail.Reason);
-			PlayerInfo.RegisterFailReason = Responce->Data.RegisterFail.Reason;
 		}
 		free(Responce);
 	}
@@ -1054,9 +1084,6 @@ int main(void) {
 		}
 		CurrentTime += DeltaTime;
 
-		if (ProgState != SignUpPage) { PlayerInfo.RegisterFailReason = Net_Server_RegisterFail_NoFail; }
-		if (ProgState != LoginPage) { PlayerInfo.LogonFailReason = Net_Server_LogonFail_NoFail; }
-
 		switch(ProgState) {
 		case GameplayScreen: {
 			ProcessAndRenderGameplayScreen(DeltaTime, CurrentTime);
@@ -1078,19 +1105,19 @@ int main(void) {
 			ProcessAndRenderInstrumentSelect(DeltaTime, CurrentTime);
 		} break;
         
-        case ListenScreen: {
+		case ListenScreen: {
 			ProcessAndRenderListenScreen(DeltaTime, CurrentTime);
 		} break;
         
-        case FilterScreen: {
+		case FilterScreen: {
 			ProcessAndRenderFilterScreen(DeltaTime, CurrentTime);
 		} break;
         
-        case PostPlayScreen: {
+		case PostPlayScreen: {
 			ProcessAndRenderPostPlayScreen(DeltaTime, CurrentTime);
 		} break;
         
-        case Intro: {
+		case Intro: {
 			ProcessAndRenderIntro(DeltaTime, CurrentTime);
 		} break;
 
