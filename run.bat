@@ -4,6 +4,7 @@ cd %~dp0
 
 pushd bin
 
-"BluesBash.exe"
+start "Game" "BluesBash.exe"
+start "Server" "BluesBash_Server.exe"
 
 popd
