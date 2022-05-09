@@ -710,7 +710,7 @@ void ProcessAndRenderFilterScreen(double DeltaTime, double CurrentTime) {
 	EndDrawing();
 }
 
-void ProcessAndRenderSigninMenu(double DeltaTime, double CurrentTime) {
+void ProcessAndRenderSignUpMenu(double DeltaTime, double CurrentTime) {
 	BeginDrawing();
 	ClearBackground(RAYWHITE);
 
@@ -718,6 +718,43 @@ void ProcessAndRenderSigninMenu(double DeltaTime, double CurrentTime) {
 	DoUIButtonFromMap("SignUpPage_Background");
 
 	UIResult = DoUIButtonFromMap("SignUpPage_Submit");
+	
+	UIResult = DoUITextAreaFromMap("SignUpPage_Email");
+	if (UIResult.PerformAction) {
+		DoTextInputFromMap("SignUpPage_Email");
+	}
+	
+	UIResult = DoUITextAreaFromMap("SignUpPage_Password");
+	if (UIResult.PerformAction) {
+		DoTextInputFromMap("SignUpPage_Password");
+	}
+	
+	UIResult = DoUITextAreaFromMap("SignUpPage_Username");
+	if (UIResult.PerformAction) {
+		DoTextInputFromMap("SignUpPage_Username");
+	}
+	
+	UIResult = DoUITextAreaFromMap("SignUpPage_SecurityQuestion");
+	if (UIResult.PerformAction) {
+		DoTextInputFromMap("SignUpPage_SecurityQuestion");
+	}
+	
+	UIResult = DoUITextAreaFromMap("SignUpPage_SecurityAnswer");
+	if (UIResult.PerformAction) {
+		DoTextInputFromMap("SignUpPage_SecurityAnswer");
+	}
+	
+	button_def *BackArrow = ButtonMap_Get("SignUpPage_BackArrow");
+	UIResult = DoUIButtonFromMap("SignUpPage_BackArrow");
+	if (UIResult.PerformAction) {
+		ProgState = ListenScreen;
+	}
+	if (UIResult.Hot) {
+		AnimateForwards(ButtonMap_Get("SignUpPage_BackArrow"), DeltaTime, false);
+	}
+	else {
+		AnimateBackwards(ButtonMap_Get("SignUpPage_BackArrow"), DeltaTime, false);
+	}
 
 	EndDrawing();
 }
@@ -978,7 +1015,7 @@ int main(void) {
 		} break;
 
 		case SignUpPage: {
-			ProcessAndRenderSigninMenu(DeltaTime, CurrentTime);
+			ProcessAndRenderSignUpMenu(DeltaTime, CurrentTime);
 		} break;
 
 		case InstrumentSelect: {
