@@ -590,6 +590,17 @@ void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime) {
 		AnimateBackwards(ButtonMap_Get("TopMenu_Login"), DeltaTime, false);
 	}
 
+	{
+		text_area_def *UserName = TextAreaMap_Get("TopMenu_DisplayUser");
+		if (PlayerInfo.UserId == NOT_LOGGED_IN) {
+			UserName->Buffer = "Not Logged In";
+		}
+		else {
+			UserName->Buffer = PlayerInfo.Nickname;
+		}
+		DoUITextAreaFromMap("TopMenu_DisplayUser");
+	}
+
 	EndDrawing();
 }
 
@@ -755,6 +766,8 @@ void ProcessAndRenderSignUpMenu(double DeltaTime, double CurrentTime) {
 	BeginDrawing();
 	ClearBackground(RAYWHITE);
 
+	local_persist char *ErrorMessage = 0;
+	local_persist int ErrorMessageSize;
 
 	ui_result UIResult = {false, false};
 	DoUIButtonFromMap("SignUpPage_Background");
@@ -770,25 +783,18 @@ void ProcessAndRenderSignUpMenu(double DeltaTime, double CurrentTime) {
 		AnimateBackwards(ButtonMap_Get("SignUpPage_BackArrow"), DeltaTime, false);
 	}
 
-	/*
-	const char *DianosticStrings[] = {
-		"", // No Fail
-		"Generic Error, Yell At Programmer.",
-		"Email must be provided.",
-		"Password must be provided.",
-		"Username must be provided.",
-		"Security Question must be provided.",
-		"Security Answer must be provided.",
-		"Email is already registered.",
-		"Username is already registered.",
-	};
+	if (ErrorMessage) {
+		DoUIButtonFromMap("SignUpPage_HoldOnBox");
+		text_area_def *TextArea = TextAreaMap_Get("SignUpPage_HoldOnText");
+		TextArea->Buffer = ErrorMessage; // @TODO(Roskuski): This leaks memeory
+		TextArea->FontSize = ErrorMessageSize;
+		DoUITextAreaFromMap("SignUpPage_HoldOnText");
 
-	const char *ShownString = DianosticStrings[PlayerInfo.RegisterFailReason];
-	memcpy(TextAreaMap_Get("SignUpPage_DianosticMessage")->Buffer,  ShownString, strlen(ShownString));
-	if (PlayerInfo.RegisterFailReason != Net_Server_RegisterFail_NoFail) {
-		UIResult = DoUITextAreaFromMap("SignUpPage_DianosticMessage");
+		UIResult = DoUIButtonFromMap("SignUpPage_HoldOnOk");
+		if (UIResult.PerformAction) {
+			ErrorMessage = 0;
+		}
 	}
-	*/
 
 	UIResult = DoUITextAreaFromMap("SignUpPage_Email");
 	if (UIResult.PerformAction) {
@@ -832,11 +838,45 @@ void ProcessAndRenderSignUpMenu(double DeltaTime, double CurrentTime) {
 		net_server_nugget *Responce = ClientRequest(&Send);
 		// @TODO(Roskuski): This is placeholder.
 		if (Responce->Command == Net_Server_RegisterOk) {
-			printf("Register Ok, UserId: %d\n", Responce->Data.RegisterOk.UserId);
 			PlayerInfo.UserId = Responce->Data.RegisterOk.UserId;
+			memcpy(PlayerInfo.Nickname, Responce->Data.RegisterOk.Nickname, NICKNAME_LEN);
+			ProgState = TopMenu;
 		}
 		else if (Responce->Command == Net_Server_RegisterFail) {
-			printf("Register Fail, Reason: %d\n", Responce->Data.RegisterFail.Reason);
+			switch (Responce->Data.RegisterFail.Reason) {
+				case Net_Server_RegisterFail_Generic:
+					ErrorMessage = "Generic Error Message";
+					ErrorMessageSize = 40;
+					break;
+				case Net_Server_RegisterFail_EmptyEmail:
+					ErrorMessage = "Please provide an Email";
+					ErrorMessageSize = 40;
+					break;
+				case Net_Server_RegisterFail_EmptyPassword:
+					ErrorMessage = "Please provide a Password";
+					ErrorMessageSize = 36;
+					break;
+				case Net_Server_RegisterFail_EmptyNickname: 
+					ErrorMessage = "Please provide a Username";
+					ErrorMessageSize = 36;
+					break;
+				case Net_Server_RegisterFail_EmptySecQuestion: 
+					ErrorMessage = "Please provide a security question";
+					ErrorMessageSize = 28;
+					break;
+				case Net_Server_RegisterFail_EmptySecAnswer: 
+					ErrorMessage = "Please provide a security answer";
+					ErrorMessageSize = 29;
+					break;
+				case Net_Server_RegisterFail_UsedEmail: 
+					ErrorMessage = "That email is already used.";
+					ErrorMessageSize = 37;
+					break;
+				case Net_Server_RegisterFail_UsedNickname: 
+					ErrorMessage = "That nickname is already used.";
+					ErrorMessageSize = 31;
+					break;
+			}
 		}
 		free(Responce);
 	}
