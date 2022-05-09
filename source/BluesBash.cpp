@@ -128,6 +128,7 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	const chord_names ChordSequence[] = {Cmaj7, Fmaj7, Cmaj7, Gmaj7, Fmaj7, Cmaj7};
 	const double ChordRatio[] = {2, 2, 2, 1, 1, 2};
     
+	ui_result UIResult = {false, false};
 	
 	// @TODO(Roskuski): @RemoveMe move to a different initilatizion system for state init.
 	local_persist bool IsInitilized = false;
@@ -239,20 +240,37 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	
 	
 	//ANIMATION FOR GAMEPLAY STARTS HERE!!!------------------------------------------------------------
-	/*
-	UIResult = DoUIButtonFromMap("Player_Player");
-	if (IsKeyPressed(KEY_RIGHT)) {
-        free(PlayerButton->AniState.Key);
-        PlayerButton->AniState.Key = (char*)malloc(strlen("Right") + 1);
-        memcpy(PlayerButton->AniState.Key, "Right", strlen("Right") + 1);
-        animation *NewAni = AnimationMap_Get("Right");
-        PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
-        PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-		AnimateForwards(ButtonMap_Get("Player_Player"), DeltaTime, false);
+	UIResult = DoUIButtonFromMap("GameplayScreen_PlayerPiano");
+	button_def *PlayerButton = ButtonMap_Get("GameplayScreen_PlayerPiano");
+	if (IsKeyPressed(KEY_LEFT)) {
+		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
+		free(PlayerButton->AniState.Key);
+		PlayerButton->AniState.Key = (char*)malloc(strlen("Left") + 1);
+		memcpy(PlayerButton->AniState.Key, "Left", strlen("Left") + 1);
+		animation *NewAni = AnimationMap_Get("Left");
+		PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+		PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
 	}
-	*/
-	//ANIMATION FOR GAMEPLAY ENDS HERE!!!------------------------------------------------------------
+	if (IsKeyPressed(KEY_RIGHT)) {
+		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
+		free(PlayerButton->AniState.Key);
+		PlayerButton->AniState.Key = (char*)malloc(strlen("Right") + 1);
+		memcpy(PlayerButton->AniState.Key, "Right", strlen("Right") + 1);
+		animation *NewAni = AnimationMap_Get("Right");
+		PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+		PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+	}
+	if (IsKeyPressed(KEY_UP)) {
+		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
+		free(PlayerButton->AniState.Key);
+		PlayerButton->AniState.Key = (char*)malloc(strlen("Middle") + 1);
+		memcpy(PlayerButton->AniState.Key, "Middle", strlen("Middle") + 1);
+		animation *NewAni = AnimationMap_Get("Middle");
+		PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+		PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+	}
 	
+	//ANIMATION FOR GAMEPLAY ENDS HERE!!!------------------------------------------------------------
 	
 
 	// Stop Sustained notes that we are no longer holding.
