@@ -592,52 +592,51 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 	ui_result UIResult = {false, false};
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_Background");
 
-
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_BubBox");
 	if (UIResult.Hot) {
 		button_def *PlayerButton = ButtonMap_Get("InstrumentSelectPage_Player");
 
 		UIResult = DoUIButtonFromMap("InstrumentSelectPage_PianoBub");
 		if (UIResult.PerformAction) {
-            AnimateForwards(ButtonMap_Get("InstrumentSelectPage_Player"), DeltaTime, false);
-            free(PlayerButton->AniState.Key);
+			AnimateForwards(ButtonMap_Get("InstrumentSelectPage_Player"), DeltaTime, false);
+			free(PlayerButton->AniState.Key);
 			PlayerButton->AniState.Key = (char*)malloc(strlen("Piano") + 1);
 			memcpy(PlayerButton->AniState.Key, "Piano", strlen("Piano") + 1);
 			animation *NewAni = AnimationMap_Get("Piano");
 			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
 			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-            PlayerInfo.Instrument = Brog_Piano;
+			PlayerInfo.Instrument = Brog_Piano;
 		}
 		UIResult = DoUIButtonFromMap("InstrumentSelectPage_SaxBub");
 		if (UIResult.PerformAction) {
-            AnimateForwards(ButtonMap_Get("InstrumentSelectPage_Player"), DeltaTime, false);
+			AnimateForwards(ButtonMap_Get("InstrumentSelectPage_Player"), DeltaTime, false);
 			free(PlayerButton->AniState.Key);
 			PlayerButton->AniState.Key = (char*)malloc(strlen("Sax") + 1);
 			memcpy(PlayerButton->AniState.Key, "Sax", strlen("Sax") + 1);
 			animation *NewAni = AnimationMap_Get("Sax");
 			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
 			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-            PlayerInfo.Instrument = Brog_Saxophone;
+			PlayerInfo.Instrument = Brog_Saxophone;
 		}
 		UIResult = DoUIButtonFromMap("InstrumentSelectPage_GuitarBub");
 		if (UIResult.PerformAction) {
-            AnimateForwards(ButtonMap_Get("InstrumentSelectPage_Player"), DeltaTime, false);
-            free(PlayerButton->AniState.Key);
+			AnimateForwards(ButtonMap_Get("InstrumentSelectPage_Player"), DeltaTime, false);
+			free(PlayerButton->AniState.Key);
 			PlayerButton->AniState.Key = (char*)malloc(strlen("Guitar") + 1);
 			memcpy(PlayerButton->AniState.Key, "Guitar", strlen("Guitar") + 1);
 			animation *NewAni = AnimationMap_Get("Guitar");
 			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
 			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-            PlayerInfo.Instrument = Brog_Guitar;
-        }
+			PlayerInfo.Instrument = Brog_Guitar;
+		}
 	}
     
-    //ROBOT BUBBLE STUFFFF
-    UIResult = DoUIButtonFromMap("InstrumentSelectPage_Robot");
-    UIResult = DoUIButtonFromMap("InstrumentSelectPage_RoboBubBox");
+	//ROBOT BUBBLE STUFFFF
+	UIResult = DoUIButtonFromMap("InstrumentSelectPage_Robot");
+	UIResult = DoUIButtonFromMap("InstrumentSelectPage_RoboBubBox");
 	if (UIResult.Hot) {
 		button_def *RoboButton = ButtonMap_Get("InstrumentSelectPage_Robot");
-		if (AnimateForwards(ButtonMap_Get("InstrumentSelectPage_RoboBubBox"), DeltaTime, false) || true) {
+		if (AnimateForwards(ButtonMap_Get("InstrumentSelectPage_RoboBubBox"), DeltaTime, false)) {
 			UIResult = DoUIButtonFromMap("InstrumentSelectPage_RPianoBub");
 			if (UIResult.PerformAction) {
 				AnimateForwards(ButtonMap_Get("InstrumentSelectPage_Robot"), DeltaTime, false);
@@ -676,10 +675,8 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
     else {
 		AnimateBackwards(ButtonMap_Get("InstrumentSelectPage_RoboBubBox"), DeltaTime, false);
 	}
-    
-   
-    
-    button_def *GoJam = ButtonMap_Get("InstrumentSelectPage_GoJam");
+
+	button_def *GoJam = ButtonMap_Get("InstrumentSelectPage_GoJam");
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_GoJam");
 	if (UIResult.PerformAction) {
 		ProgState = Player;
