@@ -80,6 +80,9 @@ PicturePreProcessor.exe "resources\FilterScreenBG.png" 1 0 1 FilterScreenBG.ppp
 PicturePreProcessor.exe "resources\PostPlayScreen.png" 1 0 1 PostPlayScreen.ppp
 PicturePreProcessor.exe "resources\ListenScreen.png" 1 0 1 ListenScreen.ppp
 PicturePreProcessor.exe "resources\nothing.png" 1 0 1 nothing.ppp
+PicturePreProcessor.exe "resources\OK.png" 1 0 1 OK.ppp
+PicturePreProcessor.exe "resources\WarningTextbox.png" 1 0 1 WarningTextbox.ppp
+PicturePreProcessor.exe "resources\HoldOn.png" 1 0 1 HoldOn.ppp
 
 
 PicturePreProcessor.exe "resources\animations\filter button\filterbutton%%d.png" 5 1 15 FilterButton.ppp
