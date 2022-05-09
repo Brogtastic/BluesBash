@@ -140,7 +140,7 @@ global_var Sound GuitarFinale;
 global_var Sound PianoFinale;
 global_var Sound SaxFinale;
 global_var Sound BBIntroAudio;
-
+global_var Sound LoopingDrumTrack;
 
 // Returns true if the note that's passed in is currently playing
 bool IsNotePlaying(note_name Note, note_instrument Instrument);

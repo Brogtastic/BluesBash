@@ -263,6 +263,8 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 			// Stop the current chord (on start up we can stop notes that are not playing)
 			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
 				StopNote(Note,PlayerInfo.Instrument);
+				PlaySound(LoopingDrumTrack);
+				PlaySound(LoopingDrumTrack);
 			}
 
 			PlayerInfo.CurrentChord += 1;
@@ -1071,6 +1073,7 @@ int main(void) {
 	PianoFinale = LoadSound("resources/Piano Finale.mp3");
 	SaxFinale = LoadSound("resources/Sax Finale.mp3");
 	BBIntroAudio = LoadSound("resources/BBIntroAudio.wav");
+	LoopingDrumTrack = LoadSound("resources/LoopingDrumTrack.wav");
 
 	bool InitStatus = InitNetwork();
 
