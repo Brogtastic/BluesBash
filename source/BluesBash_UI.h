@@ -51,7 +51,7 @@ struct text_area_def {
 // full button key: uim file name + button name => "TopMenu_PlayButton"
 
 // ButtonMap Start
-#define ButtonMap_BucketCount (30)
+#define ButtonMap_BucketCount (50)
 #define ButtonMap_BackingCount (150)
 #define ButtonMap_NoEntry (-1)
 
@@ -61,8 +61,8 @@ int ButtonMap_FreeListHead;
 // ButtonMap End
 
 // TextAreaMap Start
-#define TextAreaMap_BucketCount (30)
-#define TextAreaMap_BackingCount (50)
+#define TextAreaMap_BucketCount (50)
+#define TextAreaMap_BackingCount (100)
 #define TextAreaMap_NoEntry (-1)
 
 text_area_def TextAreaMap_Backing[TextAreaMap_BackingCount];

@@ -15,7 +15,7 @@ struct animation {
 
 // Animation Hash Map Begins
 #define AnimationMap_BucketCount (30)
-#define AnimationMap_BackingCount (50)
+#define AnimationMap_BackingCount (100)
 #define AnimationMap_NoEntry (-1)
 
 animation AnimationMap_BackingData[AnimationMap_BackingCount];

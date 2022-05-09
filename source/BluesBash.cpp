@@ -53,6 +53,7 @@ struct player_info {
 	int CurrentChord;
 	
     note_instrument Instrument;
+	note_instrument RoboInstrument;
 	note_name Keyboard[19];
 	note_name SustainedNotes[4];
 
@@ -330,6 +331,7 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 		ui_result UIResult = {false, false};
 		UIResult = DoUIButtonFromMap("GameplayScreen_Background");
 
+		UIResult = DoUIButtonFromMap("GameplayScreen_DrumBot");
 		AnimateForwards(ButtonMap_Get("GameplayScreen_DrumBot"), DeltaTime, true);
 
 		// @TODO progress bar
@@ -491,6 +493,17 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 		
 	}
 	
+	//ROBOT SHIT
+	if(PlayerInfo.RoboInstrument == Brog_Piano){
+		UIResult = DoUIButtonFromMap("GameplayScreen_PianoBot");
+	}
+	if(PlayerInfo.RoboInstrument == Brog_Guitar){
+		UIResult = DoUIButtonFromMap("GameplayScreen_GuitarBot");
+	}
+	if(PlayerInfo.RoboInstrument == Brog_Saxophone){
+		UIResult = DoUIButtonFromMap("GameplayScreen_TromboneBot");
+	}
+	
 	button_def *BackArrow = ButtonMap_Get("GameplayScreen_BackArrow");
 	UIResult = DoUIButtonFromMap("GameplayScreen_BackArrow");
 	if (UIResult.PerformAction) {
@@ -627,6 +640,12 @@ void ProcessAndRenderLoginMenu(double DeltaTime, double CurrentTime) {
 	UIResult = DoUIButtonFromMap("LoginPage_SignUpButton");
 	if (UIResult.PerformAction) {
 		ProgState = SignUpPage;
+	}
+	
+	
+	UIResult = DoUIButtonFromMap("LoginPage_LogoutButton");
+	if (UIResult.PerformAction) {
+		ProgState = TopMenu;
 	}
 
 	DoUIButtonFromMap("LoginPage_Shading"); 
@@ -776,7 +795,7 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 				animation *NewAni = AnimationMap_Get("PianoBot");
 				RoboButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
 				RoboButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-				PlayerInfo.Instrument = Brog_Piano;
+				PlayerInfo.RoboInstrument = Brog_Piano;
 			}
 			UIResult = DoUIButtonFromMap("InstrumentSelectPage_RTromBub");
 			if (UIResult.PerformAction) {
@@ -786,7 +805,7 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 				animation *NewAni = AnimationMap_Get("TromboneBot");
 				RoboButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
 				RoboButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-				PlayerInfo.Instrument = Brog_Saxophone;
+				PlayerInfo.RoboInstrument = Brog_Saxophone;
 			}
 			UIResult = DoUIButtonFromMap("InstrumentSelectPage_RGuitarBub");
 			if (UIResult.PerformAction) {
@@ -796,7 +815,7 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 				animation *NewAni = AnimationMap_Get("GuitarBot");
 				RoboButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
 				RoboButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-				PlayerInfo.Instrument = Brog_Guitar;
+				PlayerInfo.RoboInstrument = Brog_Guitar;
 			}
 		}
 	}
