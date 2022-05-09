@@ -102,6 +102,7 @@ struct net_server_security_question_fail_def {
 
 struct net_server_register_ok_def {
 	int UserId;
+	char Nickname[40];
 };
 
 enum net_server_register_fail_reason {

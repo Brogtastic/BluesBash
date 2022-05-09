@@ -65,10 +65,11 @@ const char *DatabaseCreationSQL =
 
 char QueryBuffer[2000] = {}; // @TODO(Roskuski): This is probably wastful
 
+const char *RegisterTestEmailQuery = "SELECT Email FROM Users WHERE Email = \'%s\';";
+const char *RegisterTestNicknameQuery = "SELECT Nickname FROM Users WHERE Nickname = \'%s\';";
 const char *RegisterQuery = "INSERT INTO Users (Email, Password, Nickname, SecQuestion, SecAnswer) VALUES (\'%s\', \'%s\', \'%s\', \'%s\', \'%s\');";
-const char *PostRegisterQuery = "SELECT Id FROM Users WHERE Email = \'%s\';";
+const char *PostRegisterQuery = "SELECT Id, Nickname FROM Users WHERE Email = \'%s\';";
 const char *LogonQuery = "SELECT Id, Nickname FROM Users WHERE Email = \'%s\' AND Password = \'%s\';";
-
 
 SOCKET ListenSocket;
 sqlite3 *Database;
@@ -164,6 +165,38 @@ void ClientRegister(net_client_nugget ClientNugget, SOCKET ClientSock) {
 		Reply.Data.RegisterFail.Reason = Net_Server_RegisterFail_EmptyEmail;
 	}
 
+	{
+		snprintf(QueryBuffer, 2000, RegisterTestEmailQuery, SEmail);
+		sqlite3_stmt *Statement;
+		sqlite3_prepare_v2(Database, QueryBuffer, -1, &Statement, 0);
+		
+
+		int StepResult = sqlite3_step(Statement);
+		if (StepResult == SQLITE_DONE) {
+		}
+		else if (StepResult == SQLITE_ROW) {
+			Reply.Command = Net_Server_RegisterFail;
+			Reply.Data.RegisterFail.Reason = Net_Server_RegisterFail_UsedEmail;
+		}
+		sqlite3_finalize(Statement);
+	}
+
+	{
+		snprintf(QueryBuffer, 2000, RegisterTestNicknameQuery, SNickname);
+		sqlite3_stmt *Statement;
+		sqlite3_prepare_v2(Database, QueryBuffer, -1, &Statement, 0);
+		
+
+		int StepResult = sqlite3_step(Statement);
+		if (StepResult == SQLITE_DONE) {
+		}
+		else if (StepResult == SQLITE_ROW) {
+			Reply.Command = Net_Server_RegisterFail;
+			Reply.Data.RegisterFail.Reason = Net_Server_RegisterFail_UsedNickname;
+		}
+		sqlite3_finalize(Statement);
+	}
+
 	if (Reply.Command == Net_Server_RegisterOk) {
 		snprintf(QueryBuffer, 2000, RegisterQuery, SEmail, SPassword, SNickname, SSecQuestion, SSecAnswer);
 		char *ErrorMessage = 0;
@@ -192,17 +225,13 @@ void ClientRegister(net_client_nugget ClientNugget, SOCKET ClientSock) {
 					Reply.Data.RegisterFail.Reason = Net_Server_RegisterFail_Generic;
 				}
 				else {
-					if (sqlite3_column_count(Statement) != 1) {
-						printf("Net_Client_Register, PostRegisterQuery, Column Count\n");
-						Reply.Command = Net_Server_RegisterFail;
-						Reply.Data.RegisterFail.Reason = Net_Server_RegisterFail_Generic;
-					}
-					else {
-						Reply.Data.RegisterOk.UserId = sqlite3_column_int(Statement, 0);
-						for (int StepResult = sqlite3_step(Statement); StepResult != SQLITE_DONE; StepResult = sqlite3_step(Statement)) {}
-					}
+					Reply.Data.RegisterOk.UserId = sqlite3_column_int(Statement, 0);
+					const unsigned char *TableNickname = sqlite3_column_text(Statement, 1);
+					memcpy(Reply.Data.RegisterOk.Nickname, TableNickname, NICKNAME_LEN);
+					for (int StepResult = sqlite3_step(Statement); StepResult != SQLITE_DONE; StepResult = sqlite3_step(Statement)) {}
 				}
 			}
+		sqlite3_finalize(Statement);
 		}
 	}
 
