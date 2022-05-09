@@ -1006,8 +1006,11 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
     
     button_def *BotBotBot = ButtonMap_Get("InstrumentSelectPage_BotBotBot");
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_BotBotBot");
-	if (UIResult.Hot) {
-		AnimateForwards(ButtonMap_Get("InstrumentSelectPage_BotBotBot"), DeltaTime, true);
+	if (UIResult.PerformAction) {
+		PlaySound(LoopingDrumTrack);
+	}
+	if(UIResult.Hot){
+			AnimateForwards(ButtonMap_Get("InstrumentSelectPage_BotBotBot"), DeltaTime, true);
 	}
 
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_Player");
