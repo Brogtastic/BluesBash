@@ -61,7 +61,7 @@ enum note_name {
 	NOTES
 	NoteName_Count, // This entry's value is how many notes we have.
 #undef XX
-#undef X	
+#undef X
 };
 
 enum note_instrument {
