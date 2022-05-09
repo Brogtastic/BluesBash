@@ -791,14 +791,18 @@ void ProcessAndRenderIntro(double DeltaTime, double CurrentTime) {
 
 	UIResult = DoUIButtonFromMap("Intro_Intro");
 	
-    PlaySound(BBIntroAudio);
-	AnimateForwards(ButtonMap_Get("Intro_Intro"), DeltaTime, false);
+	local_persist bool PlayOnce = false;
+	if (!PlayOnce && DeltaTime != 0) { // NOTE(Roskuski): Start on the first real frame
+		PlaySound(BBIntroAudio);
+		PlayOnce = true;
+	}
+	if (AnimateForwards(ButtonMap_Get("Intro_Intro"), DeltaTime, false)) {
+		ProgState = TopMenu;
+	}
 
 	EndDrawing();
-	
-    
-    
-    //@TODO(Brog):---------------HEY ROSKUSKI MASK THE LOADING BEHIND THIS BIG NELLY OK????-----------------
+
+	//@TODO(Brog):---------------HEY ROSKUSKI MASK THE LOADING BEHIND THIS BIG NELLY OK????-----------------
 }
 
 
@@ -830,15 +834,21 @@ int main(void) {
 	GuitarFinale = LoadSound("resources/Guitar Finale.mp3");
 	PianoFinale = LoadSound("resources/Piano Finale.mp3");
 	SaxFinale = LoadSound("resources/Sax Finale.mp3");
-    BBIntroAudio = LoadSound("resources/BBIntroAudio.wav");
+	BBIntroAudio = LoadSound("resources/BBIntroAudio.wav");
 
 	bool InitStatus = InitNetwork();
 
 	if (!InitStatus) { return -1; }
   
 	while(!WindowShouldClose()) {
-		double DeltaTime = GetFrameTime();
+		local_persist bool IsLoadingTimeFrame = true;
 		local_persist double CurrentTime = 0;
+
+		double DeltaTime = GetFrameTime();
+		if (IsLoadingTimeFrame && DeltaTime != 0) {
+			DeltaTime = 0;
+			IsLoadingTimeFrame = false;
+		}
 		CurrentTime += DeltaTime;
 
 		switch(ProgState) {
