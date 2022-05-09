@@ -486,11 +486,11 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 	}
 	
 	//ROBOT SHIT
-	if(PlayerInfo.RoboInstrument == Brog_Piano){
-		UIResult = DoUIButtonFromMap("GameplayScreen_PianoBot");
-	}
 	if(PlayerInfo.RoboInstrument == Brog_Guitar){
 		UIResult = DoUIButtonFromMap("GameplayScreen_GuitarBot");
+	}
+	if(PlayerInfo.RoboInstrument == Brog_Piano){
+		UIResult = DoUIButtonFromMap("GameplayScreen_PianoBot");
 	}
 	if(PlayerInfo.RoboInstrument == Brog_Saxophone){
 		UIResult = DoUIButtonFromMap("GameplayScreen_TromboneBot");
@@ -747,7 +747,7 @@ void ProcessAndRenderSignUpMenu(double DeltaTime, double CurrentTime) {
 	button_def *BackArrow = ButtonMap_Get("SignUpPage_BackArrow");
 	UIResult = DoUIButtonFromMap("SignUpPage_BackArrow");
 	if (UIResult.PerformAction) {
-		ProgState = ListenScreen;
+		ProgState = LoginPage;
 	}
 	if (UIResult.Hot) {
 		AnimateForwards(ButtonMap_Get("SignUpPage_BackArrow"), DeltaTime, false);
