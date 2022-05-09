@@ -13,6 +13,7 @@ enum net_client_commands {
 	Net_Client_JackOut,
 	Net_Client_Logon,
 	Net_Client_SecurityQuestion,
+	Net_Client_Register,
 };
 
 struct net_client_jack_in_def {
@@ -21,6 +22,14 @@ struct net_client_jack_in_def {
 
 struct net_client_jack_out_def {
 	// empty
+};
+
+struct net_client_register_def {
+	char Email[EMAIL_LEN];
+	char Password[PASSWORD_LEN];
+	char Nickname[NICKNAME_LEN];
+	char SecQuestion[SEC_QUESTION_LEN];
+	char SecAnswer[SEC_ANSWER_LEN];
 };
 
 struct net_client_logon_def {
@@ -41,6 +50,7 @@ struct net_client_nugget {
 		net_client_jack_out_def JackOut;
 		net_client_logon_def Logon;
 		net_client_security_question_def SecurityQuestion;
+		net_client_register_def Register;
 		char Raw[512];
 	} Data;
 };
@@ -57,6 +67,8 @@ enum net_server_commands {
 	Net_Server_SecurityQuestion,
 	Net_Server_SecurityQuestionOk,
 	Net_Server_SecurityQuestionFail,
+	Net_Server_RegisterOk,
+	Net_Server_RegisterFail,
 };
 
 struct net_server_jack_in_def {
@@ -73,8 +85,9 @@ struct net_server_logon_ok_def {
 };
 
 enum net_server_logon_fail_reason {
-	Net_Server_Logon_Fail_UnregisteredEmail,
-	Net_Server_Logon_Fail_BadPassword,
+	Net_Server_LogonFail_NoFail = 0,
+	Net_Server_LogonFail_UnregisteredEmail,
+	Net_Server_LogonFail_BadPassword,
 };
 
 struct net_server_logon_fail_def {
@@ -93,6 +106,27 @@ struct net_server_security_question_fail_def {
 	// Empty
 };
 
+struct net_server_register_ok_def {
+	int UserId;
+};
+
+enum net_server_register_fail_reason {
+	Net_Server_RegisterFail_NoFail = 0,
+	Net_Server_RegisterFail_Generic,
+	Net_Server_RegisterFail_EmptyEmail,
+	Net_Server_RegisterFail_EmptyPassword, 
+	Net_Server_RegisterFail_EmptyNickname,
+	Net_Server_RegisterFail_EmptySecQuestion,
+	Net_Server_RegisterFail_EmptySecAnswer,
+
+	Net_Server_RegisterFail_UsedEmail,
+	Net_Server_RegisterFail_UsedNickname,
+};
+
+struct net_server_register_fail_def {
+	net_server_register_fail_reason Reason;
+};
+
 struct net_server_nugget {
 	net_server_commands Command;
 	union {
@@ -103,6 +137,8 @@ struct net_server_nugget {
 		net_server_security_question_def SecQuestion;
 		net_server_security_question_ok_def SecQuestionOk;
 		net_server_security_question_fail_def SecQuestionFail;
+		net_server_register_ok_def RegisterOk;
+		net_server_register_fail_def RegisterFail;
 		char Raw[512];
 	} Data;
 };

@@ -105,8 +105,10 @@ void LoadUim_TextAreas(FILE *File) {
 		fread(&TextArea.HitRect, sizeof(TextArea.HitRect), 1, File);
 		fread(&TextArea.GraphicRect, sizeof(TextArea.GraphicRect), 1, File);
 
-		TextArea.Buffer = (char*)malloc(TextArea.BufferMaxSize + 1);
-		memset(TextArea.Buffer, 0, TextArea.BufferMaxSize + 1);
+		// NOTE(Roskuski) Text areas are actually able to hold one less character than expected
+		// This is because of the null term
+		TextArea.Buffer = (char*)malloc(TextArea.BufferMaxSize);
+		memset(TextArea.Buffer, 0, TextArea.BufferMaxSize);
 		TextAreaMap_Insert(TextArea.Entry.Key, TextArea);
 	}
 
