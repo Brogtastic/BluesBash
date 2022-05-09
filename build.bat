@@ -2,6 +2,9 @@
 rem alway start with the correct working directory
 cd %~dp0
 
+echo Starting Time:
+time /T
+
 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"
 
 rem ensure output directories do exist.
@@ -126,5 +129,7 @@ echo Building Server...
 cl %Server_CFlags% %Server_IncludePaths% %Server_TranslationUnits% %Server_LFlags% %Server_LibraryPaths%
 @echo off
 
+echo Ending Time:
+time /T
 
 
