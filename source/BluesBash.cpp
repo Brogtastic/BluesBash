@@ -29,7 +29,7 @@
 #include "Server/Commands.h" 
 
 enum prog_state {
-	Player,
+	GameplayScreen,
 	TopMenu,
 	LoginPage,
 	SignUpPage,
@@ -122,7 +122,7 @@ double LinearInterp(double Start, double End, double Ratio) {
 	return Start + (End - Start) * Ratio;
 }
 
-void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
+void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 	// @TODO(Roskuski): The constants here should be folded into PlayerInfo.
 	const double ChordLength = WHOLE_NOTE(SecondsPerBeat);
 	const chord_names ChordSequence[] = {Cmaj7, Fmaj7, Cmaj7, Gmaj7, Fmaj7, Cmaj7};
@@ -212,6 +212,8 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 		OffsetYEaseRatio = 0;
 	}
     
+
+	
 	if(IsKeyPressed(KEY_F)){
 		if (PlayerInfo.Instrument == Brog_Piano) {
 			for (int Index = 0; Index < NoteName_Count; Index++) {
@@ -237,6 +239,9 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 		}
 		ProgState = PostPlayScreen;
 	}
+	
+	
+	
 	
 	
 
@@ -389,35 +394,115 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 		}
 		
 	//ANIMATION FOR GAMEPLAY STARTS HERE!!!------------------------------------------------------------
-	UIResult = DoUIButtonFromMap("GameplayScreen_PlayerPiano");
-	button_def *PlayerButton = ButtonMap_Get("GameplayScreen_PlayerPiano");
-	if (IsKeyPressed(KEY_LEFT)) {
-		free(PlayerButton->AniState.Key);
-		PlayerButton->AniState.Key = (char*)malloc(strlen("PianoLeft") + 1);
-		memcpy(PlayerButton->AniState.Key, "PianoLeft", strlen("PianoLeft") + 1);
-		animation *NewAni = AnimationMap_Get("PianoLeft");
-		PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
-		PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
+	if (PlayerInfo.Instrument == Brog_Piano) {
+		UIResult = DoUIButtonFromMap("GameplayScreen_PlayerPiano");
+		button_def *PlayerButton = ButtonMap_Get("GameplayScreen_PlayerPiano");
+		if (IsKeyPressed(KEY_LEFT)) {
+			free(PlayerButton->AniState.Key);
+			PlayerButton->AniState.Key = (char*)malloc(strlen("PianoLeft") + 1);
+			memcpy(PlayerButton->AniState.Key, "PianoLeft", strlen("PianoLeft") + 1);
+			animation *NewAni = AnimationMap_Get("PianoLeft");
+			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
+		}
+		if (IsKeyPressed(KEY_RIGHT)) {
+			free(PlayerButton->AniState.Key);
+			PlayerButton->AniState.Key = (char*)malloc(strlen("PianoRight") + 1);
+			memcpy(PlayerButton->AniState.Key, "PianoRight", strlen("PianoRight") + 1);
+			animation *NewAni = AnimationMap_Get("PianoRight");
+			PlayerButton->AniState.CurrentFrameMajor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+			PlayerButton->AniState.CurrentFrameMinor = NewAni->UniqueFrameCount - 1;
+			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
+		}
+		if (IsKeyPressed(KEY_UP)) {
+			free(PlayerButton->AniState.Key);
+			PlayerButton->AniState.Key = (char*)malloc(strlen("PianoMiddle") + 1);
+			memcpy(PlayerButton->AniState.Key, "PianoMiddle", strlen("PianoMiddle") + 1);
+			animation *NewAni = AnimationMap_Get("PianoMiddle");
+			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
+		}
+		
 	}
-	if (IsKeyPressed(KEY_RIGHT)) {
-		free(PlayerButton->AniState.Key);
-		PlayerButton->AniState.Key = (char*)malloc(strlen("PianoRight") + 1);
-		memcpy(PlayerButton->AniState.Key, "PianoRight", strlen("PianoRight") + 1);
-		animation *NewAni = AnimationMap_Get("PianoRight");
-		PlayerButton->AniState.CurrentFrameMajor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-		PlayerButton->AniState.CurrentFrameMinor = NewAni->UniqueFrameCount - 1;
-		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerButton"), DeltaTime, false);
+	
+	if (PlayerInfo.Instrument == Brog_Guitar) {
+		UIResult = DoUIButtonFromMap("GameplayScreen_PlayerGuitar");
+		button_def *PlayerButton = ButtonMap_Get("GameplayScreen_PlayerGuitar");
+		if (IsKeyPressed(KEY_LEFT)) {
+			free(PlayerButton->AniState.Key);
+			PlayerButton->AniState.Key = (char*)malloc(strlen("GuitarLeft") + 1);
+			memcpy(PlayerButton->AniState.Key, "GuitarLeft", strlen("GuitarLeft") + 1);
+			animation *NewAni = AnimationMap_Get("GuitarLeft");
+			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerGuitar"), DeltaTime, false);
+		}
+		if (IsKeyPressed(KEY_RIGHT)) {
+			free(PlayerButton->AniState.Key);
+			PlayerButton->AniState.Key = (char*)malloc(strlen("GuitarRight") + 1);
+			memcpy(PlayerButton->AniState.Key, "GuitarRight", strlen("GuitarRight") + 1);
+			animation *NewAni = AnimationMap_Get("GuitarRight");
+			PlayerButton->AniState.CurrentFrameMajor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+			PlayerButton->AniState.CurrentFrameMinor = NewAni->UniqueFrameCount - 1;
+			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerGuitar"), DeltaTime, false);
+		}
+		if (IsKeyPressed(KEY_UP)) {
+			free(PlayerButton->AniState.Key);
+			PlayerButton->AniState.Key = (char*)malloc(strlen("GuitarMiddle") + 1);
+			memcpy(PlayerButton->AniState.Key, "GuitarMiddle", strlen("GuitarMiddle") + 1);
+			animation *NewAni = AnimationMap_Get("GuitarMiddle");
+			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerGuitar"), DeltaTime, false);
+		}
 	}
-	if (IsKeyPressed(KEY_UP)) {
-		free(PlayerButton->AniState.Key);
-		PlayerButton->AniState.Key = (char*)malloc(strlen("PianoMiddle") + 1);
-		memcpy(PlayerButton->AniState.Key, "PianoMiddle", strlen("PianoMiddle") + 1);
-		animation *NewAni = AnimationMap_Get("PianoMiddle");
-		PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
-		PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
+	if (PlayerInfo.Instrument == Brog_Saxophone) {
+		UIResult = DoUIButtonFromMap("GameplayScreen_PlayerSax");
+		button_def *PlayerButton = ButtonMap_Get("GameplayScreen_PlayerSax");
+		if (IsKeyPressed(KEY_LEFT)) {
+			free(PlayerButton->AniState.Key);
+			PlayerButton->AniState.Key = (char*)malloc(strlen("SaxLeft") + 1);
+			memcpy(PlayerButton->AniState.Key, "SaxLeft", strlen("SaxLeft") + 1);
+			animation *NewAni = AnimationMap_Get("SaxLeft");
+			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerSax"), DeltaTime, false);
+		}
+		if (IsKeyPressed(KEY_RIGHT)) {
+			free(PlayerButton->AniState.Key);
+			PlayerButton->AniState.Key = (char*)malloc(strlen("SaxRight") + 1);
+			memcpy(PlayerButton->AniState.Key, "SaxRight", strlen("SaxRight") + 1);
+			animation *NewAni = AnimationMap_Get("SaxRight");
+			PlayerButton->AniState.CurrentFrameMajor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+			PlayerButton->AniState.CurrentFrameMinor = NewAni->UniqueFrameCount - 1;
+			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerSax"), DeltaTime, false);
+		}
+		if (IsKeyPressed(KEY_UP)) {
+			free(PlayerButton->AniState.Key);
+			PlayerButton->AniState.Key = (char*)malloc(strlen("SaxMiddle") + 1);
+			memcpy(PlayerButton->AniState.Key, "SaxMiddle", strlen("SaxMiddle") + 1);
+			animation *NewAni = AnimationMap_Get("SaxMiddle");
+			PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+			PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+			AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerSax"), DeltaTime, false);
+		}
+		
 	}
+	
+	button_def *BackArrow = ButtonMap_Get("GameplayScreen_BackArrow");
+	UIResult = DoUIButtonFromMap("GameplayScreen_BackArrow");
+	if (UIResult.PerformAction) {
+		ProgState = InstrumentSelect;
+	}
+	if (UIResult.Hot) {
+		AnimateForwards(ButtonMap_Get("GameplayScreen_BackArrow"), DeltaTime, false);
+	}
+	else {
+		AnimateBackwards(ButtonMap_Get("GameplayScreen_BackArrow"), DeltaTime, false);
+	}
+	
 	
 	//ANIMATION FOR GAMEPLAY ENDS HERE!!!------------------------------------------------------------
 		
@@ -722,7 +807,7 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 	button_def *GoJam = ButtonMap_Get("InstrumentSelectPage_GoJam");
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_GoJam");
 	if (UIResult.PerformAction) {
-		ProgState = Player;
+		ProgState = GameplayScreen;
 	}
 	if (UIResult.Hot) {
 		AnimateForwards(ButtonMap_Get("InstrumentSelectPage_GoJam"), DeltaTime, true);
@@ -869,8 +954,8 @@ int main(void) {
 		CurrentTime += DeltaTime;
 
 		switch(ProgState) {
-		case Player: {
-			ProcessAndRenderPlayer(DeltaTime, CurrentTime);
+		case GameplayScreen: {
+			ProcessAndRenderGameplayScreen(DeltaTime, CurrentTime);
 		} break;
 
 		case TopMenu: {
