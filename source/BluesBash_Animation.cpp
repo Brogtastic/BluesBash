@@ -59,10 +59,10 @@ bool AnimateForwards(animation_state &State, double DeltaTime, bool Loop) {
 	bool Result = false;
 	
 	State.CurrentTime += DeltaTime;
-	for (; State.CurrentTime > Animation->FrameTime; State.CurrentTime -= Animation->FrameTime) {
+	for (; State.CurrentTime >= Animation->FrameTime; State.CurrentTime -= Animation->FrameTime) {
 		State.CurrentFrameMinor += 1;
 
-		if (State.CurrentFrameMinor > Animation->Frames[State.CurrentFrameMajor].FrameLength) {
+		if (State.CurrentFrameMinor >= Animation->Frames[State.CurrentFrameMajor].FrameLength) {
 			State.CurrentFrameMajor += 1;
 			State.CurrentFrameMinor = 0;
 			if (State.CurrentFrameMajor >= Animation->UniqueFrameCount) {
@@ -78,6 +78,12 @@ bool AnimateForwards(animation_state &State, double DeltaTime, bool Loop) {
 				}
 			}
 		}
+	}
+
+	if (!Loop && !Result &&
+		  (State.CurrentFrameMajor == Animation->UniqueFrameCount - 1) &&
+		  (State.CurrentFrameMinor == Animation->Frames[State.CurrentFrameMajor].FrameLength - 1)) {
+		Result = true;
 	}
 
 	return Result;
@@ -113,6 +119,13 @@ bool AnimateBackwards(animation_state &State, double DeltaTime, bool Loop) {
 				State.CurrentFrameMinor = Animation->Frames[State.CurrentFrameMajor].FrameLength;
 			}
 		}
+	}
+
+	// @TODO(Roskuski): This edit is untested. In Theory this function may have ocilated between True and False while stopped at the first frame of an animation. This check is added to ensure that we always return true while we are stopped at the first frame.
+	if (!Loop && !Result &&
+		  (State.CurrentFrameMajor == 0) &&
+		  (State.CurrentFrameMinor == 0) {
+		Result = true;
 	}
 
 	return Result;
