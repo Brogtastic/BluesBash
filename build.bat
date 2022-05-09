@@ -95,7 +95,7 @@ PicturePreProcessor.exe "resources\animations\GoJam\GoJam%%d.png" 12 1 15 GoJam.
 PicturePreProcessor.exe "resources\animations\YKW Gameplay Robot\YKWGameplayRobot%%d.png" 11 1 15 GamePlayRobot.ppp
 PicturePreProcessor.exe "resources\animations\UploadTrack\UploadTrack%%d.png" 4 1 15 UploadTrack.ppp
 PicturePreProcessor.exe "resources\animations\BackToMenu\BackToMenu%%d.png" 4 1 15 BackToMenu.ppp
-PicturePreProcessor.exe "resources\Logout.png" 1 0 1 logout.ppp
+PicturePreProcessor.exe "resources\animations\logout\logout%%d.png" 2 0 15 logout.ppp
 
 
 PicturePreProcessor.exe "resources\animations\Change Guys\Guitar\Guitar%%d.png" 3 1 15 Guitar.ppp
@@ -122,8 +122,9 @@ PicturePreProcessor.exe "resources\animations\Player Animation\Sax\Middle\Saxoph
 PicturePreProcessor.exe "resources\animations\Player Animation\Sax\Right\SaxophoneRight%%d.png" 9 1 15 SaxRight.ppp
 
 PicturePreProcessor.exe "resources\titlescreen.png" 1 0 1 TopMenuBG.ppp
-PicturePreProcessor.exe "resources\sign up.png" 1 0 1 SignUpButton.ppp
-PicturePreProcessor.exe "resources\submit.png" 1 0 1 SubmitButton.ppp
+PicturePreProcessor.exe "resources\animations\signup\signup%%d.png" 2 0 15 SignUpButton.ppp
+PicturePreProcessor.exe "resources\animations\submit\submit%%d.png" 2 0 15 SubmitButton.ppp
+PicturePreProcessor.exe "resources\animations\loginbutton\login%%d.png" 2 0 15 LoginButton.ppp
 PicturePreProcessor.exe "resources\textbox.png" 1 0 1 Textbox.ppp
 PicturePreProcessor.exe "resources\LoginScreenShading.png" 1 0 1 LoginScreenShading.ppp
 PicturePreProcessor.exe resources\animations\signuppage\SignUpScreen%%04d.png 69 1 12 SignUpScreen.ppp
