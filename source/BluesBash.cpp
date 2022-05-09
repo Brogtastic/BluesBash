@@ -213,36 +213,28 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 		OffsetYEaseRatio = 0;
 	}
     
-
 	
 	if(IsKeyPressed(KEY_F)){
 		if (PlayerInfo.Instrument == Brog_Piano) {
-			for (int Index = 0; Index < NoteName_Count; Index++) {
-				StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
-				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
+			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
+				StopNote(Note,PlayerInfo.Instrument);
 			}
 			PlaySound(PianoFinale);
 		}
-
 		if (PlayerInfo.Instrument == Brog_Guitar){
-			for (int Index = 0; Index < NoteName_Count; Index++) {
-				StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
-				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
+			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
+				StopNote(Note,PlayerInfo.Instrument);
 			}
 			PlaySound(GuitarFinale);
 		}
 		else if (PlayerInfo.Instrument == Brog_Saxophone){
-			for (int Index = 0; Index < NoteName_Count; Index++) {
-				StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
-				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
+			for (note_name Note : Chords[ChordSequence[PlayerInfo.CurrentChord]]) {
+				StopNote(Note,PlayerInfo.Instrument);
 			}
 			PlaySound(SaxFinale);
 		}
 		ProgState = PostPlayScreen;
 	}
-	
-	
-	
 	
 	
 
