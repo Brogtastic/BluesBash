@@ -139,6 +139,7 @@ global_var Sound NoteSoundList[NoteInstrumentCount][NoteName_Count];
 global_var Sound GuitarFinale;
 global_var Sound PianoFinale;
 global_var Sound SaxFinale;
+global_var Sound BBIntroAudio;
 
 
 // Returns true if the note that's passed in is currently playing
