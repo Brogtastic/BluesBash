@@ -122,6 +122,8 @@ PicturePreProcessor.exe "resources\animations\Player Animation\Sax\Middle\Saxoph
 PicturePreProcessor.exe "resources\animations\Player Animation\Sax\Right\SaxophoneRight%%d.png" 9 1 15 SaxRight.ppp
 
 PicturePreProcessor.exe "resources\titlescreen.png" 1 0 1 TopMenuBG.ppp
+PicturePreProcessor.exe "resources\InstrumentInstructions.png" 1 0 1 InstrumentInstructions.ppp
+PicturePreProcessor.exe "resources\ArrowKeyInstructions.png" 1 0 1 ArrowKeysInstructions.ppp
 PicturePreProcessor.exe "resources\animations\signup\signup%%d.png" 2 0 15 SignUpButton.ppp
 PicturePreProcessor.exe "resources\animations\submit\submit%%d.png" 2 0 15 SubmitButton.ppp
 PicturePreProcessor.exe "resources\animations\loginbutton\login%%d.png" 2 0 15 LoginButton.ppp
