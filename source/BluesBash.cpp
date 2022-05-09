@@ -713,7 +713,6 @@ void ProcessAndRenderPostPlayScreen(double DeltaTime, double CurrentTime) {
 
 	ui_result UIResult = {false, false};
 	DoUIButtonFromMap("PostPlayScreen_Background");
-	AnimateForwards(ButtonMap_Get("PostPlayScreen_Background"), DeltaTime, true);
 
 	UIResult = DoUITextAreaFromMap("PostPlayScreen_TitleTextbox");
 	if (UIResult.PerformAction) {
@@ -1016,11 +1015,8 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
     
     button_def *BotBotBot = ButtonMap_Get("InstrumentSelectPage_BotBotBot");
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_BotBotBot");
-	if (UIResult.PerformAction) {
-		PlaySound(LoopingDrumTrack);
-	}
-	if(UIResult.Hot){
-			AnimateForwards(ButtonMap_Get("InstrumentSelectPage_BotBotBot"), DeltaTime, true);
+	if (UIResult.Hot) {
+		AnimateForwards(ButtonMap_Get("InstrumentSelectPage_BotBotBot"), DeltaTime, true);
 	}
 
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_Player");
