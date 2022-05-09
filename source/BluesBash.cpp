@@ -26,6 +26,7 @@
 #include "BluesBash_UI.h"
 #include "BluesBash_Map.h"
 #include "win32_BluesBash.h"
+#include "Server/Commands.h" 
 
 enum prog_state {
 	Player,
@@ -33,9 +34,9 @@ enum prog_state {
 	LoginPage,
 	SignUpPage,
 	InstrumentSelect,
-    FilterScreen,
-    ListenScreen,
-    PostPlayScreen,
+	FilterScreen,
+	ListenScreen,
+	PostPlayScreen,
 };
 
 enum sustained_key {
@@ -209,36 +210,30 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 		OffsetYEaseRatio = 0;
 	}
     
-    if(IsKeyPressed(KEY_F)){
+	if(IsKeyPressed(KEY_F)){
 		if (PlayerInfo.Instrument == Brog_Piano) {
-            for (int Index = 0; Index < NoteName_Count; Index++) {
-                StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
+			for (int Index = 0; Index < NoteName_Count; Index++) {
+				StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
 				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
-            }
+			}
 			PlaySound(PianoFinale);
-            
-            
 		}
-			
+
 		if (PlayerInfo.Instrument == Brog_Guitar){
-            for (int Index = 0; Index < NoteName_Count; Index++) {
-                StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
+			for (int Index = 0; Index < NoteName_Count; Index++) {
+				StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
 				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
-            }
+			}
 			PlaySound(GuitarFinale);
-            
-            
 		}
 		else if (PlayerInfo.Instrument == Brog_Saxophone){
-            for (int Index = 0; Index < NoteName_Count; Index++) {
-                StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
+			for (int Index = 0; Index < NoteName_Count; Index++) {
+				StopSound(NoteSoundList[PlayerInfo.Instrument][Index]);
 				NoteStateList[PlayerInfo.Instrument][Index].State = NotPlaying;
-            }
+			}
 			PlaySound(SaxFinale);
-            
-            
 		}
-        ProgState = PostPlayScreen;
+		ProgState = PostPlayScreen;
 	}
 
 	// Stop Sustained notes that we are no longer holding.
@@ -251,9 +246,9 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	}
 
 	// Do Chords
-    //!!!!!!!!!!!!!!!!!!!!!!!!
-    //-------------------------------------------------------------------------
-    //WHILE F KEY NOT PRESSED
+	//!!!!!!!!!!!!!!!!!!!!!!!!
+	//-------------------------------------------------------------------------
+	//WHILE F KEY NOT PRESSED
 	{
 		PlayerInfo.TimeUntilNextChord -= DeltaTime;
 			
@@ -322,12 +317,11 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	{
 		BeginDrawing();
 		ClearBackground(RAYWHITE);
-        
-        ui_result UIResult = {false, false};
-        UIResult = DoUIButtonFromMap("GameplayScreen_Background");
-        
-        
-        AnimateForwards(ButtonMap_Get("GameplayScreen_DrumBot"), DeltaTime, true);
+
+		ui_result UIResult = {false, false};
+		UIResult = DoUIButtonFromMap("GameplayScreen_Background");
+
+		AnimateForwards(ButtonMap_Get("GameplayScreen_DrumBot"), DeltaTime, true);
 
 		// @TODO progress bar
 		DrawRectangleRec({ScreenWidth/2 - 200 - 2, ScreenHeight*(13.0/16.0) - 1, 400 + 2, 32 + 2}, BLACK);
@@ -462,14 +456,6 @@ void ProcessAndRenderTopMenu(double DeltaTime, double CurrentTime) {
 		AnimateBackwards(ButtonMap_Get("TopMenu_Login"), DeltaTime, false);
 	}
 
-	// Debug Info
-	DrawFPS(10, 10);
-	{
-		char Buffer[256] = {};
-		sprintf(Buffer, "Hot Index: %lld, Active Index: %lld\nMousePos: %d %d", UIContext.Hot.KeyPointer, UIContext.Active.KeyPointer, GetMouseX(), GetMouseY());
-		DrawText(Buffer, 10, 30, 20, WHITE);
-	} 
-
 	EndDrawing();
 }
 
@@ -502,6 +488,26 @@ void ProcessAndRenderLoginMenu(double DeltaTime, double CurrentTime) {
 	else {
 		AnimateBackwards(ButtonMap_Get("LoginPage_BackArrow"), DeltaTime, false);
 	}
+
+	UIResult = DoUIButtonFromMap("LoginPage_SubmitButton");
+	if (UIResult.PerformAction) {
+		text_area_def *EmailBox = TextAreaMap_Get("LoginPage_EmailBox");
+		text_area_def *PasswordBox = TextAreaMap_Get("LoginPage_PasswordBox");
+		net_client_nugget Send = {};
+		Send.Command = Net_Client_Logon;
+		memcpy(Send.Data.Logon.Email, EmailBox->Buffer, EMAIL_LEN);
+		memcpy(Send.Data.Logon.Password, PasswordBox->Buffer, PASSWORD_LEN);
+		net_server_nugget *Responce = ClientRequest(&Send);
+		printf("NickName: \"%s\", UserId: %d\n", Responce->Data.LogonOk.Nickname, Responce->Data.LogonOk.UserId);
+		free(Responce);
+	}
+
+	UIResult = DoUIButtonFromMap("LoginPage_SignUpButton");
+	if (UIResult.PerformAction) {
+		ProgState = SignUpPage;
+	}
+
+	DoUIButtonFromMap("LoginPage_Shading"); 
 
 	EndDrawing();
 }
@@ -555,9 +561,8 @@ void ProcessAndRenderFilterScreen(double DeltaTime, double CurrentTime) {
 	if (UIResult.PerformAction) {
 		DoTextInputFromMap("FilterScreen_UserBox");
 	}
-    
-    
-    button_def *BackArrow = ButtonMap_Get("FilterScreen_BackArrow");
+
+	button_def *BackArrow = ButtonMap_Get("FilterScreen_BackArrow");
 	UIResult = DoUIButtonFromMap("FilterScreen_BackArrow");
 	if (UIResult.PerformAction) {
 		ProgState = ListenScreen;
@@ -568,7 +573,6 @@ void ProcessAndRenderFilterScreen(double DeltaTime, double CurrentTime) {
 	else {
 		AnimateBackwards(ButtonMap_Get("FilterScreen_BackArrow"), DeltaTime, false);
 	}
-    
 
 	EndDrawing();
 }
@@ -584,7 +588,6 @@ void ProcessAndRenderSigninMenu(double DeltaTime, double CurrentTime) {
 
 	EndDrawing();
 }
-
 
 void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 	BeginDrawing();
@@ -756,8 +759,6 @@ void ProcessAndRenderListenScreen(double DeltaTime, double CurrentTime) {
 
 //END NEW SHIT
 
-
-
 int main(void) {
 	// Initialization
 	//--------------------------------------------------------------------------------------
@@ -775,16 +776,20 @@ int main(void) {
 
 	InitAudioDevice();
 
-	// Load all notes
-    for (int InstrumentIndex = 0; InstrumentIndex < NoteInstrumentCount; InstrumentIndex++) {        
-        for (int Index = 0; Index < NoteName_Count; Index++) {
-            NoteSoundList[InstrumentIndex][Index] = LoadSound(NoteFileNames[InstrumentIndex][Index]);
-        }
-    }
-    GuitarFinale = LoadSound("resources/Guitar Finale.mp3");
-    PianoFinale = LoadSound("resources/Piano Finale.mp3");
-    SaxFinale = LoadSound("resources/Sax Finale.mp3");
-	  
+// Load all notes
+	for (int InstrumentIndex = 0; InstrumentIndex < NoteInstrumentCount; InstrumentIndex++) {        
+		for (int Index = 0; Index < NoteName_Count; Index++) {
+			NoteSoundList[InstrumentIndex][Index] = LoadSound(NoteFileNames[InstrumentIndex][Index]);
+		}
+	}
+	GuitarFinale = LoadSound("resources/Guitar Finale.mp3");
+	PianoFinale = LoadSound("resources/Piano Finale.mp3");
+	SaxFinale = LoadSound("resources/Sax Finale.mp3");
+
+	bool InitStatus = InitNetwork();
+
+	if (!InitStatus) { return -1; }
+  
 	while(!WindowShouldClose()) {
 		double DeltaTime = GetFrameTime();
 		local_persist double CurrentTime = 0;

@@ -20,19 +20,28 @@ if not exist libs\Odin (
 	exit
 )
 
-set IncludePaths=-Ilibs\raylib\include
-set LibraryPaths=/LIBPATH:libs\raylib\lib\
-set TranslationUnits=source\BluesBash.cpp source\win32_BluesBash.cpp
+set Game_IncludePaths=-Ilibs\raylib\include
+set Game_LibraryPaths=/LIBPATH:libs\raylib\lib\
+set Game_TranslationUnits=source\BluesBash.cpp source\win32_BluesBash.cpp
+set Game_CFlags=-nologo -Fobin\obj\
+set Game_LFlags=-link /OUT:bin\BluesBash.exe /nologo
 
-set CFlags=-nologo -Fobin\obj\
-set LFlags=-link /OUT:bin\BluesBash.exe /nologo
+set Server_IncludePaths=
+set Server_LibraryPaths=
+set Server_TranslationUnits=source\Server\Server.cpp
+set Server_CFlags=-nologo -Fobin\obj\
+set Server_LFlags=-link /OUT:bin\BluesBash_Server.exe /nologo
 
 if "%1"=="debug" (
-	 set CFlags=%CFlags% -Zi -Od -MD
-	 set LFlags=%LFlags% /DEBUG
+	 set Game_CFlags=%Game_CFlags% -Zi -Od -MD
+	 set Game_LFlags=%Game_LFlags% /DEBUG
+	 set Server_CFlags=%Server_CFlags% -Zi -Od -MD
+	 set Server_LFlags=%Server_LFlags% /DEBUG
 ) else (
-	 set CFlags=%CFlags% -O2 -MT
-	 set LFlags=%LFlags% 
+	 set Game_CFlags=%Game_CFlags% -O2 -MT
+	 set Game_LFlags=%Game_LFlags% 
+	 set Server_CFlags=%Server_CFlags% -O2 -MT
+	 set Server_LFlags=%Server_LFlags% 
 )
 
 echo Building Tools...
@@ -109,7 +118,13 @@ popd
 echo Building game...
 
 @echo on
-cl %CFlags% %IncludePaths% %TranslationUnits% raylibdll.lib %LFlags% %LibraryPaths%
+cl %Game_CFlags% %Game_IncludePaths% %Game_TranslationUnits% %Game_LFlags% %Game_LibraryPaths%
 @echo off
+
+echo Building Server...
+@echo on
+cl %Server_CFlags% %Server_IncludePaths% %Server_TranslationUnits% %Server_LFlags% %Server_LibraryPaths%
+@echo off
+
 
 
