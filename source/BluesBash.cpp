@@ -327,6 +327,7 @@ void ProcessAndRenderGameplayScreen(double DeltaTime, double CurrentTime) {
 
 		ui_result UIResult = {false, false};
 		UIResult = DoUIButtonFromMap("GameplayScreen_Background");
+		UIResult = DoUIButtonFromMap("GameplayScreen_Instructions");
 
 		UIResult = DoUIButtonFromMap("GameplayScreen_DrumBot");
 		AnimateForwards(ButtonMap_Get("GameplayScreen_DrumBot"), DeltaTime, true);
@@ -886,6 +887,8 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 
 	ui_result UIResult = {false, false};
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_Background");
+	
+	UIResult = DoUIButtonFromMap("InstrumentSelectPage_Instructions");
 
     UIResult = DoUIButtonFromMap("InstrumentSelectPage_Player");
 	UIResult = DoUIButtonFromMap("InstrumentSelectPage_BubBox");
