@@ -239,39 +239,6 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 	}
 	
 	
-	//ANIMATION FOR GAMEPLAY STARTS HERE!!!------------------------------------------------------------
-	UIResult = DoUIButtonFromMap("GameplayScreen_PlayerPiano");
-	button_def *PlayerButton = ButtonMap_Get("GameplayScreen_PlayerPiano");
-	if (IsKeyPressed(KEY_LEFT)) {
-		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
-		free(PlayerButton->AniState.Key);
-		PlayerButton->AniState.Key = (char*)malloc(strlen("Left") + 1);
-		memcpy(PlayerButton->AniState.Key, "Left", strlen("Left") + 1);
-		animation *NewAni = AnimationMap_Get("Left");
-		PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
-		PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-	}
-	if (IsKeyPressed(KEY_RIGHT)) {
-		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
-		free(PlayerButton->AniState.Key);
-		PlayerButton->AniState.Key = (char*)malloc(strlen("Right") + 1);
-		memcpy(PlayerButton->AniState.Key, "Right", strlen("Right") + 1);
-		animation *NewAni = AnimationMap_Get("Right");
-		PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
-		PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-	}
-	if (IsKeyPressed(KEY_UP)) {
-		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
-		free(PlayerButton->AniState.Key);
-		PlayerButton->AniState.Key = (char*)malloc(strlen("Middle") + 1);
-		memcpy(PlayerButton->AniState.Key, "Middle", strlen("Middle") + 1);
-		animation *NewAni = AnimationMap_Get("Middle");
-		PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
-		PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
-	}
-	
-	//ANIMATION FOR GAMEPLAY ENDS HERE!!!------------------------------------------------------------
-	
 
 	// Stop Sustained notes that we are no longer holding.
 	for (int SustainedKey = 0; SustainedKey < SustainedKey_Count; SustainedKey++) {
@@ -420,6 +387,39 @@ void ProcessAndRenderPlayer(double DeltaTime, double CurrentTime) {
 				DrawTextureQuad(*GetCurrentFrame(Help), {1, 1}, {0, 0}, {0, 0, ScreenWidth, ScreenHeight}, Trans);
 			}
 		}
+		
+	//ANIMATION FOR GAMEPLAY STARTS HERE!!!------------------------------------------------------------
+	UIResult = DoUIButtonFromMap("GameplayScreen_PlayerPiano");
+	button_def *PlayerButton = ButtonMap_Get("GameplayScreen_PlayerPiano");
+	if (IsKeyPressed(KEY_LEFT)) {
+		free(PlayerButton->AniState.Key);
+		PlayerButton->AniState.Key = (char*)malloc(strlen("PianoLeft") + 1);
+		memcpy(PlayerButton->AniState.Key, "PianoLeft", strlen("PianoLeft") + 1);
+		animation *NewAni = AnimationMap_Get("PianoLeft");
+		PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+		PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
+	}
+	if (IsKeyPressed(KEY_RIGHT)) {
+		free(PlayerButton->AniState.Key);
+		PlayerButton->AniState.Key = (char*)malloc(strlen("PianoRight") + 1);
+		memcpy(PlayerButton->AniState.Key, "PianoRight", strlen("PianoRight") + 1);
+		animation *NewAni = AnimationMap_Get("PianoRight");
+		PlayerButton->AniState.CurrentFrameMajor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+		PlayerButton->AniState.CurrentFrameMinor = NewAni->UniqueFrameCount - 1;
+		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerButton"), DeltaTime, false);
+	}
+	if (IsKeyPressed(KEY_UP)) {
+		free(PlayerButton->AniState.Key);
+		PlayerButton->AniState.Key = (char*)malloc(strlen("PianoMiddle") + 1);
+		memcpy(PlayerButton->AniState.Key, "PianoMiddle", strlen("PianoMiddle") + 1);
+		animation *NewAni = AnimationMap_Get("PianoMiddle");
+		PlayerButton->AniState.CurrentFrameMajor = NewAni->UniqueFrameCount - 1;
+		PlayerButton->AniState.CurrentFrameMinor = NewAni->Frames[NewAni->UniqueFrameCount - 1].FrameLength;
+		AnimateForwards(ButtonMap_Get("GameplayScreen_PlayerPiano"), DeltaTime, false);
+	}
+	
+	//ANIMATION FOR GAMEPLAY ENDS HERE!!!------------------------------------------------------------
 		
 		EndDrawing();
 	}
@@ -685,7 +685,6 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 		if (AnimateForwards(ButtonMap_Get("InstrumentSelectPage_RoboBubBox"), DeltaTime, false)) {
 			UIResult = DoUIButtonFromMap("InstrumentSelectPage_RPianoBub");
 			if (UIResult.PerformAction) {
-				AnimateForwards(ButtonMap_Get("InstrumentSelectPage_Robot"), DeltaTime, false);
 				free(RoboButton->AniState.Key);
 				RoboButton->AniState.Key = (char*)malloc(strlen("PianoBot") + 1);
 				memcpy(RoboButton->AniState.Key, "PianoBot", strlen("PianoBot") + 1);
@@ -696,7 +695,6 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 			}
 			UIResult = DoUIButtonFromMap("InstrumentSelectPage_RTromBub");
 			if (UIResult.PerformAction) {
-				AnimateForwards(ButtonMap_Get("InstrumentSelectPage_Robot"), DeltaTime, false);
 				free(RoboButton->AniState.Key);
 				RoboButton->AniState.Key = (char*)malloc(strlen("TromboneBot") + 1);
 				memcpy(RoboButton->AniState.Key, "TromboneBot", strlen("TromboneBot") + 1);
@@ -707,7 +705,6 @@ void ProcessAndRenderInstrumentSelect(double DeltaTime, double CurrentTime) {
 			}
 			UIResult = DoUIButtonFromMap("InstrumentSelectPage_RGuitarBub");
 			if (UIResult.PerformAction) {
-				AnimateForwards(ButtonMap_Get("InstrumentSelectPage_Robot"), DeltaTime, false);
 				free(RoboButton->AniState.Key);
 				RoboButton->AniState.Key = (char*)malloc(strlen("GuitarBot") + 1);
 				memcpy(RoboButton->AniState.Key, "GuitarBot", strlen("GuitarBot") + 1);
