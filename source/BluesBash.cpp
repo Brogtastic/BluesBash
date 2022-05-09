@@ -660,8 +660,17 @@ void ProcessAndRenderLoginMenu(double DeltaTime, double CurrentTime) {
 		AnimateBackwards(ButtonMap_Get("LoginPage_BackArrow"), DeltaTime, false);
 	}
 
+	if (PlayerInfo.UserId != NOT_LOGGED_IN) {
+		button_def *Button = ButtonMap_Get("LoginPage_SubmitButton");
+		Button->AniState.CurrentFrameMajor = 1;
+	}
+	else {
+		button_def *Button = ButtonMap_Get("LoginPage_SubmitButton");
+		Button->AniState.CurrentFrameMajor = 0;
+	}
+
 	UIResult = DoUIButtonFromMap("LoginPage_SubmitButton");
-	if (UIResult.PerformAction) {
+	if (UIResult.PerformAction && (PlayerInfo.UserId == NOT_LOGGED_IN)) {
 		// @TODO(Roskuski): This is placeholder.
 		text_area_def *EmailBox = TextAreaMap_Get("LoginPage_EmailBox");
 		text_area_def *PasswordBox = TextAreaMap_Get("LoginPage_PasswordBox");
@@ -683,6 +692,7 @@ void ProcessAndRenderLoginMenu(double DeltaTime, double CurrentTime) {
 				memcpy(PlayerInfo.Nickname, Responce->Data.LogonOk.Nickname, NICKNAME_LEN);
 				PlayerInfo.UserId = Responce->Data.LogonOk.UserId;
 				ErrorMessage = 0;
+				ProgState = TopMenu;
 			}
 			else {
 				ErrorMessage = "Ensure that your Email and Password are correct.";
@@ -692,18 +702,50 @@ void ProcessAndRenderLoginMenu(double DeltaTime, double CurrentTime) {
 		}
 	}
 
+
+	if (PlayerInfo.UserId != NOT_LOGGED_IN) {
+		button_def *Button = ButtonMap_Get("LoginPage_SignUpButton");
+		Button->AniState.CurrentFrameMajor = 1;
+	}
+	else {
+		button_def *Button = ButtonMap_Get("LoginPage_SignUpButton");
+		Button->AniState.CurrentFrameMajor = 0;
+	}
+
 	UIResult = DoUIButtonFromMap("LoginPage_SignUpButton");
-	if (UIResult.PerformAction) {
+	if (UIResult.PerformAction && (PlayerInfo.UserId == NOT_LOGGED_IN)) {
 		ProgState = SignUpPage;
 	}
-	
-	
+
+	if (PlayerInfo.UserId == NOT_LOGGED_IN) {
+		button_def *Button = ButtonMap_Get("LoginPage_LogoutButton");
+		Button->AniState.CurrentFrameMajor = 1;
+	}
+	else {
+		button_def *Button = ButtonMap_Get("LoginPage_LogoutButton");
+		Button->AniState.CurrentFrameMajor = 0;
+	}
+
 	UIResult = DoUIButtonFromMap("LoginPage_LogoutButton");
-	if (UIResult.PerformAction) {
+	if (UIResult.PerformAction && (PlayerInfo.UserId != NOT_LOGGED_IN)) {
+		memset(PlayerInfo.Nickname, 0, NICKNAME_LEN);
+		PlayerInfo.UserId = NOT_LOGGED_IN;
 		ProgState = TopMenu;
 	}
 
 	DoUIButtonFromMap("LoginPage_Shading"); 
+
+	if (ProgState != LoginPage) {
+		text_area_def *Email = TextAreaMap_Get("LoginPage_EmailBox");
+		memset(Email->Buffer, 0, Email->BufferMaxSize);
+		Email->BufferCurrentLength = 0;
+
+		text_area_def *Password = TextAreaMap_Get("LoginPage_PasswordBox");
+		memset(Password->Buffer, 0, Password->BufferMaxSize);
+		Password->BufferCurrentLength = 0;
+
+		ErrorMessage = 0;
+	}
 
 	EndDrawing();
 }
@@ -732,10 +774,10 @@ void ProcessAndRenderPostPlayScreen(double DeltaTime, double CurrentTime) {
 	}
     
     UIResult = DoUIButtonFromMap("PostPlayScreen_UploadTrack");
-	if (UIResult.PerformAction) {
+	if (UIResult.PerformAction && (PlayerInfo.UserId != NOT_LOGGED_IN)) {
 		ProgState = ListenScreen;
 	}
-	if (UIResult.Hot) {
+	if (UIResult.Hot && (PlayerInfo.UserId != NOT_LOGGED_IN)) {
 		AnimateForwards(ButtonMap_Get("PostPlayScreen_UploadTrack"), DeltaTime, false);
 	}
 	else {
@@ -889,6 +931,27 @@ void ProcessAndRenderSignUpMenu(double DeltaTime, double CurrentTime) {
 			}
 		}
 		free(Responce);
+	}
+
+	if (ProgState != SignUpPage) {
+		text_area_def *EmailBox = TextAreaMap_Get("SignUpPage_Email");
+		text_area_def *PasswordBox = TextAreaMap_Get("SignUpPage_Password");
+		text_area_def *UsernameBox = TextAreaMap_Get("SignUpPage_Username");
+		text_area_def *SecurityQuestionBox = TextAreaMap_Get("SignUpPage_SecurityQuestion");
+		text_area_def *SecurityAnswerBox = TextAreaMap_Get("SignUpPage_SecurityAnswer");
+
+		memset(EmailBox->Buffer, 0, EmailBox->BufferMaxSize);
+		memset(PasswordBox->Buffer, 0, PasswordBox->BufferMaxSize);
+		memset(UsernameBox->Buffer, 0, UsernameBox->BufferMaxSize);
+		memset(SecurityQuestionBox->Buffer, 0, SecurityQuestionBox->BufferMaxSize);
+		memset(SecurityAnswerBox->Buffer, 0, SecurityAnswerBox->BufferMaxSize);
+
+		EmailBox->BufferCurrentLength = 0;
+		PasswordBox->BufferCurrentLength = 0;
+		UsernameBox->BufferCurrentLength = 0;
+		SecurityQuestionBox->BufferCurrentLength = 0;
+		SecurityAnswerBox->BufferCurrentLength = 0;
+		ErrorMessage = 0;
 	}
 
 	EndDrawing();
