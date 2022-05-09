@@ -59,7 +59,7 @@ bool AnimateForwards(animation_state &State, double DeltaTime, bool Loop) {
 	bool Result = false;
 	
 	State.CurrentTime += DeltaTime;
-	for (; State.CurrentTime >= Animation->FrameTime; State.CurrentTime -= Animation->FrameTime) {
+	for (; State.CurrentTime > Animation->FrameTime; State.CurrentTime -= Animation->FrameTime) {
 		State.CurrentFrameMinor += 1;
 
 		if (State.CurrentFrameMinor >= Animation->Frames[State.CurrentFrameMajor].FrameLength) {
@@ -101,7 +101,7 @@ bool AnimateBackwards(animation_state &State, double DeltaTime, bool Loop) {
 	for (; State.CurrentTime < 0; State.CurrentTime += Animation->FrameTime) {
 		State.CurrentFrameMinor -= 1;
 
-		if (State.CurrentFrameMinor < 0) {
+		if (State.CurrentFrameMinor <= 0) {
 			State.CurrentFrameMajor -= 1;
 			if (State.CurrentFrameMajor <= 0) {
 				Result = true;
